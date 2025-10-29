@@ -1,0 +1,15 @@
+export const colorMaster: Record<string, string> = {
+  putih: "#FFFFFF",
+  hitam: "#000000",
+  abu: "#808080",
+  abuabu: "#808080",
+  abu_abu: "#808080",
+  merah: "#FF0000",
+  biru: "#007BFF",
+  navy: "#001F3F",
+  pink: "#FFC0CB",
+  hijau: "#299A4D",
+  kuning: "#FFD700",
+  krem: "#F5DEB3",
+  maroon: "#800000",
+};

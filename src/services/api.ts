@@ -1,12 +1,12 @@
-import { Product } from "../types/product.types";
-import { dummyProducts } from "../data/mockProducts";
+import { IProduct } from "../types/IProduct";
+import { dummyProducts } from "../data/ProductsData";
 
 // --- SIMULASI API SERVICE ---
 // Ini adalah lapisan yang meniru pemanggilan 'axios.get'
 // Di aplikasi nyata, Anda akan mengganti isi fungsi ini dengan pemanggilan axios sungguhan
 
 export const mockApi = {
-  fetchProducts: (): Promise<{ data: Product[] }> => {
+  fetchProducts: (): Promise<{ data: IProduct[] }> => {
     console.log("MOCK API: Fetching all products...");
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -16,7 +16,7 @@ export const mockApi = {
     });
   },
 
-  fetchProductById: (id: string): Promise<{ data: Product | undefined }> => {
+  fetchProductById: (id: string): Promise<{ data: IProduct | undefined }> => {
     console.log(`MOCK API: Fetching product by id: ${id}`);
     return new Promise((resolve, reject) => {
       setTimeout(() => {

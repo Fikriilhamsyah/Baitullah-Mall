@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Product } from "../types/product.types";
+import { Product } from "../types/IProduct";
 import { mockApi } from "../services/api";
 // import { api } from '../services/api'; // Untuk API sungguhan
 
