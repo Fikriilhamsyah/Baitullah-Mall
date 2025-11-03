@@ -1,14 +1,14 @@
-"use client"; // Diperlukan untuk useState (memilih produk)
+"use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 
-// Component
+// Components
 import ProductList from "@/components/features/product/ProductList";
 import ProductDetail from "@/components/features/product/ProductDetail";
 import { HeroSection } from "@components/features/home/HeroSection";
 import { PromoBanner } from "@/components/features/home/promo/PromoSection";
-import { InputField } from "@/components/ui/InputField";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { Button } from "@/components/ui/Button";
 const SliderSection = dynamic(() => import("@/components/features/home/SliderSection.client"), {
   ssr: false,
@@ -16,41 +16,51 @@ const SliderSection = dynamic(() => import("@/components/features/home/SliderSec
 
 // Data
 import { slides } from "@/data/SlidesData";
+import { CategorySlider } from "@/components/features/category/CategorySlider";
+import { ChevronRight } from "lucide-react";
 
-// Icons
-import { ArrowRight, Search, User } from "lucide-react";
-
-// Ini adalah Halaman Home Anda
+// Halaman Home
 export default function HomePage() {
-  // State untuk menentukan halaman (daftar atau detail)
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(
-    null
-  );
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Simulasi loading awal halaman
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1200); // misal 1.2 detik
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Jika loading → tampilkan spinner fullscreen
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
-    // container, padding, dll. sudah diatur di RootLayout
     <>
       {selectedProductId ? (
-        // Tampilkan Halaman Detail
-        <ProductDetail
-          id={selectedProductId}
-          onBack={() => setSelectedProductId(null)}
-        />
+        <ProductDetail id={selectedProductId} onBack={() => setSelectedProductId(null)} />
       ) : (
-        // Tampilkan Halaman Utama (Home)
         <>
-          {/* 3. Hero Section */}
+          {/* Hero Section (mobile only) */}
           <div className="block md:hidden">
-            <HeroSection />
+            <HeroSection filterButtonLabel={false} />
           </div>
 
-          {/* 2. Slider/Gallery di atas */}
+          {/* Slider Section */}
           <SliderSection slides={slides} autoPlay />
-          
-          {/* 3. Promo Banner */}
+
+          {/* Promo Banner */}
           <PromoBanner />
 
-          {/* 4. Banner Paragraph */}
+          {/* Category Slider */}
+          <section className="hidden lg:block container mx-auto px-4 sm:px-6 py-4 md:py-6">
+            <div className="container mx-auto px-4 md:px-0">
+              <h2 className="text-md md:text-2xl font-bold text-neutral-900 pb-2 md:pb-8">Kategori</h2>
+            </div>
+            <CategorySlider />
+          </section>
+
+          {/* Banner Paragraf */}
           <div className="py-4 md:py-6">
             <div className="w-full h-full aspect-[2.32/1]">
               <div className="banner-paragraf w-full h-full">
@@ -66,15 +76,36 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* 5. Product List Section */}
+          {/* Product List */}
           <section className="md:container md:mx-auto md:px-6 pb-8">
             <div id="produk" className="w-full">
               <div className="container mx-auto px-4 md:px-0">
-                <h2 className="text-md font-bold text-neutral-900 pb-2">
-                  Produk Pilihan
-                </h2>
+                <h2 className="text-md md:text-2xl font-bold text-neutral-900 pb-2 md:pb-8">Produk Baitullah Mall</h2>
               </div>
-              <ProductList onProductSelect={(id) => setSelectedProductId(id)} />
+              <ProductList
+                onProductSelect={(id) => setSelectedProductId(id)}
+                paymentType="rupiah"
+              />
+              <div className="flex justify-center items-center mt-2">
+                <Button label="Lihat Produk Lainnya" variant="normal" iconRight={ChevronRight} color="primary" shadow="lg" />
+              </div>
+            </div>
+          </section>
+
+          {/* Tukar Point */}
+          <section className="md:container md:mx-auto md:px-6 pb-8">
+            <div id="tukarpoin" className="w-full">
+              <div className="container mx-auto px-4 md:px-0">
+                <h2 className="text-md md:text-2xl font-bold text-neutral-900 pb-1 md:pb-2">Tukar Poin</h2>
+                <p className="text-sm md:text-lg font-normal text-neutral-600 pb-2 md:pb-8">Kumpulkan Poin, Tukar dengan Keberkahan.</p>
+              </div>
+              <ProductList
+                onProductSelect={(id) => setSelectedProductId(id)}
+                paymentType="poin"
+              />
+              <div className="flex justify-center items-center mt-2">
+                <Button label="Lihat Produk Lainnya" variant="normal" iconRight={ChevronRight} color="primary" shadow="lg" />
+              </div>
             </div>
           </section>
         </>
@@ -82,4 +113,3 @@ export default function HomePage() {
     </>
   );
 }
-

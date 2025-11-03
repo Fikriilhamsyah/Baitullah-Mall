@@ -82,8 +82,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) => {
         </h3>
 
         {/* Harga */}
-        <p className="text-xl font-bold text-gray-800">
-          {formatPrice(product.basePrice)}
+        <p className="text-xl font-extrabold text-gray-800">
+          {product.paymentType === "poin"
+            ? `${product.basePrice} Poin`
+            : formatPrice(product.basePrice)}
         </p>
 
         {/* Rating */}

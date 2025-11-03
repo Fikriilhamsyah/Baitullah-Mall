@@ -11,6 +11,7 @@ const categories: ProductCategory[] = [
   "Perlengkapan Travel",
   "Kesehatan & Kebersihan",
   "Buku & Panduan",
+  "Oleh-oleh & Souvenir",
   "Paket Bundling",
 ];
 
@@ -21,6 +22,7 @@ const categoryImages: Partial<Record<ProductCategory, string>> = {
   "Perlengkapan Travel": "/img/banner/banner-kategori-perlengkapan-travel.webp",
   "Kesehatan & Kebersihan": "/img/banner/banner-kategori-kesehatan-kebersihan.webp",
   "Buku & Panduan": "/img/banner/banner-kategori-buku-panduan.webp",
+  "Oleh-oleh & Souvenir": "/img/banner/banner-kategori-oleh-oleh-souvenir.webp",
   "Paket Bundling": "/img/banner/banner-kategori-paket-bundling.webp",
 };
 

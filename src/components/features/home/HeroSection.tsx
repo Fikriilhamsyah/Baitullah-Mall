@@ -8,6 +8,7 @@ import { InputField } from "@/components/ui/InputField";
 
 // Icons
 import { Search, ListFilter } from "lucide-react";
+import { filter } from "framer-motion/client";
 
 // Dummy data (bisa diganti dengan hasil dari API)
 const metaKeywords = [
@@ -22,7 +23,14 @@ const metaKeywords = [
   "Sandal Haji",
 ];
 
-export function HeroSection() {
+interface HeroSectionProps {
+  metaKeywords?: string[]; // bisa dikirim dari parent
+  title?: string;
+  filterButtonLabel?: true | false; // tampilkan label pada tombol filter
+  onSearch?: (query: string) => void; // contoh event callback
+}
+
+export function HeroSection(props: HeroSectionProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -57,7 +65,7 @@ export function HeroSection() {
 
   return (
     <section>
-      <div className="w-full bg-white hero-mobile-container md:hero-tablet-container px-4 md:px-6 py-4 md:py-6 text-white">
+      <div className="w-full bg-white hero-mobile-container md:hero-tablet-container px-4 md:px-6 py-4 md:py-6 pt-[80px] text-white">
         <div className="container mx-auto">
           {/* 🔍 Search bar + Filter button */}
           <div className="relative flex items-center gap-2 mb-2">
@@ -93,12 +101,14 @@ export function HeroSection() {
             </div>
 
             {/* 🧩 Filter Button */}
-            <button
-              onClick={() => setIsFilterOpen(true)}
-              className="bg-transparent"
-            >
-              <ListFilter size={24} className="text-primary-500" />
-            </button>
+            {props.filterButtonLabel && (
+              <button
+                onClick={() => setIsFilterOpen(true)}
+                className="bg-transparent"
+              >
+                <ListFilter size={24} className="text-primary-500" />
+              </button>
+            )}
           </div>
 
           {/* 🧭 Category Carousel */}

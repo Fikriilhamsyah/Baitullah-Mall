@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Product } from "../types/IProduct";
+import { IProduct } from "../types/IProduct";
 import { mockApi } from "../services/api";
 // import { api } from '../services/api'; // Untuk API sungguhan
 
@@ -8,7 +8,7 @@ import { mockApi } from "../services/api";
  * Mengelola state loading, error, dan data produk.
  */
 export const useProducts = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<IProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 

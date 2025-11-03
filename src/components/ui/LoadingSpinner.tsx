@@ -1,12 +1,22 @@
 import React from "react";
-import { Loader2 } from "lucide-react";
+import Image from "next/image";
 
-// Komponen untuk menampilkan loading spinner
-const LoadingSpinner: React.FC = () => (
-  <div className="flex justify-center items-center h-64">
-    <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
-    <span className="sr-only">Loading...</span>
-  </div>
-);
+const PageLoader = () => {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+      <div className="animate-spin-y">
+        <Image
+          src="/img/logo/android-chrome-512x512.png"
+          alt="Loading..."
+          width={60}
+          height={60}
+          priority
+          className="select-none"
+        />
+      </div>
+      <p className="mt-4 text-gray-600 text-sm">Memuat halaman...</p>
+    </div>
+  );
+};
 
-export default LoadingSpinner;
+export default PageLoader;

@@ -17,6 +17,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
   variant?: ButtonVariant;
   color?: ButtonColor;
+  shadow?: "none" | "sm" | "md" | "lg";
   customColor?: {
     bg?: string;
     text?: string;
@@ -36,6 +37,7 @@ export const Button: React.FC<ButtonProps> = ({
   color = "primary",
   customColor,
   fullWidth = false,
+  shadow = "none",
   className = "",
   ...props
 }) => {
@@ -70,16 +72,29 @@ export const Button: React.FC<ButtonProps> = ({
       `
       : "bg-gray-200 text-gray-700 border border-gray-300";
 
+  // 🟨 Shadow berdasarkan prop
+  const shadowStyle = 
+    shadow === "none"
+      ? "shadow-none"
+      : shadow === "sm"
+      ? "shadow-sm"
+      : shadow === "md"
+      ? "shadow-md"
+      : shadow === "lg"
+      ? "shadow-lg"
+      : "shadow-none";
+
   return (
     <button
       {...props}
       disabled={loading || props.disabled}
       className={`
         flex items-center justify-center gap-2
-        px-4 py-2 font-medium text-[8px] md:text-sm transition-all duration-200
+        px-4 py-2 font-medium text-[10px] md:text-sm transition-all duration-200
         ${baseColor}
         ${radius}
         ${fullWidth ? "w-full" : ""}
+        ${shadowStyle}
         ${loading ? "opacity-70 cursor-not-allowed" : ""}
         ${className}
       `}

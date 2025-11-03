@@ -16,6 +16,7 @@ export const dummyProducts: IProduct[] = [
     ],
     stock: 150,
     rating: 4.6,
+    paymentType: "rupiah",
     variants: [
       {
         id: "V_UKURAN",
@@ -48,6 +49,7 @@ export const dummyProducts: IProduct[] = [
     ],
     stock: 80,
     rating: 4.8,
+    paymentType: "rupiah",
     variants: [
       {
         id: "V_WARNA_G",
@@ -79,7 +81,7 @@ export const dummyProducts: IProduct[] = [
     name: "Tasbih Digital LED",
     description:
       "Tasbih digital dengan layar LED dan penghitung otomatis. Cocok digunakan di tempat gelap.",
-    basePrice: 75000,
+    basePrice: 3,
     category: "Aksesoris Ibadah",
     imageUrl: "/img/product-list/tas-kabin-2.jpg",
     images: [
@@ -87,7 +89,8 @@ export const dummyProducts: IProduct[] = [
       "/img/product-detail/tasbih-digital-2.jpg",
     ],
     stock: 300,
-    rating: 4.3,
+    rating: 3.3,
+    paymentType: "poin",
     variants: [
       {
         id: "V_WARNA_T",
@@ -97,6 +100,9 @@ export const dummyProducts: IProduct[] = [
           { id: "WT_PUTIH", value: "Putih", priceModifier: 0 },
           { id: "WT_BIRU", value: "Biru", priceModifier: 0 },
           { id: "WT_PINK", value: "Pink", priceModifier: 5000 },
+          { id: "WT_MERAH", value: "Merah", priceModifier: 5000 },
+          { id: "WT_NAVY", value: "Navy", priceModifier: 5000 },
+          { id: "WT_HIJAU", value: "Hijau", priceModifier: 5000 },
         ],
       },
     ],
@@ -115,13 +121,14 @@ export const dummyProducts: IProduct[] = [
     ],
     stock: 500,
     rating: 4.5,
+    paymentType: "rupiah",
   },
   {
     id: "K4001",
     name: "Sabun & Shampoo Non-Parfum Ihram",
     description:
       "Paket sabun dan shampoo halal tanpa parfum, aman digunakan saat ihram.",
-    basePrice: 120000,
+    basePrice: 5,
     category: "Kesehatan & Kebersihan",
     imageUrl: "/img/product-list/koper-2.jpg",
     images: [
@@ -130,6 +137,7 @@ export const dummyProducts: IProduct[] = [
     ],
     stock: 200,
     rating: 4.7,
+    paymentType: "poin",
   },
   {
     id: "B5001",
@@ -145,6 +153,7 @@ export const dummyProducts: IProduct[] = [
     ],
     stock: 120,
     rating: 4.9,
+    paymentType: "rupiah",
   },
   {
     id: "Z6001",
@@ -160,13 +169,14 @@ export const dummyProducts: IProduct[] = [
     ],
     stock: 50,
     rating: 4.4,
+    paymentType: "rupiah",
   },
   {
     id: "T3002",
     name: "Bantal Leher Travel Memory Foam",
     description:
       "Bantal leher empuk dengan memory foam, ideal untuk perjalanan jauh.",
-    basePrice: 99000,
+    basePrice: 20,
     category: "Perlengkapan Travel",
     imageUrl: "/img/product-list/bantal-leher-1.jpg",
     images: [
@@ -176,6 +186,8 @@ export const dummyProducts: IProduct[] = [
     ],
     stock: 320,
     rating: 4.3,
+    paymentType: "poin",
+  
     variants: [
       {
         id: "V_WARNA_B",

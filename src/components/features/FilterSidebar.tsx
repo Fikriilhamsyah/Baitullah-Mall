@@ -1,7 +1,9 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { InputField } from "../ui/InputField";
+import CheckboxGroup from "../ui/CheckboxGroup";
 
 interface FilterSidebarProps {
   open: boolean;
@@ -9,6 +11,9 @@ interface FilterSidebarProps {
 }
 
 export function FilterSidebar({ open, onClose }: FilterSidebarProps) {
+  const [category, setCategory] = useState<string[]>([]);
+  const [gender, setGender] = useState<string[]>([]);
+
   // 🔒 Disable scroll body ketika sidebar aktif
   useEffect(() => {
     if (open) {
@@ -43,7 +48,7 @@ export function FilterSidebar({ open, onClose }: FilterSidebarProps) {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 200, damping: 25 }}
-            className="fixed top-0 right-0 w-80 max-w-full h-full bg-white shadow-xl z-50 flex flex-col"
+            className="fixed top-0 right-0 w-70 max-w-full h-full bg-white shadow-xl z-50 flex flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
@@ -59,9 +64,53 @@ export function FilterSidebar({ open, onClose }: FilterSidebarProps) {
             </div>
 
             {/* Isi filter */}
-            <div className="p-4 space-y-4 text-neutral-700">
-              <p className="text-sm">Contoh filter kategori, harga, dll...</p>
-            </div>
+            <div className="p-4">
+              <p className="text-md font-normal text-neutral-600 mb-8">Menampilkan produk</p>
+              <div className="space-y-6">
+                  <div>
+                      <p className="text-md font-bold text-neutral-700 mb-2">Harga</p>
+                      <div className="flex items-center">
+                          <p className="text-md font-normal text-neutral-600 mr-2">Rp</p>
+                          <div className="grid grid-cols-2 gap-2">
+                              <InputField type="number" placeholder="Min" />
+                              <InputField type="number" placeholder="Max" />
+                          </div>
+                      </div>
+                  </div>
+                  <div>
+                      <p className="text-md font-bold text-neutral-700 mb-2">Kategori</p>
+                      <div>
+                          <CheckboxGroup
+                              options={[
+                                  { label: "Pakaian & Ihram", value: "pakaian_ihram" },
+                                  { label: "Aksesoris Ibadah", value: "aksesoris_ibadah" },
+                                  { label: "Perlengkapan Travel", value: "perlengkapan_travel" },
+                                  { label: "Kesehatan & Kebersihan", value: "kesehatan_kebersihan" },
+                                  { label: "Buku Panduan", value: "buku_panduan" },
+                                  { label: "Oleh-oleh & Souvenir", value: "oleh_oleh_souvenir" },
+                                  { label: "Paket Bundling", value: "paket_bundling" },
+                              ]}
+                              selected={category}
+                              onChange={setCategory}
+                          />
+                      </div>
+                  </div>
+                  <div>
+                      <p className="text-md font-bold text-neutral-700 mb-2">Gender</p>
+                      <div>
+                          <CheckboxGroup
+                              options={[
+                                  { label: "Pria", value: "pria" },
+                                  { label: "Wanita", value: "wanita" },
+                                  { label: "Unisex", value: "unisex" },
+                              ]}
+                              selected={gender}
+                              onChange={setGender}
+                          />
+                      </div>
+                  </div>
+              </div>
+          </div>
           </motion.aside>
         </>
       )}

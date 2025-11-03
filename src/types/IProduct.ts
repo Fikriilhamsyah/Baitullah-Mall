@@ -6,6 +6,8 @@ export type IProductCategory =
   | "Buku & Panduan"
   | "Paket Bundling";
 
+export type IProductPaymentType = "rupiah" | "poin";
+
 export interface IVariantOption {
   id: string;
   value: string;
@@ -29,4 +31,5 @@ export interface IProduct {
   stock: number;
   rating?: number;
   variants?: IVariantType[];
+  paymentType: IProductPaymentType;
 }
