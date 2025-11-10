@@ -12,7 +12,11 @@ interface CheckboxGroupProps {
   onChange: (value: string[]) => void;
 }
 
-const CheckboxGroup: React.FC<CheckboxGroupProps> = ({ options, selected, onChange }) => {
+const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
+  options,
+  selected,
+  onChange,
+}) => {
   const toggleValue = (value: string) => {
     if (selected.includes(value)) {
       onChange(selected.filter((v) => v !== value));
@@ -24,21 +28,36 @@ const CheckboxGroup: React.FC<CheckboxGroupProps> = ({ options, selected, onChan
   return (
     <div className="flex flex-col gap-2">
       {options.map((opt) => (
-        <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+        <label
+          key={opt.value}
+          className="flex items-center gap-2 cursor-pointer group"
+        >
           <input
             type="checkbox"
             value={opt.value}
             checked={selected.includes(opt.value)}
             onChange={() => toggleValue(opt.value)}
-            className="w-4 h-4 text-brand-dark focus:ring-brand-light border-gray-300 rounded"
+            className={`
+              w-4 h-4 border-gray-300 rounded 
+              text-primary-500 focus:ring-primary-500
+              transition-colors duration-200
+              checked:bg-primary-500 checked:border-primary-500
+              hover:border-primary-500
+            `}
           />
-          <span className="text-gray-700">{opt.label}</span>
+          <span
+            className={`
+              text-gray-700 text-sm md:text-md 
+              group-hover:text-primary-600 transition-colors
+            `}
+          >
+            {opt.label}
+          </span>
         </label>
       ))}
     </div>
 
     // const [preferences, setPreferences] = useState<string[]>([]);
-
     // <CheckboxGroup
     //     options={[
     //         { label: "Berlangganan Newsletter", value: "newsletter" },

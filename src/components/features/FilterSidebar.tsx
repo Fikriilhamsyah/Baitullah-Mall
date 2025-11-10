@@ -4,16 +4,51 @@ import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { InputField } from "../ui/InputField";
 import CheckboxGroup from "../ui/CheckboxGroup";
+import { Button } from "../ui/Button";
 
 interface FilterSidebarProps {
   open: boolean;
   onClose: () => void;
+
+  // 🔹 Props sinkronisasi dari ProductPage
+  totalCount: number;
+  totalAll: number;
+  category: string[];
+  gender: string[];
+  sortBy: string;
+  minPrice: number | "";
+  maxPrice: number | "";
+  productType: string[];
+
+  onChangeCategory: (val: string[]) => void;
+  onChangeGender: (val: string[]) => void;
+  onChangeSort: (val: string) => void;
+  onChangeMinPrice: (val: number | "") => void;
+  onChangeMaxPrice: (val: number | "") => void;
+  onChangeProductType: (val: string[]) => void;
+
+  onResetFilters: () => void;
 }
 
-export function FilterSidebar({ open, onClose }: FilterSidebarProps) {
-  const [category, setCategory] = useState<string[]>([]);
-  const [gender, setGender] = useState<string[]>([]);
-
+export function FilterSidebar({
+  open,
+  onClose,
+  totalCount,
+  totalAll,
+  category,
+  gender,
+  sortBy,
+  minPrice,
+  maxPrice,
+  productType,
+  onChangeCategory,
+  onChangeGender,
+  onChangeSort,
+  onChangeMinPrice,
+  onChangeMaxPrice,
+  onChangeProductType,
+  onResetFilters,
+}: FilterSidebarProps) {
   // 🔒 Disable scroll body ketika sidebar aktif
   useEffect(() => {
     if (open) {
@@ -21,8 +56,6 @@ export function FilterSidebar({ open, onClose }: FilterSidebarProps) {
     } else {
       document.body.style.overflow = "";
     }
-
-    // Cleanup saat komponen unmount
     return () => {
       document.body.style.overflow = "";
     };
@@ -51,7 +84,7 @@ export function FilterSidebar({ open, onClose }: FilterSidebarProps) {
             className="fixed top-0 right-0 w-70 max-w-full h-full bg-white shadow-xl z-50 flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 z-10">
               <h2 className="font-semibold text-lg text-neutral-800">
                 Filter Produk
               </h2>
@@ -64,53 +97,145 @@ export function FilterSidebar({ open, onClose }: FilterSidebarProps) {
             </div>
 
             {/* Isi filter */}
-            <div className="p-4">
-              <p className="text-md font-normal text-neutral-600 mb-8">Menampilkan produk</p>
-              <div className="space-y-6">
-                  <div>
-                      <p className="text-md font-bold text-neutral-700 mb-2">Harga</p>
-                      <div className="flex items-center">
-                          <p className="text-md font-normal text-neutral-600 mr-2">Rp</p>
-                          <div className="grid grid-cols-2 gap-2">
-                              <InputField type="number" placeholder="Min" />
-                              <InputField type="number" placeholder="Max" />
-                          </div>
-                      </div>
-                  </div>
-                  <div>
-                      <p className="text-md font-bold text-neutral-700 mb-2">Kategori</p>
-                      <div>
-                          <CheckboxGroup
-                              options={[
-                                  { label: "Pakaian & Ihram", value: "pakaian_ihram" },
-                                  { label: "Aksesoris Ibadah", value: "aksesoris_ibadah" },
-                                  { label: "Perlengkapan Travel", value: "perlengkapan_travel" },
-                                  { label: "Kesehatan & Kebersihan", value: "kesehatan_kebersihan" },
-                                  { label: "Buku Panduan", value: "buku_panduan" },
-                                  { label: "Oleh-oleh & Souvenir", value: "oleh_oleh_souvenir" },
-                                  { label: "Paket Bundling", value: "paket_bundling" },
-                              ]}
-                              selected={category}
-                              onChange={setCategory}
-                          />
-                      </div>
-                  </div>
-                  <div>
-                      <p className="text-md font-bold text-neutral-700 mb-2">Gender</p>
-                      <div>
-                          <CheckboxGroup
-                              options={[
-                                  { label: "Pria", value: "pria" },
-                                  { label: "Wanita", value: "wanita" },
-                                  { label: "Unisex", value: "unisex" },
-                              ]}
-                              selected={gender}
-                              onChange={setGender}
-                          />
-                      </div>
-                  </div>
+            <div className="p-4 flex-1 overflow-y-auto">
+              {/* ✅ Jumlah produk tersinkronisasi */}
+              <div className="flex justify-between items-center mb-8">
+                <p className="text-sm md:text-md font-normal text-neutral-600">
+                  Menampilkan produk
+                </p>
+                <p className="text-sm md:text-md font-semibold text-primary-600">
+                  {totalCount} / {totalAll}
+                </p>
               </div>
-          </div>
+
+              <div className="space-y-6">
+                {/* Harga */}
+                <div>
+                  <p className="text-sm md:text-md font-bold text-neutral-700 mb-2">
+                    Harga
+                  </p>
+                  <div className="flex items-center">
+                    <p className="text-sm md:text-md font-normal text-neutral-600 mr-2">
+                      Rp
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <InputField
+                        type="number"
+                        placeholder="Min"
+                        value={minPrice}
+                        onChange={(e) =>
+                          onChangeMinPrice(
+                            e.target.value === "" ? "" : Number(e.target.value)
+                          )
+                        }
+                      />
+                      <InputField
+                        type="number"
+                        placeholder="Max"
+                        value={maxPrice}
+                        onChange={(e) =>
+                          onChangeMaxPrice(
+                            e.target.value === "" ? "" : Number(e.target.value)
+                          )
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Urutkan Berdasarkan */}
+                <div>
+                  <InputField
+                    type="select"
+                    label="Urutkan Berdasarkan"
+                    options={[
+                      { value: "", label: "Pilih Urutan" },
+                      { value: "terbaru", label: "Produk Terbaru" },
+                      { value: "terlaris", label: "Produk Terlaris" },
+                      { value: "termahal", label: "Harga: Tinggi ke Rendah" },
+                      { value: "termurah", label: "Harga: Rendah ke Tinggi" },
+                    ]}
+                    value={sortBy}
+                    onChange={(e) => onChangeSort(e.target.value)}
+                  />
+                </div>
+
+                {/* Jenis Pembayaran Produk */}
+                <div>
+                  <p className="text-sm md:text-md font-bold text-neutral-700 mb-2">
+                    Jenis Pembayaran Produk
+                  </p>
+                  <CheckboxGroup
+                    options={[
+                      { label: "Produk Biasa", value: "rupiah" },
+                      { label: "Tukar Poin", value: "poin" },
+                    ]}
+                    selected={productType}
+                    onChange={onChangeProductType}
+                  />
+                </div>
+
+                {/* Kategori */}
+                <div>
+                  <p className="text-sm md:text-md font-bold text-neutral-700 mb-2">
+                    Kategori
+                  </p>
+                  <CheckboxGroup
+                    options={[
+                      { label: "Pakaian & Ihram", value: "Pakaian & Ihram" },
+                      { label: "Aksesoris Ibadah", value: "Aksesoris Ibadah" },
+                      { label: "Perlengkapan Travel", value: "Perlengkapan Travel" },
+                      { label: "Kesehatan & Kebersihan", value: "Kesehatan & Kebersihan" },
+                      { label: "Buku Panduan", value: "Buku & Panduan" },
+                      { label: "Oleh-oleh & Souvenir", value: "Oleh-oleh & Souvenir" },
+                      { label: "Paket Bundling", value: "Paket Bundling" },
+                    ]}
+                    selected={category}
+                    onChange={onChangeCategory}
+                  />
+                </div>
+
+                {/* Gender */}
+                <div>
+                  <p className="text-sm md:text-md font-bold text-neutral-700 mb-2">
+                    Gender
+                  </p>
+                  <CheckboxGroup
+                    options={[
+                      { label: "Pria", value: "pria" },
+                      { label: "Wanita", value: "wanita" },
+                      { label: "Unisex", value: "unisex" },
+                    ]}
+                    selected={gender}
+                    onChange={onChangeGender}
+                  />
+                </div>
+
+                {/* Tombol aksi */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    label="Atur Ulang"
+                    variant="rounded"
+                    color="custom"
+                    customColor={{
+                      bg: "bg-white",
+                      text: "text-primary-500",
+                      border: "border-primary-500",
+                      hoverBg: "bg-primary-500",
+                      hoverText: "text-black",
+                    }}
+                    onClick={onResetFilters}
+                  />
+                  <Button
+                    label="Terapkan"
+                    color="primary"
+                    variant="rounded"
+                    fullWidth={true}
+                    onClick={onClose}
+                  />
+                </div>
+              </div>
+            </div>
           </motion.aside>
         </>
       )}

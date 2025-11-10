@@ -50,7 +50,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) => {
   return (
     <div
       onClick={() => onSelect(product.id)}
-      className="bg-white overflow-hidden cursor-pointer transform transition-all duration-300 hover:shadow-md hover:-translate-y-1"
+      className="bg-white overflow-hidden cursor-pointer md:transform md:transition-all md:duration-300 md:hover:shadow-md md:hover:-translate-y-1"
     >
       {/* Gambar Utama */}
       <img
@@ -59,7 +59,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) => {
         className="w-full h-auto aspect-[4/5] object-cover"
         onError={(e) =>
           (e.currentTarget.src =
-            "https://placehold.co/600x400/eeeeee/aaaaaa?text=Image+Error")
+            "https://placehold.co/600x400/eeeeee/aaaaaa?text=No+Image")
         }
       />
 
@@ -77,7 +77,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) => {
         <VariantInfo gender={variantGender} sizes={sizeDisplay ? [sizeDisplay] : []} />
 
         {/* Nama Produk */}
-        <h3 className="text-sm font-semibold text-gray-900 truncate">
+        <h3 className="text-sm font-semibold text-gray-900">
           {product.name}
         </h3>
 

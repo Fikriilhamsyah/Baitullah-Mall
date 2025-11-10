@@ -34,9 +34,171 @@ export const dummyProducts: IProduct[] = [
         options: [{ id: "G_PRIA", value: "Pria", priceModifier: 0 }],
       },
     ],
+    createdAt: "2025-10-01T00:00:00Z",
   },
   {
     id: "P1002",
+    name: "Mukena Premium Travel",
+    description:
+      "Mukena bahan parasut ringan dan mudah dilipat, ideal untuk perjalanan ibadah.",
+    basePrice: 275000,
+    category: "Pakaian & Ihram",
+    imageUrl: "/img/product-list/mukena-travel.jpg",
+    images: [
+      "/img/product-detail/mukena-1.jpg",
+      "/img/product-detail/mukena-2.jpg",
+    ],
+    stock: 120,
+    rating: 4.8,
+    paymentType: "rupiah",
+    variants: [
+      {
+        id: "V_GENDER",
+        name: "Gender",
+        options: [{ id: "G_WANITA", value: "Wanita", priceModifier: 0 }],
+      },
+    ],
+    createdAt: "2025-10-03T00:00:00Z",
+  },
+  {
+    id: "P1003",
+    name: "Tas Selempang Travel Anti Air",
+    description:
+      "Tas kecil anti air dengan banyak kompartemen, cocok untuk menyimpan paspor dan uang selama perjalanan.",
+    basePrice: 180000,
+    category: "Perlengkapan Travel",
+    imageUrl: "/img/product-list/tas-travel.jpg",
+    images: [
+      "/img/product-detail/tas-1.jpg",
+      "/img/product-detail/tas-2.jpg",
+    ],
+    stock: 200,
+    rating: 4.4,
+    paymentType: "rupiah",
+    variants: [
+      {
+        id: "V_GENDER",
+        name: "Gender",
+        options: [{ id: "G_UNISEX", value: "Unisex", priceModifier: 0 }],
+      },
+    ],
+    createdAt: "2025-10-05T00:00:00Z",
+  },
+  {
+    id: "P1004",
+    name: "Sabun Cair Travel Halal 100ml",
+    description:
+      "Sabun cair tanpa alkohol dengan ukuran travel-friendly, aman untuk dibawa ke pesawat.",
+    basePrice: 45000,
+    category: "Kesehatan & Kebersihan",
+    imageUrl: "/img/product-list/sabun-travel.jpg",
+    images: [
+      "/img/product-detail/sabun-1.jpg",
+      "/img/product-detail/sabun-2.jpg",
+    ],
+    stock: 500,
+    rating: 4.9,
+    paymentType: "rupiah",
+    variants: [],
+    createdAt: "2025-10-06T00:00:00Z",
+  },
+  {
+    id: "P1005",
+    name: "Buku Panduan Haji & Umroh Lengkap",
+    description:
+      "Panduan lengkap pelaksanaan ibadah haji dan umroh sesuai sunnah, mudah dipahami dan praktis.",
+    basePrice: 85000,
+    category: "Buku & Panduan",
+    imageUrl: "/img/product-list/buku-panduan.jpg",
+    images: [
+      "/img/product-detail/buku-1.jpg",
+      "/img/product-detail/buku-2.jpg",
+    ],
+    stock: 300,
+    rating: 4.7,
+    paymentType: "rupiah",
+    variants: [],
+    createdAt: "2025-10-07T00:00:00Z",
+  },
+  {
+    id: "P1006",
+    name: "Souvenir Tasbih Kayu Cendana",
+    description:
+      "Tasbih 33 butir dari kayu cendana pilihan, aroma lembut dan elegan, cocok untuk oleh-oleh jamaah.",
+    basePrice: 65000,
+    category: "Oleh-oleh & Souvenir",
+    imageUrl: "/img/product-list/tasbih.jpg",
+    images: [
+      "/img/product-detail/tasbih-1.jpg",
+      "/img/product-detail/tasbih-2.jpg",
+    ],
+    stock: 400,
+    rating: 4.5,
+    paymentType: "rupiah",
+    variants: [
+      {
+        id: "V_GENDER",
+        name: "Gender",
+        options: [{ id: "G_UNISEX", value: "Unisex", priceModifier: 0 }],
+      },
+    ],
+    createdAt: "2025-10-08T00:00:00Z",
+  },
+  {
+    id: "P1007",
+    name: "Paket Bundling Perlengkapan Umroh",
+    description:
+      "Paket lengkap perlengkapan umroh berisi kain ihram, sabun halal, dan tas travel kecil.",
+    basePrice: 650000,
+    category: "Paket Bundling",
+    imageUrl: "/img/product-list/paket-bundling.jpg",
+    images: [
+      "/img/product-detail/paket-1.jpg",
+      "/img/product-detail/paket-2.jpg",
+    ],
+    stock: 100,
+    rating: 4.9,
+    paymentType: "rupiah",
+    variants: [],
+    createdAt: "2025-10-09T00:00:00Z",
+  },
+  {
+    id: "P1001_DUP",
+    name: "Kain Ihram Pria Premium",
+    description:
+      "Kain ihram tanpa jahitan dengan bahan katun premium yang lembut dan mudah menyerap keringat.",
+    basePrice: 350000,
+    category: "Pakaian & Ihram",
+    imageUrl: "/img/product-list/kain-ihram-1.jpg",
+    images: [
+      "/img/product-detail/kain-ihram-1.jpg",
+      "/img/product-detail/kain-ihram-2.jpg",
+      "/img/product-detail/kain-ihram-3.jpg",
+    ],
+    stock: 150,
+    rating: 4.6,
+    paymentType: "rupiah",
+    variants: [
+      {
+        id: "V_UKURAN",
+        name: "Ukuran",
+        options: [
+          { id: "UK_M", value: "M", priceModifier: 0 },
+          { id: "UK_L", value: "L", priceModifier: 0 },
+          { id: "UK_XL", value: "XL", priceModifier: 25000 },
+          { id: "UK_XXL", value: "XXL", priceModifier: 50000 },
+        ],
+      },
+      {
+        id: "V_GENDER",
+        name: "Gender",
+        options: [{ id: "G_PRIA", value: "Pria", priceModifier: 0 }],
+      },
+    ],
+    createdAt: "2025-10-10T00:00:00Z",
+  },
+  {
+    id: "P1002_DUP",
     name: "Gamis Wanita Syar'i Premium",
     description:
       "Gamis longgar, nyaman, dan adem, cocok untuk ibadah dan aktivitas harian.",
@@ -75,6 +237,7 @@ export const dummyProducts: IProduct[] = [
         options: [{ id: "G_WANITA", value: "Wanita", priceModifier: 0 }],
       },
     ],
+    createdAt: "2025-10-11T00:00:00Z",
   },
   {
     id: "A2001",
@@ -106,98 +269,6 @@ export const dummyProducts: IProduct[] = [
         ],
       },
     ],
-  },
-  {
-    id: "T3001",
-    name: "Botol Semprot Wudhu Portable",
-    description:
-      "Botol spray praktis untuk berwudhu di perjalanan, desain ergonomis dan mudah dibawa.",
-    basePrice: 35000,
-    category: "Perlengkapan Travel",
-    imageUrl: "/img/product-list/koper-1.jpg",
-    images: [
-      "/img/product-detail/botol-wudhu-1.jpg",
-      "/img/product-detail/botol-wudhu-2.jpg",
-    ],
-    stock: 500,
-    rating: 4.5,
-    paymentType: "rupiah",
-  },
-  {
-    id: "K4001",
-    name: "Sabun & Shampoo Non-Parfum Ihram",
-    description:
-      "Paket sabun dan shampoo halal tanpa parfum, aman digunakan saat ihram.",
-    basePrice: 5,
-    category: "Kesehatan & Kebersihan",
-    imageUrl: "/img/product-list/koper-2.jpg",
-    images: [
-      "/img/product-detail/sabun-ihram-1.jpg",
-      "/img/product-detail/sabun-ihram-2.jpg",
-    ],
-    stock: 200,
-    rating: 4.7,
-    paymentType: "poin",
-  },
-  {
-    id: "B5001",
-    name: "Buku Panduan Manasik Haji & Umroh",
-    description:
-      "Panduan lengkap ibadah haji dan umroh, disertai doa-doa dan panduan praktik.",
-    basePrice: 90000,
-    category: "Buku & Panduan",
-    imageUrl: "/img/product-list/sabuk-ihram-1.jpg",
-    images: [
-      "/img/product-detail/buku-manasik-1.jpg",
-      "/img/product-detail/buku-manasik-2.jpg",
-    ],
-    stock: 120,
-    rating: 4.9,
-    paymentType: "rupiah",
-  },
-  {
-    id: "Z6001",
-    name: "Paket Bundling Umroh Lengkap",
-    description:
-      "Paket lengkap berisi Kain Ihram, Sabuk, Botol Wudhu, dan Tasbih Digital.",
-    basePrice: 550000,
-    category: "Paket Bundling",
-    imageUrl: "/img/product-list/syal-1.jpg",
-    images: [
-      "/img/product-detail/paket-bundling-1.jpg",
-      "/img/product-detail/paket-bundling-2.jpg",
-    ],
-    stock: 50,
-    rating: 4.4,
-    paymentType: "rupiah",
-  },
-  {
-    id: "T3002",
-    name: "Bantal Leher Travel Memory Foam",
-    description:
-      "Bantal leher empuk dengan memory foam, ideal untuk perjalanan jauh.",
-    basePrice: 20,
-    category: "Perlengkapan Travel",
-    imageUrl: "/img/product-list/bantal-leher-1.jpg",
-    images: [
-      "/img/product-detail/bantal-leher-1.jpg",
-      "/img/product-detail/bantal-leher-2.jpg",
-      "/img/product-detail/bantal-leher-3.jpg",
-    ],
-    stock: 320,
-    rating: 4.3,
-    paymentType: "poin",
-  
-    variants: [
-      {
-        id: "V_WARNA_B",
-        name: "Warna",
-        options: [
-          { id: "WB_ABU", value: "Abu-abu", priceModifier: 0 },
-          { id: "WB_NAVY", value: "Navy", priceModifier: 0 },
-          { id: "WB_MAROON", value: "Maroon", priceModifier: 0 },
-        ],
-      },
-    ],
+    createdAt: "2025-10-12T00:00:00Z",
   },
 ];

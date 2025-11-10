@@ -19,6 +19,8 @@ export const InputField: React.FC<InputFieldProps> = ({
   type = "text",
   options = [],
   className,
+  value,
+  onChange,
   ...props
 }) => {
   const roundedStyle =
@@ -32,6 +34,25 @@ export const InputField: React.FC<InputFieldProps> = ({
     roundedStyle,
     className
   );
+
+  // 🔹 Fungsi untuk mencegah input negatif di field number
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+
+    // Kosongkan atau validasi agar tidak di bawah 0
+    if (value === "" || Number(value) >= 0) {
+      onChange?.(e);
+    } else {
+      // Reset ke 0 jika user masukkan negatif
+      e.target.value = "0";
+      onChange?.(e);
+    }
+  };
+
+  // 🔹 Fungsi handler select agar tetap sinkron dengan state React
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onChange?.(e as any);
+  };
 
   return (
     <div className="w-full space-y-1">
@@ -59,7 +80,12 @@ export const InputField: React.FC<InputFieldProps> = ({
             )}
           />
         ) : type === "select" ? (
-          <select {...(props as any)} className={baseClasses}>
+          <select
+            value={value ?? ""}
+            onChange={handleSelectChange}
+            {...(props as any)}
+            className={baseClasses}
+          >
             <option value="">Pilih...</option>
             {options.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -67,6 +93,15 @@ export const InputField: React.FC<InputFieldProps> = ({
               </option>
             ))}
           </select>
+        ) : type === "number" ? (
+          <input
+            {...props}
+            type="number"
+            min={0}
+            value={value}
+            onChange={handleNumberChange}
+            className={baseClasses}
+          />
         ) : (
           <input {...props} type={type} className={baseClasses} />
         )}

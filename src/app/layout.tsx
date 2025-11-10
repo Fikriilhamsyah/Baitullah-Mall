@@ -11,6 +11,9 @@ import localFont from "next/font/local";
 import Header from "@components/layout/Header";
 import Footer from "@components/layout/Footer";
 
+// Context
+import { SearchProvider } from "@/context/SearchContext";
+
 // Font setup
 // Inter
 const inter = Inter({ subsets: ["latin"] });
@@ -78,14 +81,16 @@ export default function RootLayout({
       <body
         className={`${openSauceSans.className} flex flex-col min-h-screen bg-gray-50`}
       >
-        <Header />
+        <SearchProvider>
+          <Header />
 
-        {/* Konten halaman akan dirender di sini */}
-        <main className="flex-grow">
-          {children}
-        </main>
+          {/* Konten halaman akan dirender di sini */}
+          <main className="flex-grow">
+            {children}
+          </main>
 
-        <Footer />
+          <Footer />
+        </SearchProvider>
       </body>
     </html>
   );

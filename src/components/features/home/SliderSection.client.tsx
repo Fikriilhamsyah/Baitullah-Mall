@@ -54,7 +54,7 @@ export default function SliderClient({ slides, autoPlay = true }: SliderProps) {
 
   return (
     <div className="w-full overflow-x-hidden">
-      <div className="container mx-auto px-4 sm:px-6 py-4 md:py-6 md:pt-[161px]">
+      <div className="container mx-auto px-4 sm:px-6 py-4 md:py-6 lg:pt-[161px]">
         <div className="relative w-full group">
           {ready && (
             <Swiper

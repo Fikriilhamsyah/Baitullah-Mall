@@ -4,6 +4,7 @@ export type IProductCategory =
   | "Perlengkapan Travel"
   | "Kesehatan & Kebersihan"
   | "Buku & Panduan"
+  | "Oleh-oleh & Souvenir"
   | "Paket Bundling";
 
 export type IProductPaymentType = "rupiah" | "poin";
@@ -32,4 +33,5 @@ export interface IProduct {
   rating?: number;
   variants?: IVariantType[];
   paymentType: IProductPaymentType;
+  createdAt: string;
 }

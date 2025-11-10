@@ -1,9 +1,16 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { navIcons } from "@utils/helpers";
+import { usePathname, useSearchParams } from "next/navigation";
+
+// Components
 import { MobileSidebar } from "./MobileSidebar";
+
+// Context
+import { useSearch } from "@/context/SearchContext";
+
+// Icons
+import { navIcons } from "@utils/helpers";
 import {
   Home,
   Package,
@@ -15,6 +22,8 @@ import {
   Facebook,
   Youtube,
   Handbag,
+  Search,
+  X
 } from "lucide-react";
 
 // 🧠 Dummy meta keywords (bisa ganti dari API)
@@ -60,14 +69,18 @@ const navLinksMobile = [
 
 const Header: React.FC = () => {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   // 🔍 Search logic
-  const [searchTerm, setSearchTerm] = useState("");
+  const { searchTerm, setSearchTerm, handleSearch } = useSearch();
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLDivElement>(null);
+
+  // ✅ Ambil query dari URL (misal ?query=tas)
+  const queryParam = searchParams.get("query") || "";
 
   // 🧠 Filter suggestion
   useEffect(() => {
@@ -145,7 +158,7 @@ const Header: React.FC = () => {
             {/* Kiri: Logo */}
             <div className="flex items-center gap-2 flex-shrink-0">
               {/* Mobile Menu Button */}
-              <div className="md:hidden">
+              <div className="lg:hidden">
                 <button
                   onClick={() => setIsSidebarOpen(true)}
                   className="p-2 rounded-md text-neutral-600 hover:bg-gray-100 focus:ring-2 focus:ring-primary-500"
@@ -165,7 +178,7 @@ const Header: React.FC = () => {
             </div>
 
             {/* Tengah: Search + Nav */}
-            <div className="hidden md:flex flex-col w-full mx-10">
+            <div className="hidden lg:flex flex-col w-full mx-10">
               {/* 🔍 Search Bar with Suggestion */}
               <div ref={inputRef} className="relative flex justify-center w-full mb-3">
                 <div className="relative w-full">
@@ -173,30 +186,40 @@ const Header: React.FC = () => {
                     type="text"
                     placeholder="Cari produk..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSearchTerm(value);
+
+                      // Jika kosong → tampilkan semua produk
+                      if (value.trim().length === 0) {
+                        handleSearch("");
+                      }
+                    }}
                     onFocus={() => {
                       if (suggestions.length > 0) setShowSuggestions(true);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && searchTerm.trim().length > 0) {
+                        e.preventDefault();
+                        handleSearch(searchTerm.trim());
+                        setShowSuggestions(false);
+                      }
                     }}
                     className="w-full px-5 py-2.5 pr-12 rounded-md bg-white text-neutral-800 placeholder-neutral-400 border border-[#33C060] focus:outline-none focus:ring-1 focus:ring-[#33C060] transition"
                   />
                   <button
                     type="button"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 bg-[#33C060] hover:bg-[#299A4D] text-white p-2.5 rounded-md transition"
+                    disabled={searchTerm.trim().length === 0}
+                    onClick={() => handleSearch(searchTerm)}
+                    className={`
+                      absolute right-1 top-1/2 -translate-y-1/2 
+                      p-2.5 rounded-md transition cursor-pointer
+                      ${searchTerm.trim().length === 0 
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
+                        : "bg-[#33C060] hover:bg-[#299A4D] text-white"}
+                    `}
                   >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M21 21l-4.35-4.35M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"
-                      />
-                    </svg>
+                    <Search className="w-4 h-4" />
                   </button>
 
                   {/* 🔡 Suggestion dropdown */}
@@ -220,23 +243,25 @@ const Header: React.FC = () => {
               </div>
 
               {/* 🔗 Nav Link */}
-              <div className="flex items-center space-x-6">
-                {navLinks.map((link) => {
-                  const isActive = pathname === link.href;
-                  return (
-                    <Link
-                      key={link.id}
-                      href={link.href}
-                      className={`text-xs font-normal transition-colors ${
-                        isActive
-                          ? "text-neutral-900"
-                          : "text-neutral-600 hover:text-neutral-900 font-semibold"
-                      }`}
-                    >
-                      {link.label}
-                    </Link>
-                  );
-                })}
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-6">
+                  {navLinks.map((link) => {
+                    const isActive = pathname === link.href;
+                    return (
+                      <Link
+                        key={link.id}
+                        href={link.href}
+                        className={`text-xs font-normal transition-colors ${
+                          isActive
+                            ? "text-neutral-900"
+                            : "text-neutral-600 hover:text-neutral-900 font-semibold"
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 

@@ -90,7 +90,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={loading || props.disabled}
       className={`
         flex items-center justify-center gap-2
-        px-4 py-2 font-medium text-[10px] md:text-sm transition-all duration-200
+        px-4 py-2 font-medium text-[10px] md:text-sm transition-all duration-200 cursor-pointer
         ${baseColor}
         ${radius}
         ${fullWidth ? "w-full" : ""}

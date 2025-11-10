@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 
 // Components
 import ProductList from "@/components/features/product/ProductList";
@@ -21,6 +22,7 @@ import { ChevronRight } from "lucide-react";
 
 // Halaman Home
 export default function HomePage() {
+  const router = useRouter();
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -42,8 +44,12 @@ export default function HomePage() {
       ) : (
         <>
           {/* Hero Section (mobile only) */}
-          <div className="block md:hidden">
-            <HeroSection filterButtonLabel={false} />
+          <div className="block lg:hidden">
+            <HeroSection
+              categoryFilter={true}
+              filterButtonLabel={false}
+              onSearch={(query) => router.push(`/productlist?query=${encodeURIComponent(query)}`)}
+            />
           </div>
 
           {/* Slider Section */}
@@ -85,9 +91,10 @@ export default function HomePage() {
               <ProductList
                 onProductSelect={(id) => setSelectedProductId(id)}
                 paymentType="rupiah"
+                showPagination={false}
               />
-              <div className="flex justify-center items-center mt-2">
-                <Button label="Lihat Produk Lainnya" variant="normal" iconRight={ChevronRight} color="primary" shadow="lg" />
+              <div className="flex justify-center items-center mt-4">
+                <Button label="Lihat Produk Lainnya" variant="normal" iconRight={ChevronRight} color="primary" shadow="lg" onClick={() => router.push("/productlist")} />
               </div>
             </div>
           </section>
@@ -102,9 +109,10 @@ export default function HomePage() {
               <ProductList
                 onProductSelect={(id) => setSelectedProductId(id)}
                 paymentType="poin"
+                showPagination={false}
               />
-              <div className="flex justify-center items-center mt-2">
-                <Button label="Lihat Produk Lainnya" variant="normal" iconRight={ChevronRight} color="primary" shadow="lg" />
+              <div className="flex justify-center items-center mt-4">
+                <Button label="Lihat Produk Lainnya" variant="normal" iconRight={ChevronRight} color="primary" shadow="lg" onClick={() => router.push("/productlist")} />
               </div>
             </div>
           </section>

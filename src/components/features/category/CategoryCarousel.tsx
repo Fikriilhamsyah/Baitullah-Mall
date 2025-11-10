@@ -3,9 +3,9 @@ import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { categoryIcons } from "@utils/helpers";
 import { Package } from "lucide-react";
-import type { ProductCategory } from "@/types/IProduct";
+import type { IProductCategory } from "@/types/IProduct";
 
-const categories: ProductCategory[] = [
+const categories: IProductCategory[] = [
   "Pakaian & Ihram",
   "Aksesoris Ibadah",
   "Perlengkapan Travel",
@@ -16,7 +16,7 @@ const categories: ProductCategory[] = [
 ];
 
 // 🔗 Map kategori ke gambar
-const categoryImages: Partial<Record<ProductCategory, string>> = {
+const categoryImages: Partial<Record<IProductCategory, string>> = {
   "Pakaian & Ihram": "/img/banner/banner-kategori-pakaian-ihram.webp",
   "Aksesoris Ibadah": "/img/banner/banner-kategori-aksesoris-ibadah.webp",
   "Perlengkapan Travel": "/img/banner/banner-kategori-perlengkapan-travel.webp",
@@ -47,20 +47,20 @@ export function CategoryCarousel() {
   }, []);
 
   return (
-    <section className="w-full">
+    <section className="w-full mt-2">
       <div
         ref={scrollRef}
-        className="flex overflow-x-auto no-scrollbar space-x-2 scroll-smooth"
+        className="flex overflow-x-auto no-scrollbar space-x-4 scroll-smooth"
       >
         {categories.map((category) => {
-          const imgSrc = categoryImages[category as ProductCategory];
-          const IconComponent = categoryIcons[category as ProductCategory];
+          const imgSrc = categoryImages[category as IProductCategory];
+          const IconComponent = categoryIcons[category as IProductCategory];
 
           return (
             <a
               key={category}
               href={`/kategori/${category.toLowerCase().replace(/ & /g, "-")}`}
-              className="flex-shrink-0 w-20 flex flex-col items-center text-neutral-700 font-medium"
+              className="flex-shrink-0 w-20 md:w-34 flex flex-col items-center text-neutral-700 font-medium"
             >
               <div className="mb-2 flex items-center justify-center">
                 {imgSrc ? (
