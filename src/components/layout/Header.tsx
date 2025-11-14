@@ -21,7 +21,7 @@ import {
   Instagram,
   Facebook,
   Youtube,
-  Handbag,
+  ShoppingCart,
   Search,
   X
 } from "lucide-react";
@@ -268,7 +268,7 @@ const Header: React.FC = () => {
             {/* Kanan: Cart & Profile */}
             <div className="flex items-center gap-4">
               <Link href="/cart" className="flex-shrink-0">
-                <Handbag className="w-7 h-7 text-neutral-700 hover:text-black transition" />
+                <ShoppingCart className="w-7 h-7 text-neutral-700 hover:text-black transition" />
               </Link>
               <Link href="/profile" className="flex-shrink-0 block lg:hidden">
                 <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />

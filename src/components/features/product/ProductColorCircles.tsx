@@ -15,9 +15,11 @@ const ColorCircles: React.FC<ColorCirclesProps> = ({ colors, maxVisible = 5 }) =
 
   return (
     <div className="flex flex-wrap gap-1 mt-1 mb-1">
-      {visibleColors.map((color) => {
-        const lower = color.toLowerCase();
-        const hex = colorMaster[lower] || color;
+      {visibleColors.map((color: string) => {
+        const hex =
+          colorMaster[color.toLowerCase()] ||
+          (/^#([0-9A-F]{3}){1,2}$/i.test(color) ? color : "#f3f3f3");
+
         return (
           <div
             key={color}
@@ -39,5 +41,7 @@ const ColorCircles: React.FC<ColorCirclesProps> = ({ colors, maxVisible = 5 }) =
     </div>
   );
 };
+
+
 
 export default ColorCircles;

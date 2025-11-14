@@ -217,9 +217,10 @@ export const dummyProducts: IProduct[] = [
         id: "V_WARNA_G",
         name: "Warna",
         options: [
-          { id: "W_PUTIH", value: "Putih", priceModifier: 0 },
-          { id: "W_HITAM", value: "Hitam", priceModifier: 0 },
-          { id: "W_NAVY", value: "Navy", priceModifier: 0 },
+          { id: "W_PUTIH", name: "Putih", value: "Putih", priceModifier: 0 },
+          { id: "W_HITAM", name: "Hitam", value: "Hitam", priceModifier: 0 },
+          { id: "W_NAVY", name: "Navy", value: "Navy", priceModifier: 0 },
+          { id: "W_MOCCA", name: "Mocca", value: "#D2B48C", priceModifier: 5000 },
         ],
       },
       {
@@ -259,16 +260,137 @@ export const dummyProducts: IProduct[] = [
         id: "V_WARNA_T",
         name: "Warna",
         options: [
-          { id: "WT_HITAM", value: "Hitam", priceModifier: 0 },
-          { id: "WT_PUTIH", value: "Putih", priceModifier: 0 },
-          { id: "WT_BIRU", value: "Biru", priceModifier: 0 },
-          { id: "WT_PINK", value: "Pink", priceModifier: 5000 },
-          { id: "WT_MERAH", value: "Merah", priceModifier: 5000 },
-          { id: "WT_NAVY", value: "Navy", priceModifier: 5000 },
-          { id: "WT_HIJAU", value: "Hijau", priceModifier: 5000 },
+          { id: "WT_HITAM", name: "Hitam", value: "Hitam", priceModifier: 0 },
+          { id: "WT_PUTIH", name: "Putih", value: "Putih", priceModifier: 0 },
+          { id: "WT_BIRU", name: "Biru", value: "Biru", priceModifier: 0 },
+          { id: "WT_PINK", name: "Pink", value: "#FFC0CB", priceModifier: 5000 },
+          { id: "WT_MERAH", name: "Merah", value: "#FF0000", priceModifier: 5000 },
+          { id: "WT_NAVY", name: "Navy", value: "Navy", priceModifier: 5000 },
+          { id: "WT_HIJAU", name: "Hijau", value: "#008000", priceModifier: 5000 },
         ],
       },
     ],
     createdAt: "2025-10-12T00:00:00Z",
+  },
+  {
+    id: "P1008",
+    name: "Baju Koko Premium Bordir Lengan Panjang",
+    description:
+      "Baju koko dengan bahan katun halus, bordir elegan, dan nyaman dipakai untuk ibadah atau acara resmi.",
+    basePrice: 275000,
+    category: "Pakaian & Ihram",
+    imageUrl: "/img/product-list/baju-koko.jpg",
+    images: [
+      "/img/product-detail/baju-koko-1.jpg",
+      "/img/product-detail/baju-koko-2.jpg",
+    ],
+    stock: 180,
+    rating: 4.7,
+    paymentType: "rupiah",
+    variants: [
+      {
+        id: "V_WARNA_KOKO",
+        name: "Warna",
+        options: [
+          { id: "WK_PUTIH", name: "Putih", value: "Putih", priceModifier: 0 },
+          { id: "WK_COKLAT", name: "Coklat", value: "#8B4513", priceModifier: 10000 },
+          { id: "WK_HITAM", name: "Hitam", value: "Hitam", priceModifier: 15000 },
+        ],
+      },
+      {
+        id: "V_UKURAN_KOKO",
+        name: "Ukuran",
+        options: [
+          { id: "UK_M", value: "M", priceModifier: 0 },
+          { id: "UK_L", value: "L", priceModifier: 0 },
+          { id: "UK_XL", value: "XL", priceModifier: 20000 },
+          { id: "UK_XXL", value: "XXL", priceModifier: 30000 },
+        ],
+      },
+    ],
+    createdAt: "2025-10-13T00:00:00Z",
+  },
+  {
+    id: "P1009",
+    name: "Jaket Travel Muslimah Waterproof",
+    description:
+      "Jaket ringan tahan air dengan desain panjang menutupi aurat, dilengkapi hoodie dan saku dalam.",
+    basePrice: 375000,
+    category: "Perlengkapan Travel",
+    imageUrl: "/img/product-list/jaket-muslimah.jpg",
+    images: [
+      "/img/product-detail/jaket-muslimah-1.jpg",
+      "/img/product-detail/jaket-muslimah-2.jpg",
+    ],
+    stock: 95,
+    rating: 4.9,
+    paymentType: "rupiah",
+    variants: [
+      {
+        id: "V_WARNA_JK",
+        name: "Warna",
+        options: [
+          { id: "W_NAVY", name: "Navy", value: "Navy", priceModifier: 0 },
+          { id: "W_ARMY", name: "Army", value: "#4B5320", priceModifier: 5000 },
+          { id: "W_MAROON", name: "Maroon", value: "#800000", priceModifier: 5000 },
+        ],
+      },
+      {
+        id: "V_UKURAN_JK",
+        name: "Ukuran",
+        options: [
+          { id: "UK_S", value: "S", priceModifier: 0 },
+          { id: "UK_M", value: "M", priceModifier: 0 },
+          { id: "UK_L", value: "L", priceModifier: 15000 },
+          { id: "UK_XL", value: "XL", priceModifier: 25000 },
+        ],
+      },
+    ],
+    createdAt: "2025-10-14T00:00:00Z",
+  },
+  {
+    id: "P1010",
+    name: "Jaket Travel Muslim Unisex Premium",
+    description:
+      "Jaket ringan berbahan water-repellent, cocok untuk perjalanan Haji, Umroh, dan wisata halal. Didesain nyaman untuk pria maupun wanita.",
+    basePrice: 550000,
+    category: "Pakaian & Ihram",
+    imageUrl: "/img/product-list/jaket-travel.jpg",
+    images: [
+      "/img/product-detail/jaket-travel-1.jpg",
+      "/img/product-detail/jaket-travel-2.jpg",
+      "/img/product-detail/jaket-travel-3.jpg",
+    ],
+    stock: 180,
+    rating: 4.9,
+    paymentType: "rupiah",
+    variants: [
+      {
+        id: "V_WARNA_J",
+        name: "Warna",
+        options: [
+          { id: "W_HITAM", name: "Hitam", value: "Hitam", priceModifier: 0 },
+          { id: "W_ABU", name: "Abu-abu", value: "Abu-abu", priceModifier: 0 },
+          { id: "W_NAVY", name: "Navy", value: "Navy", priceModifier: 0 },
+          { id: "W_OLIVE", name: "Hijau Olive", value: "#808000", priceModifier: 20000 },
+        ],
+      },
+      {
+        id: "V_UKURAN_J",
+        name: "Ukuran",
+        options: [
+          { id: "UK_S", value: "S", priceModifier: 0 },
+          { id: "UK_M", value: "M", priceModifier: 0 },
+          { id: "UK_L", value: "L", priceModifier: 20000 },
+          { id: "UK_XL", value: "XL", priceModifier: 30000 },
+        ],
+      },
+      {
+        id: "V_GENDER_J",
+        name: "Gender",
+        options: [{ id: "G_PRIA", value: "Pria", priceModifier: 0 }],
+      },
+    ],
+    createdAt: "2025-10-13T00:00:00Z",
   },
 ];

@@ -103,7 +103,7 @@ export const Button: React.FC<ButtonProps> = ({
       {loading && <Loader2 className="h-4 w-4 animate-spin" />}
 
       {/* Label */}
-      {label && <span className="block">{label}</span>}
+      {label && <span className="block text-sm md:text-md">{label}</span>}
 
       {/* Ikon di kanan (opsional) */}
       {IconRight && !loading && <IconRight className="h-4 w-4" />}

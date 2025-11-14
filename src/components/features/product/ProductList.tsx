@@ -13,7 +13,6 @@ import Pagination from "@/components/ui/Pagination";
 import { SearchX } from "lucide-react";
 
 interface ProductListProps {
-  onProductSelect: (id: string) => void;
   paymentType?: "rupiah" | "poin";
   showPagination?: boolean;
   searchQuery?: string;
@@ -22,7 +21,6 @@ interface ProductListProps {
 const ITEMS_PER_PAGE = 8;
 
 const ProductList: React.FC<ProductListProps> = ({
-  onProductSelect,
   paymentType,
   showPagination = true,
   searchQuery = "",
@@ -71,7 +69,7 @@ const ProductList: React.FC<ProductListProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <ProductCard product={product} onSelect={onProductSelect} />
+              <ProductCard product={product} />
             </motion.div>
           ))}
         </motion.div>

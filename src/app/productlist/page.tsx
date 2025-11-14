@@ -13,6 +13,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { InputField } from "@/components/ui/InputField";
 import CheckboxGroup from "@/components/ui/CheckboxGroup";
 import ErrorMessage from "@/components/ui/ErrorMessage";
+import { Button } from "@/components/ui/Button";
 
 // Hooks
 import { useProducts } from "@hooks/useProducts";
@@ -224,114 +225,116 @@ export default function ProductListPage() {
 
           <div className="grid grid-cols-12 gap-4">
             {/* Sidebar Filter */}
-            <div className="hidden lg:block col-span-3 bg-neutral-100 h-fit p-4">
-              {/* Atur Ulang Filter */}
-              <button
-                onClick={() => {
-                  setCategory([]);
-                  setGender([]);
-                  setProductType([]);
-                  setSortBy("");
-                  setMinPrice("");
-                  setMaxPrice("");
-                }}
-                className="w-full border border-primary-500 text-primary-500 rounded-md py-2 hover:bg-primary-500 hover:text-white transition mb-6"
-              >
-                Atur Ulang Filter
-              </button>
-              
-              {/* ✅ Bagian jumlah produk */}
-              <div className="flex justify-between items-center mb-8">
-                <p className="text-md font-normal text-neutral-600">
-                  Menampilkan produk
-                </p>
-                <p className="text-md font-semibold text-primary-600">
-                  {totalCount} / {totalAll}
-                </p>
-              </div>
+            <div className="hidden lg:block col-span-3">
+              <div className="sticky top-[160px] h-[calc(100vh-140px)] overflow-y-auto bg-neutral-100 p-4">
+                {/* Atur Ulang Filter */}
+                <Button
+                  label="Atur Ulang Filter"
+                  color="primary"
+                  onClick={() => {
+                    setCategory([]);
+                    setGender([]);
+                    setProductType([]);
+                    setSortBy("");
+                    setMinPrice("");
+                    setMaxPrice("");
+                  }}
+                  fullWidth={true}
+                />
+                
+                {/* ✅ Bagian jumlah produk */}
+                <div className="flex justify-between items-center mb-8 mt-8">
+                  <p className="text-md font-normal text-neutral-600">
+                    Menampilkan produk
+                  </p>
+                  <p className="text-md font-semibold text-primary-600">
+                    {totalCount} / {totalAll}
+                  </p>
+                </div>
 
-              <div className="space-y-6">
-                {/* Harga */}
-                <div>
-                  <p className="text-md font-bold text-neutral-700 mb-2">Harga</p>
-                  <div className="flex items-center">
-                    <p className="text-md font-normal text-neutral-600 mr-2">
-                      Rp
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <InputField
-                        type="number"
-                        placeholder="Min"
-                        value={minPrice}
-                        onChange={(e) =>
-                          setMinPrice(
-                            e.target.value === "" ? "" : Number(e.target.value)
-                          )
-                        }
-                      />
-                      <InputField
-                        type="number"
-                        placeholder="Max"
-                        value={maxPrice}
-                        onChange={(e) =>
-                          setMaxPrice(
-                            e.target.value === "" ? "" : Number(e.target.value)
-                          )
-                        }
-                      />
+                <div className="space-y-6">
+                  {/* Harga */}
+                  <div>
+                    <p className="text-md font-bold text-neutral-700 mb-2">Harga</p>
+                    <div className="flex items-center">
+                      <p className="text-md font-normal text-neutral-600 mr-2">
+                        Rp
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <InputField
+                          type="number"
+                          placeholder="Min"
+                          value={minPrice}
+                          onChange={(e) =>
+                            setMinPrice(
+                              e.target.value === "" ? "" : Number(e.target.value)
+                            )
+                          }
+                        />
+                        <InputField
+                          type="number"
+                          placeholder="Max"
+                          value={maxPrice}
+                          onChange={(e) =>
+                            setMaxPrice(
+                              e.target.value === "" ? "" : Number(e.target.value)
+                            )
+                          }
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Jenis Pembayaran Produk */}
-                <div>
-                  <p className="text-md font-bold text-neutral-700 mb-2">
-                    Jenis Pembayaran Produk
-                  </p>
-                  <CheckboxGroup
-                    options={[
-                      { label: "Produk Biasa", value: "rupiah" },
-                      { label: "Tukar Poin", value: "poin" },
-                    ]}
-                    selected={productType}
-                    onChange={setProductType}
-                  />
-                </div>
+                  {/* Jenis Pembayaran Produk */}
+                  <div>
+                    <p className="text-md font-bold text-neutral-700 mb-2">
+                      Jenis Pembayaran Produk
+                    </p>
+                    <CheckboxGroup
+                      options={[
+                        { label: "Produk Biasa", value: "rupiah" },
+                        { label: "Tukar Poin", value: "poin" },
+                      ]}
+                      selected={productType}
+                      onChange={setProductType}
+                    />
+                  </div>
 
-                {/* Kategori */}
-                <div>
-                  <p className="text-md font-bold text-neutral-700 mb-2">
-                    Kategori
-                  </p>
-                  <CheckboxGroup
-                    options={[
-                      { label: "Pakaian & Ihram", value: "Pakaian & Ihram" },
-                      { label: "Aksesoris Ibadah", value: "Aksesoris Ibadah" },
-                      { label: "Perlengkapan Travel", value: "Perlengkapan Travel" },
-                      { label: "Kesehatan & Kebersihan", value: "Kesehatan & Kebersihan" },
-                      { label: "Buku Panduan", value: "Buku & Panduan" },
-                      { label: "Oleh-oleh & Souvenir", value: "Oleh-oleh & Souvenir" },
-                      { label: "Paket Bundling", value: "Paket Bundling" },
-                    ]}
-                    selected={category}
-                    onChange={setCategory}
-                  />
-                </div>
+                  {/* Kategori */}
+                  <div>
+                    <p className="text-md font-bold text-neutral-700 mb-2">
+                      Kategori
+                    </p>
+                    <CheckboxGroup
+                      options={[
+                        { label: "Pakaian & Ihram", value: "Pakaian & Ihram" },
+                        { label: "Aksesoris Ibadah", value: "Aksesoris Ibadah" },
+                        { label: "Perlengkapan Travel", value: "Perlengkapan Travel" },
+                        { label: "Kesehatan & Kebersihan", value: "Kesehatan & Kebersihan" },
+                        { label: "Buku Panduan", value: "Buku & Panduan" },
+                        { label: "Oleh-oleh & Souvenir", value: "Oleh-oleh & Souvenir" },
+                        { label: "Paket Bundling", value: "Paket Bundling" },
+                      ]}
+                      selected={category}
+                      onChange={setCategory}
+                    />
+                  </div>
 
-                {/* Gender */}
-                <div>
-                  <p className="text-md font-bold text-neutral-700 mb-2">
-                    Gender
-                  </p>
-                  <CheckboxGroup
-                    options={[
-                      { label: "Pria", value: "pria" },
-                      { label: "Wanita", value: "wanita" },
-                      { label: "Unisex", value: "unisex" },
-                    ]}
-                    selected={gender}
-                    onChange={setGender}
-                  />
+                  {/* Gender */}
+                  <div>
+                    <p className="text-md font-bold text-neutral-700 mb-2">
+                      Gender
+                    </p>
+                    <CheckboxGroup
+                      options={[
+                        { label: "Pria", value: "pria" },
+                        { label: "Wanita", value: "wanita" },
+                        { label: "Unisex", value: "unisex" },
+                      ]}
+                      selected={gender}
+                      onChange={setGender}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

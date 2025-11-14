@@ -11,6 +11,7 @@ export type IProductPaymentType = "rupiah" | "poin";
 
 export interface IVariantOption {
   id: string;
+  name?: string;
   value: string;
   priceModifier: number;
 }
