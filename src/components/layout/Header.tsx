@@ -42,9 +42,6 @@ const metaKeywords = [
 const navLinks = [
   { id: 1, href: "/", label: "Beranda" },
   { id: 2, href: "/productlist", label: "Produk" },
-  { id: 3, href: "/about", label: "Tukar Poin" },
-  { id: 4, href: "/about", label: "Pria" },
-  { id: 5, href: "/about", label: "Wanita" },
   { id: 6, href: "/about", label: "Promo" },
 ];
 
@@ -54,7 +51,6 @@ const navLinksMobile = [
     items: [
       { href: "/", label: "Beranda", icon: Home },
       { href: "/productlist", label: "Produk", icon: Package },
-      { href: "/products", label: "Tukar Poin", icon: Coins },
       { href: "/promo", label: "Promo", icon: Tag },
     ],
   },
@@ -78,6 +74,14 @@ const Header: React.FC = () => {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLDivElement>(null);
+
+  // Placeholder animated
+  const [animatedPlaceholder, setAnimatedPlaceholder] = useState("");
+  const [keywordIndex, setKeywordIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [cursorVisible, setCursorVisible] = useState(true);
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   // ✅ Ambil query dari URL (misal ?query=tas)
   const queryParam = searchParams.get("query") || "";
@@ -113,6 +117,57 @@ const Header: React.FC = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Animated placeholder effect
+  useEffect(() => {
+    // Stop animasi jika user mengetik manual
+    if (isInputFocused || searchTerm.trim().length > 0) {
+      setAnimatedPlaceholder("");
+      return;
+    }
+
+    const currentKeyword = metaKeywords[keywordIndex];
+
+    let typingSpeed = isDeleting ? 50 : 100; // lebih cepat saat menghapus
+
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        // Mengetik
+        const nextText = currentKeyword.slice(0, charIndex + 1);
+        setAnimatedPlaceholder(nextText);
+        setCharIndex((prev) => prev + 1);
+
+        // Jika sudah lengkap → mulai jeda lalu delete
+        if (nextText === currentKeyword) {
+          setTimeout(() => setIsDeleting(true), 2000); // jeda 1 detik
+        }
+      } else {
+        // Menghapus
+        const nextText = currentKeyword.slice(0, charIndex - 1);
+        setAnimatedPlaceholder(nextText);
+        setCharIndex((prev) => prev - 1);
+
+        // Jika sudah terhapus → lanjut ke keyword berikutnya
+        if (nextText === "") {
+          setIsDeleting(false);
+          setKeywordIndex((prev) => (prev + 1) % metaKeywords.length);
+        }
+      }
+    }, typingSpeed);
+
+    return () => clearTimeout(timeout);
+  }, [charIndex, isDeleting, keywordIndex, searchTerm]);
+
+  // Cursor blinking effect
+  useEffect(() => {
+    if (isInputFocused) return;
+
+    const interval = setInterval(() => {
+      setCursorVisible((prev) => !prev);
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [isInputFocused]);
 
   return (
     <header className="w-full">
@@ -184,8 +239,28 @@ const Header: React.FC = () => {
                 <div className="relative w-full">
                   <input
                     type="text"
-                    placeholder="Cari produk..."
+                    placeholder={
+                      !isInputFocused && searchTerm.length === 0
+                        ? `${animatedPlaceholder}${cursorVisible ? " |" : ""}`
+                        : ""
+                    }
                     value={searchTerm}
+                    onFocus={() => {
+                      setIsInputFocused(true);
+                      setShowSuggestions(suggestions.length > 0);
+                    }}
+
+                    onBlur={() => {
+                      setIsInputFocused(false);
+
+                      // Reset animasi supaya mulai dari awal
+                      if (searchTerm.length === 0) {
+                        setAnimatedPlaceholder("");
+                        setCharIndex(0);
+                        setIsDeleting(false);
+                      }
+                    }}
+
                     onChange={(e) => {
                       const value = e.target.value;
                       setSearchTerm(value);
@@ -194,9 +269,6 @@ const Header: React.FC = () => {
                       if (value.trim().length === 0) {
                         handleSearch("");
                       }
-                    }}
-                    onFocus={() => {
-                      if (suggestions.length > 0) setShowSuggestions(true);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && searchTerm.trim().length > 0) {

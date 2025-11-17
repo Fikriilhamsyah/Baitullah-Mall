@@ -86,7 +86,7 @@ export const InputField: React.FC<InputFieldProps> = ({
             {...(props as any)}
             className={baseClasses}
           >
-            <option value="">Pilih...</option>
+            <option value="">Pilih Semua...</option>
             {options.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}

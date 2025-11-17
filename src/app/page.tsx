@@ -83,7 +83,7 @@ export default function HomePage() {
             <h2 className="text-md md:text-2xl font-bold text-neutral-900 pb-2 md:pb-8">Produk Baitullah Mall</h2>
           </div>
           <ProductList
-            paymentType="rupiah"
+            paymentType="uang"
             showPagination={false}
           />
           <div className="flex justify-center items-center mt-4">

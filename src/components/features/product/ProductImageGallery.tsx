@@ -143,7 +143,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
               <div
                 key={index}
                 onClick={() => handleThumbClick(index)}
-                className={`flex-shrink-0 w-14 h-14 md:w-20 md:h-20 cursor-pointer rounded-lg border overflow-hidden transition-all ${
+                className={`flex-shrink-0 w-14 h-14 md:w-20 md:h-20 cursor-pointer rounded-lg border border-neutral-300 overflow-hidden transition-all ${
                   activeIndex === index
                     ? "ring-2 ring-[#33C060] scale-105"
                     : "hover:ring-1 hover:ring-[#33C060]"

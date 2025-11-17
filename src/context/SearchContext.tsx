@@ -31,13 +31,24 @@ export const SearchProvider: React.FC<{ children: React.ReactNode }> = ({
     if (typeof window === "undefined") return;
 
     const trimmed = value.trim();
-    const searchUrl =
-      trimmed.length === 0
-        ? "/productlist"
-        : `/productlist?query=${encodeURIComponent(trimmed)}`;
+    const currentPath = window.location.pathname;
 
-    // 🔹 Hindari navigasi ke URL yang sama
-    const currentUrl = window.location.pathname + window.location.search;
+    // 1️⃣ Jika masih di Home dan search kosong → jangan navigasi
+    if (currentPath === "/" && trimmed.length === 0) {
+      setSearchTerm("");
+      return;
+    }
+
+    // 2️⃣ Jika kosong dan sudah di ProductList → hapus query tanpa pindah halaman
+    if (trimmed.length === 0 && currentPath === "/productlist") {
+      router.replace("/productlist"); // reset URL tanpa query
+      return;
+    }
+
+    // 3️⃣ Jika ada teks → arahkan ke productlist?query=
+    const searchUrl = `/productlist?query=${encodeURIComponent(trimmed)}`;
+    const currentUrl = currentPath + window.location.search;
+
     if (currentUrl !== searchUrl) {
       router.replace(searchUrl);
     }

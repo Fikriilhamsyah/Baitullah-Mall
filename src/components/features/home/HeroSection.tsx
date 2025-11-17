@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 
 // Components
 import { CategoryCarousel } from "@/components/features/category/CategoryCarousel";
-import { FilterSidebar } from "@components/features/FilterSidebar";
+import { ProductFilter } from "@/components/features/product/ProductFilter";
 import { InputField } from "@/components/ui/InputField";
 
 // Icons
@@ -217,7 +217,7 @@ export function HeroSection(props: HeroSectionProps) {
           {props.categoryFilter && <CategoryCarousel />}
 
           {/* 🪟 Sidebar Filter */}
-          <FilterSidebar
+          <ProductFilter
             open={isFilterOpen}
             onClose={() => setIsFilterOpen(false)}
             totalCount={props.totalCount || 0}

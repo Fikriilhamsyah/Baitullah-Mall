@@ -305,7 +305,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, name, onBack }) => {
 
       {/* Harga dan tombol beli mobile */}
       <div className="w-full block lg:hidden mt-8">
-        <div className="fixed bottom-0 z-10 w-full bg-white" style={{ boxShadow: "0 -6px 18px rgba(177, 177, 177, 0.25)" }}>
+        <div className="fixed bottom-0 z-10 w-full bg-white/80 backdrop-blur-md" style={{ boxShadow: "0 -6px 18px rgba(177, 177, 177, 0.25)" }}>
           <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 space-y-2">
             <div>
               <p className="text-xs text-gray-500">Harga Total</p>

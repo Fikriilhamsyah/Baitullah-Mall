@@ -2,11 +2,11 @@
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { InputField } from "../ui/InputField";
-import CheckboxGroup from "../ui/CheckboxGroup";
-import { Button } from "../ui/Button";
+import { InputField } from "../../ui/InputField";
+import CheckboxGroup from "../../ui/CheckboxGroup";
+import { Button } from "../../ui/Button";
 
-interface FilterSidebarProps {
+interface ProductFilterProps {
   open: boolean;
   onClose: () => void;
 
@@ -30,7 +30,7 @@ interface FilterSidebarProps {
   onResetFilters: () => void;
 }
 
-export function FilterSidebar({
+export function ProductFilter({
   open,
   onClose,
   totalCount,
@@ -48,7 +48,7 @@ export function FilterSidebar({
   onChangeMaxPrice,
   onChangeProductType,
   onResetFilters,
-}: FilterSidebarProps) {
+}: ProductFilterProps) {
   // 🔒 Disable scroll body ketika sidebar aktif
   useEffect(() => {
     if (open) {
@@ -149,7 +149,6 @@ export function FilterSidebar({
                     type="select"
                     label="Urutkan Berdasarkan"
                     options={[
-                      { value: "", label: "Pilih Urutan" },
                       { value: "terbaru", label: "Produk Terbaru" },
                       { value: "terlaris", label: "Produk Terlaris" },
                       { value: "termahal", label: "Harga: Tinggi ke Rendah" },
@@ -167,7 +166,7 @@ export function FilterSidebar({
                   </p>
                   <CheckboxGroup
                     options={[
-                      { label: "Produk Biasa", value: "rupiah" },
+                      { label: "Produk Biasa", value: "uang" },
                       { label: "Tukar Poin", value: "poin" },
                     ]}
                     selected={productType}
@@ -202,9 +201,10 @@ export function FilterSidebar({
                   </p>
                   <CheckboxGroup
                     options={[
-                      { label: "Pria", value: "pria" },
-                      { label: "Wanita", value: "wanita" },
-                      { label: "Unisex", value: "unisex" },
+                      { label: "Pria", value: "Pria" },
+                      { label: "Wanita", value: "Wanita" },
+                      { label: "Unisex", value: "Unisex" },
+                      { label: "Lainnya", value: "Lainnya" },
                     ]}
                     selected={gender}
                     onChange={onChangeGender}

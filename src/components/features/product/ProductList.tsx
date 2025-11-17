@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useProducts } from "@hooks/useProducts";
+import { useProduk } from "@hooks/useProduk";
 
 // Components
 import LoadingSpinner from "@components/ui/LoadingSpinner";
@@ -13,7 +13,7 @@ import Pagination from "@/components/ui/Pagination";
 import { SearchX } from "lucide-react";
 
 interface ProductListProps {
-  paymentType?: "rupiah" | "poin";
+  paymentType?: "uang" | "poin";
   showPagination?: boolean;
   searchQuery?: string;
 }
@@ -25,7 +25,7 @@ const ProductList: React.FC<ProductListProps> = ({
   showPagination = true,
   searchQuery = "",
 }) => {
-  const { products, loading, error } = useProducts();
+  const { products, loading, error } = useProduk();
   const [currentPage, setCurrentPage] = useState(1);
 
   if (loading) return <LoadingSpinner />;
@@ -33,10 +33,14 @@ const ProductList: React.FC<ProductListProps> = ({
 
   // Filter berdasarkan paymentType & searchQuery
   const filteredProducts = products.filter((p) => {
-    const matchesType = paymentType ? p.paymentType === paymentType : true;
-    const matchesQuery = searchQuery
-      ? p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesType = paymentType
+      ? p.jenis.nama_jenis === paymentType
       : true;
+
+    const matchesQuery = searchQuery
+      ? p.nama_produk.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+
     return matchesType && matchesQuery;
   });
 

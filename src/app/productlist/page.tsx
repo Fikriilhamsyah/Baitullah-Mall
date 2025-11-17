@@ -16,12 +16,12 @@ import ErrorMessage from "@/components/ui/ErrorMessage";
 import { Button } from "@/components/ui/Button";
 
 // Hooks
-import { useProducts } from "@hooks/useProducts";
+import { useProduk } from "@hooks/useProduk";
 
 export default function ProductListPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { products, loading: productLoading, error } = useProducts();
+  const { products, loading: productLoading, error } = useProduk();
 
   const [category, setCategory] = useState<string[]>([]);
   const [gender, setGender] = useState<string[]>([]);
@@ -93,28 +93,33 @@ export default function ProductListPage() {
     if (!products) return [];
 
     let result = products.filter((p) => {
-      const matchesQuery = query ? p.name.toLowerCase().includes(query) : true;
+      const matchesQuery = query ? p.nama_produk.toLowerCase().includes(query) : true;
 
       const matchesCategory =
-        category.length > 0 ? category.includes(p.category) : true;
+        category.length > 0 ? category.includes(p.kategori.nama_kategori) : true;
 
       const matchesGender =
         gender.length > 0
-          ? p.variants?.some(
-              (v) =>
-                v.name === "Gender" &&
-                v.options.some((opt) =>
-                  gender.includes(opt.value.toLowerCase())
-                )
-            )
+          ? p.koleksi.some((k) => gender.includes(k.nama_koleksi))
           : true;
 
+      // const matchesGender =
+      //   gender.length > 0
+      //     ? p.variants?.some(
+      //         (v) =>
+      //           v.name === "Gender" &&
+      //           v.options.some((opt) =>
+      //             gender.includes(opt.value.toLowerCase())
+      //           )
+      //       )
+      //     : true;
+
       const matchesType =
-        productType.length > 0 ? productType.includes(p.paymentType) : true;
+        productType.length > 0 ? productType.includes(p.jenis.nama_jenis) : true;
 
       const matchesPrice =
-        (minPrice === "" || p.basePrice >= Number(minPrice)) &&
-        (maxPrice === "" || p.basePrice <= Number(maxPrice));
+        (minPrice === "" || p.harga >= Number(minPrice)) &&
+        (maxPrice === "" || p.harga <= Number(maxPrice));
 
       return (
         matchesQuery &&
@@ -129,10 +134,10 @@ export default function ProductListPage() {
     if (sortBy) {
       switch (sortBy) {
         case "termahal":
-          result = [...result].sort((a, b) => b.basePrice - a.basePrice);
+          result = [...result].sort((a, b) => b.harga - a.harga);
           break;
         case "termurah":
-          result = [...result].sort((a, b) => a.basePrice - b.basePrice);
+          result = [...result].sort((a, b) => a.harga - b.harga);
           break;
         case "terlaris":
           result = [...result].sort(
@@ -142,8 +147,8 @@ export default function ProductListPage() {
         case "terbaru":
           result = [...result].sort(
             (a, b) =>
-              new Date(b.createdAt).getTime() -
-              new Date(a.createdAt).getTime()
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()
           );
           break;
       }
@@ -292,7 +297,7 @@ export default function ProductListPage() {
                     </p>
                     <CheckboxGroup
                       options={[
-                        { label: "Produk Biasa", value: "rupiah" },
+                        { label: "Produk Biasa", value: "uang" },
                         { label: "Tukar Poin", value: "poin" },
                       ]}
                       selected={productType}
@@ -327,9 +332,10 @@ export default function ProductListPage() {
                     </p>
                     <CheckboxGroup
                       options={[
-                        { label: "Pria", value: "pria" },
-                        { label: "Wanita", value: "wanita" },
-                        { label: "Unisex", value: "unisex" },
+                        { label: "Pria", value: "Pria" },
+                        { label: "Wanita", value: "Wanita" },
+                        { label: "Unisex", value: "Unisex" },
+                        { label: "Lainnya", value: "Lainnya" },
                       ]}
                       selected={gender}
                       onChange={setGender}

@@ -1,14 +1,14 @@
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
-import { IProduct } from "@/types/IProduct";
+import { IProduk } from "@/types/IProduk";
 import { formatPrice } from "@/utils/formatters";
 import ProductColorCircles from "./ProductColorCircles";
 import ProductRatingStars from "./ProductRatingStars";
 import ProductVariantInfo from "./ProductVariantInfo";
 
 interface ProductCardProps {
-  product: IProduct;
+  product: IProduk;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
