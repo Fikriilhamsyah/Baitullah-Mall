@@ -1,17 +1,33 @@
-// types/IUser.ts
 export interface IUser {
-  id: string;
-  username: string;
+  id: number;
+  uuid: string;
+  name: string;
   email: string;
-  phoneNumber: string;
-  profileImage: string | null;
-  points: number; // 1 poin = Rp1
+  phone: string;
+  email_verified_at: string | null;
+  address: string | null;
+  created_at: number;
+  updated_at: number;
+  last_login: string;
+  status: string;
+  otp: string | null;
+  token: string; // ini token dari DB user, kadang kosong
+  profile_photo_path: string | null;
+  is_ustadz: number;
+  tipe_akun: string;
 }
 
-/**
- * Utility untuk konversi poin ke rupiah
- * Contoh: formatPointsToRupiah(15000) -> "Rp15.000"
- */
+export interface ILogin {
+  email: string;
+  password: string;
+}
+
+export interface ILoginResponse {
+  success: boolean;
+  user: IUser;
+  token: string;
+}
+
 export const formatPointsToRupiah = (points: number): string => {
   return `${points.toLocaleString("id-ID")}`;
 };

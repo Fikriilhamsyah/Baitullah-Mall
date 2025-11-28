@@ -17,6 +17,8 @@ const SliderSection = dynamic(() => import("@/components/features/home/SliderSec
 // Data
 import { slides } from "@/data/SlidesData";
 import { CategorySlider } from "@/components/features/category/CategorySlider";
+
+// Icons
 import { ChevronRight } from "lucide-react";
 
 // Halaman Home

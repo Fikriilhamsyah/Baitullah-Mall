@@ -8,11 +8,10 @@ import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 
 // Layout Components
-import Header from "@components/layout/Header";
-import Footer from "@components/layout/Footer";
+import ClientProvider from "@/components/features/provider/ClientProvider";
 
-// Context
-import { SearchProvider } from "@/context/SearchContext";
+// UI Components
+import { Toast } from "@/components/ui/Toast";
 
 // Font setup
 // Inter
@@ -76,21 +75,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="id">
       <body
         className={`${openSauceSans.className} flex flex-col min-h-screen bg-gray-50`}
       >
-        <SearchProvider>
-          <Header />
-
-          {/* Konten halaman akan dirender di sini */}
-          <main className="flex-grow">
+        <Toast>
+          <ClientProvider>
             {children}
-          </main>
-
-          <Footer />
-        </SearchProvider>
+          </ClientProvider>
+        </Toast>
       </body>
     </html>
   );

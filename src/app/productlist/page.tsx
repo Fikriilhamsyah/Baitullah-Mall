@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { SearchX } from "lucide-react";
+import { SearchX, ChevronDown } from "lucide-react";
 
 // Components
 import ProductCard from "@/components/features/product/ProductCard";
@@ -16,15 +16,27 @@ import ErrorMessage from "@/components/ui/ErrorMessage";
 import { Button } from "@/components/ui/Button";
 
 // Hooks
-import { useProduk } from "@hooks/useProduk";
+import { useProducts } from "@hooks/useProducts";
+import { useCategories } from "@hooks/useCategories";
+import { useCollection } from "@hooks/useCollection";
 
 export default function ProductListPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { products, loading: productLoading, error } = useProduk();
+  const kategoriId = searchParams.get("kategori_id");
+  const { products, loading: productLoading, error } = useProducts();
+  const { categories, loading: loadingCategories, error: categoryError } = useCategories();
+  const { collection, loading: loadingCollection, error: collectionError } = useCollection();
+
+  const categoryList = categories?.data ?? [];
+  const collectionList = Array.isArray(collection)
+    ? collection
+    : Array.isArray(collection?.data)
+    ? collection.data
+    : [];
 
   const [category, setCategory] = useState<string[]>([]);
-  const [gender, setGender] = useState<string[]>([]);
+  const [collectionFilter, setCollectionFilter] = useState<number[]>([]);
   const [sortBy, setSortBy] = useState<string>("");
   const [productType, setProductType] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState<number | "">("");
@@ -35,10 +47,63 @@ export default function ProductListPage() {
   const ITEMS_PER_PAGE = 8;
   const query = searchParams.get("query")?.toLowerCase() || "";
 
-  // 🔹 Ambil filter dari URL hanya sekali (saat mount)
+  const [showScrollDown, setShowScrollDown] = useState(true);
+  const [showScrollUp, setShowScrollUp] = useState(false);
+
+  const kategoriMap: Record<string, string> = {
+    "1": "Pakaian & Ihram",
+    "2": "Aksesoris Ibadah",
+    "3": "Perlengkapan Travel",
+    "4": "Kesehatan & Kebersihan",
+    "5": "Buku & Panduan",
+    "6": "Oleh-oleh & Souvenir",
+    "7": "Paket Bundling",
+  };
+
   useEffect(() => {
+    const scrollArea = document.getElementById("filterScrollArea");
+    if (!scrollArea) return;
+
+    const handleScroll = () => {
+      if (scrollArea.scrollTop > 20) setShowScrollDown(false);
+      else setShowScrollDown(true);
+
+      if (scrollArea.scrollTop > 100) setShowScrollUp(true);
+      else setShowScrollUp(false);
+    };
+
+    scrollArea.addEventListener("scroll", handleScroll);
+    return () => scrollArea.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!kategoriId) return;
+
+    const mappedCategory = kategoriMap[kategoriId];
+    const urlCategory = searchParams.get("category");
+
+    if (mappedCategory || urlCategory) {
+      setCategory([urlCategory || mappedCategory]);
+      setCurrentPage(1);
+    }
+  }, [kategoriId]);
+
+  const scrollDown = () => {
+    const scrollArea = document.getElementById("filterScrollArea");
+    scrollArea?.scrollBy({ top: 250, behavior: "smooth" });
+  };
+
+  const scrollToTop = () => {
+    const scrollArea = document.getElementById("filterScrollArea");
+    scrollArea?.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // 🔹 Ambil filter dari URL hanya sekali
+  useEffect(() => {
+    if (kategoriId) return;
+
     const initialCategory = searchParams.get("category")?.split(",") || [];
-    const initialGender = searchParams.get("gender")?.split(",") || [];
+    const initialCollectionFilter = searchParams.get("collection")?.split(",").map(Number) || [];
     const initialSort = searchParams.get("sort") || "";
     const initialType = searchParams.get("type")?.split(",") || [];
     const initialMin = searchParams.get("minPrice")
@@ -52,13 +117,13 @@ export default function ProductListPage() {
       : 1;
 
     setCategory(initialCategory);
-    setGender(initialGender);
+    setCollectionFilter(initialCollectionFilter);
     setSortBy(initialSort);
     setProductType(initialType);
     setMinPrice(initialMin);
     setMaxPrice(initialMax);
     setCurrentPage(page);
-  }, []); // ← hanya dijalankan sekali
+  }, [kategoriId]);
 
   // 🔹 Update URL hanya jika berubah
   useEffect(() => {
@@ -66,7 +131,7 @@ export default function ProductListPage() {
 
     if (query) params.set("query", query);
     if (category.length) params.set("category", category.join(","));
-    if (gender.length) params.set("gender", gender.join(","));
+    if (collectionFilter.length) params.set("collection", collectionFilter.join(","));
     if (productType.length) params.set("type", productType.join(","));
     if (minPrice !== "") params.set("minPrice", String(minPrice));
     if (maxPrice !== "") params.set("maxPrice", String(maxPrice));
@@ -76,11 +141,10 @@ export default function ProductListPage() {
     const newUrl = `?${params.toString()}`;
     const currentUrl = `?${searchParams.toString()}`;
 
-    // ✅ Cegah looping render
     if (newUrl !== currentUrl) {
       router.replace(newUrl, { scroll: false });
     }
-  }, [category, gender, minPrice, maxPrice, sortBy, currentPage, query]);
+  }, [category, collectionFilter, minPrice, maxPrice, sortBy, currentPage, query]);
 
   // 🔹 Simulasi loading awal
   useEffect(() => {
@@ -90,72 +154,56 @@ export default function ProductListPage() {
 
   // 🔹 Filtering & Sorting
   const filteredProducts = useMemo(() => {
-    if (!products) return [];
+    const list = Array.isArray(products)
+      ? products
+      : Array.isArray(products?.data)
+      ? products.data
+      : [];
 
-    let result = products.filter((p) => {
+    let result = list.filter((p) => {
       const matchesQuery = query ? p.nama_produk.toLowerCase().includes(query) : true;
-
       const matchesCategory =
         category.length > 0 ? category.includes(p.kategori.nama_kategori) : true;
-
-      const matchesGender =
-        gender.length > 0
-          ? p.koleksi.some((k) => gender.includes(k.nama_koleksi))
-          : true;
-
-      // const matchesGender =
-      //   gender.length > 0
-      //     ? p.variants?.some(
-      //         (v) =>
-      //           v.name === "Gender" &&
-      //           v.options.some((opt) =>
-      //             gender.includes(opt.value.toLowerCase())
-      //           )
-      //       )
-      //     : true;
-
+      const matchesCollection = collectionFilter.length
+        ? collectionFilter.includes(p.koleksi_id)
+        : true;
       const matchesType =
         productType.length > 0 ? productType.includes(p.jenis.nama_jenis) : true;
 
       const matchesPrice =
-        (minPrice === "" || p.harga >= Number(minPrice)) &&
-        (maxPrice === "" || p.harga <= Number(maxPrice));
+        (minPrice === "" || Number(p.harga) >= Number(minPrice)) &&
+        (maxPrice === "" || Number(p.harga) <= Number(maxPrice));
 
       return (
         matchesQuery &&
         matchesCategory &&
-        matchesGender &&
+        matchesCollection &&
         matchesType &&
         matchesPrice
       );
     });
 
-    // 🔹 Sorting
     if (sortBy) {
       switch (sortBy) {
         case "termahal":
-          result = [...result].sort((a, b) => b.harga - a.harga);
+          result.sort((a, b) => Number(b.harga) - Number(a.harga));
           break;
         case "termurah":
-          result = [...result].sort((a, b) => a.harga - b.harga);
-          break;
-        case "terlaris":
-          result = [...result].sort(
-            (a, b) => (b.rating || 0) - (a.rating || 0)
-          );
+          result.sort((a, b) => Number(a.harga) - Number(b.harga));
           break;
         case "terbaru":
-          result = [...result].sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime()
+          result.sort(
+            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           );
+          break;
+        case "terlaris":
+          result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
           break;
       }
     }
 
     return result;
-  }, [products, query, category, gender, productType, minPrice, maxPrice, sortBy]);
+  }, [products, category, productType, minPrice, maxPrice, sortBy, query, collectionFilter]);
 
   // 🔹 Pagination
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
@@ -167,7 +215,6 @@ export default function ProductListPage() {
   if (loading || productLoading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
 
-  // 🔹 Hitung jumlah produk untuk tampilan teks
   const totalCount = filteredProducts.length;
   const totalAll = products?.length || 0;
 
@@ -179,24 +226,21 @@ export default function ProductListPage() {
           categoryFilter={false}
           filterButtonLabel={true}
           defaultSearch={query}
-          // 🔽 Sinkronisasi filter state dari ProductPage ke HeroSection
           totalCount={filteredProducts.length}
           totalAll={products?.length || 0}
           category={category}
-          gender={gender}
           productType={productType}
           sortBy={sortBy}
           minPrice={minPrice}
           maxPrice={maxPrice}
           onChangeCategory={setCategory}
-          onChangeGender={setGender}
           onChangeProductType={setProductType}
           onChangeSort={setSortBy}
           onChangeMinPrice={setMinPrice}
           onChangeMaxPrice={setMaxPrice}
           onResetFilters={() => {
             setCategory([]);
-            setGender([]);
+            setCollectionFilter([]);
             setProductType([]);
             setSortBy("");
             setMinPrice("");
@@ -231,14 +275,39 @@ export default function ProductListPage() {
           <div className="grid grid-cols-12 gap-4">
             {/* Sidebar Filter */}
             <div className="hidden lg:block col-span-3">
-              <div className="sticky top-[160px] h-[calc(100vh-140px)] overflow-y-auto bg-neutral-100 p-4">
-                {/* Atur Ulang Filter */}
+              <div className="sticky top-[160px] h-[calc(100vh-140px)] overflow-y-auto bg-neutral-100 p-4 pt-12" id="filterScrollArea">
+                {/* Scroll Buttons */}
+                <motion.button
+                  onClick={scrollDown}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={showScrollDown ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="pointer-events-auto absolute top-2 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 
+                            bg-white border border-primary-500 text-primary-500 rounded-full 
+                            py-1 px-3 text-[11px] shadow-md cursor-pointer"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                  Gulir ke bawah
+                </motion.button>
+
+                <motion.button
+                  onClick={scrollToTop}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={showScrollUp ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 
+                            z-50 flex items-center gap-1 bg-primary-500 text-white 
+                            rounded-full py-1 px-4 text-[11px] shadow-lg cursor-pointer"
+                >
+                  ↑ Ke atas
+                </motion.button>
+
                 <Button
                   label="Atur Ulang Filter"
                   color="primary"
                   onClick={() => {
                     setCategory([]);
-                    setGender([]);
+                    setCollectionFilter([]);
                     setProductType([]);
                     setSortBy("");
                     setMinPrice("");
@@ -246,15 +315,10 @@ export default function ProductListPage() {
                   }}
                   fullWidth={true}
                 />
-                
-                {/* ✅ Bagian jumlah produk */}
+
                 <div className="flex justify-between items-center mb-8 mt-8">
-                  <p className="text-md font-normal text-neutral-600">
-                    Menampilkan produk
-                  </p>
-                  <p className="text-md font-semibold text-primary-600">
-                    {totalCount} / {totalAll}
-                  </p>
+                  <p className="text-md font-normal text-neutral-600">Menampilkan produk</p>
+                  <p className="text-md font-semibold text-primary-600">{totalCount} / {totalAll}</p>
                 </div>
 
                 <div className="space-y-6">
@@ -262,18 +326,14 @@ export default function ProductListPage() {
                   <div>
                     <p className="text-md font-bold text-neutral-700 mb-2">Harga</p>
                     <div className="flex items-center">
-                      <p className="text-md font-normal text-neutral-600 mr-2">
-                        Rp
-                      </p>
+                      <p className="text-md font-normal text-neutral-600 mr-2">Rp</p>
                       <div className="grid grid-cols-2 gap-2">
                         <InputField
                           type="number"
                           placeholder="Min"
                           value={minPrice}
                           onChange={(e) =>
-                            setMinPrice(
-                              e.target.value === "" ? "" : Number(e.target.value)
-                            )
+                            setMinPrice(e.target.value === "" ? "" : Number(e.target.value))
                           }
                         />
                         <InputField
@@ -281,9 +341,7 @@ export default function ProductListPage() {
                           placeholder="Max"
                           value={maxPrice}
                           onChange={(e) =>
-                            setMaxPrice(
-                              e.target.value === "" ? "" : Number(e.target.value)
-                            )
+                            setMaxPrice(e.target.value === "" ? "" : Number(e.target.value))
                           }
                         />
                       </div>
@@ -292,9 +350,7 @@ export default function ProductListPage() {
 
                   {/* Jenis Pembayaran Produk */}
                   <div>
-                    <p className="text-md font-bold text-neutral-700 mb-2">
-                      Jenis Pembayaran Produk
-                    </p>
+                    <p className="text-md font-bold text-neutral-700 mb-2">Jenis Pembayaran Produk</p>
                     <CheckboxGroup
                       options={[
                         { label: "Produk Biasa", value: "uang" },
@@ -307,38 +363,21 @@ export default function ProductListPage() {
 
                   {/* Kategori */}
                   <div>
-                    <p className="text-md font-bold text-neutral-700 mb-2">
-                      Kategori
-                    </p>
+                    <p className="text-md font-bold text-neutral-700 mb-2">Kategori</p>
                     <CheckboxGroup
-                      options={[
-                        { label: "Pakaian & Ihram", value: "Pakaian & Ihram" },
-                        { label: "Aksesoris Ibadah", value: "Aksesoris Ibadah" },
-                        { label: "Perlengkapan Travel", value: "Perlengkapan Travel" },
-                        { label: "Kesehatan & Kebersihan", value: "Kesehatan & Kebersihan" },
-                        { label: "Buku Panduan", value: "Buku & Panduan" },
-                        { label: "Oleh-oleh & Souvenir", value: "Oleh-oleh & Souvenir" },
-                        { label: "Paket Bundling", value: "Paket Bundling" },
-                      ]}
+                      options={categoryList.map(cat => ({ label: cat.nama_kategori, value: cat.nama_kategori }))}
                       selected={category}
                       onChange={setCategory}
                     />
                   </div>
 
-                  {/* Gender */}
+                  {/* Koleksi / Gender */}
                   <div>
-                    <p className="text-md font-bold text-neutral-700 mb-2">
-                      Gender
-                    </p>
+                    <p className="text-md font-bold text-neutral-700 mb-2">Gender</p>
                     <CheckboxGroup
-                      options={[
-                        { label: "Pria", value: "Pria" },
-                        { label: "Wanita", value: "Wanita" },
-                        { label: "Unisex", value: "Unisex" },
-                        { label: "Lainnya", value: "Lainnya" },
-                      ]}
-                      selected={gender}
-                      onChange={setGender}
+                      options={collectionList.map(col => ({ label: col.nama_koleksi, value: col.id }))}
+                      selected={collectionFilter}
+                      onChange={setCollectionFilter}
                     />
                   </div>
                 </div>
@@ -377,13 +416,11 @@ export default function ProductListPage() {
                   <SearchX className="w-12 h-12 mb-3 text-gray-400" />
                   <p className="text-lg font-medium">Produk tidak ditemukan</p>
                   <p className="text-sm text-gray-400 mt-1 text-center max-w-sm">
-                    Coba ubah kata kunci pencarian atau periksa filter yang kamu
-                    gunakan.
+                    Coba ubah kata kunci pencarian atau periksa filter yang kamu gunakan.
                   </p>
                 </motion.div>
               )}
 
-              {/* Pagination */}
               {filteredProducts.length > ITEMS_PER_PAGE && (
                 <Pagination
                   currentPage={currentPage}

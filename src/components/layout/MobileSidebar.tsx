@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 // Icons
 import { X, Facebook, Instagram, Youtube, Mail } from "lucide-react";
@@ -10,11 +11,16 @@ import Link from "next/link";
 // Animation
 import { motion, AnimatePresence } from "framer-motion";
 
-// Hooks
-import { useUser } from "@/hooks/useUser";
-
 // Utils
 import { formatPointsToRupiah } from "@/types/IUser";
+
+// Context
+import { useAuth } from "@/context/AuthContext";
+import { useModal } from "@/context/ModalContext";
+
+// Components
+import SignIn from '@/components/features/auth/SignIn';
+import { Button } from "../ui/Button";
 
 interface SidebarItem {
   href: string;
@@ -40,8 +46,33 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
   links,
   activePath,
 }) => {
-  const { user, loading } = useUser();
+  const hydrated = useAuth((s) => s.hydrated);
+  if (!hydrated) return null;
+
+  const router = useRouter();
+
+  const user = useAuth((state) => state.user);
+  const openModal = useModal(s => s.openModal);
+  const closeModal = useModal(s => s.closeModal);
+
   const scrollYRef = useRef<number | null>(null);
+
+  const handleToSignIn = () => {
+    onClose();
+    setTimeout(() => {
+      openModal({
+        size: "md",
+        mobileMode: "full",
+        content: <SignIn />,
+      });
+    }, 250);
+  };
+
+  const handleLogout = () => {
+    useAuth.getState().logout();
+    onClose();
+    router.push("/");
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -133,26 +164,36 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto">
               {/* Profile */}
-              {!loading && user && (
+              {user !== null ? (
                 <div className="flex flex-col items-center p-4 border-b border-gray-200">
-                  {user.profileImage === null
-                    ? (<div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
-                        <span className="text-3xl text-gray-400">
-                          {user.username.charAt(0).toUpperCase()}
-                        </span>
-                      </div>)
-                    : (
-                      <img
-                        src={user.profileImage}
-                        className="w-20 h-20 rounded-full object-cover"
-                      />
-                    )
-                  }
-                  <p className="text-lg font-semibold text-neutral-900 mt-2">{user.username}</p>
-                  <p className="text-sm text-neutral-600">{user.email}</p>
-                  <p className="text-base font-bold text-green-600 mt-1">
-                    {formatPointsToRupiah(user.points)} Poin
+                  {user.profile_photo_path ? (
+                    <img
+                      src={`${process.env.NEXT_PUBLIC_API_BAITULLAH}/storage/${user.profile_photo_path}`}
+                      className="w-20 h-20 rounded-full object-cover"
+                      alt="photo profile"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-3xl text-gray-400">
+                        {user.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+
+                  <p className="text-lg font-semibold text-neutral-900 mt-2">
+                    {user.name}
                   </p>
+                  <p className="text-sm text-neutral-600">{user.email}</p>
+
+                  {user.points !== undefined && (
+                    <p className="text-base font-bold text-green-600 mt-1">
+                      {formatPointsToRupiah(user.points)} Poin
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center p-4 border-b border-gray-200">
+                  <Button label="Masuk" color="primary" onClick={handleToSignIn} fullWidth />
                 </div>
               )}
 
@@ -162,27 +203,43 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                   <div key={i} className="space-y-2 pb-4 border-b border-gray-200">
                     <h4 className="text-xs uppercase text-gray-400 font-semibold tracking-wider px-3">
                       {group.title}
-                    </h4>
-                    <div className="space-y-1">
-                      {group.items.map((item) => {
-                        const isActive = activePath === item.href;
-                        const Icon = item.icon;
-                        return (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={onClose}
-                            className={`flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                              isActive
-                                ? "bg-primary-100 text-primary-700"
-                                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                            }`}
-                          >
-                            {Icon && <Icon className="h-5 w-5" />}
-                            <span>{item.label}</span>
-                          </Link>
-                        );
-                      })}
+                      </h4>
+                      <div className="space-y-1">
+                        {group.items.map((item) => {
+                          const isActive = activePath === item.href;
+                          const Icon = item.icon;
+
+                          // jika item adalah logout
+                          if (item.href === "/logout") {
+                            return (
+                              <button
+                                key="logout"
+                                onClick={handleLogout}
+                                className="flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium text-gray-600 transition-colors"
+                              >
+                                {Icon && <Icon className="h-5 w-5" />}
+                                <span>Keluar</span>
+                              </button>
+                            );
+                          }
+
+                          // normal link
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={onClose}
+                              className={`flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                                isActive
+                                  ? "bg-primary-100 text-primary-700"
+                                  : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                              }`}
+                            >
+                              {Icon && <Icon className="h-5 w-5" />}
+                              <span>{item.label}</span>
+                            </Link>
+                          );
+                        })}
                     </div>
                   </div>
                 ))}

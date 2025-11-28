@@ -17,7 +17,7 @@ export default function ProductDetailPage() {
 
   return (
     <div className="">
-      <ProductDetail id={id} name={name} onBack={() => router.back()} />
+      <ProductDetail id={Number(id)} nama_produk={name} onBack={() => router.back()} />
     </div>
   );
 }

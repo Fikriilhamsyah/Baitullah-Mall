@@ -1,396 +1,394 @@
 import { IProduct } from "../types/IProduct";
 
-export const dummyProducts: IProduct[] = [
-  {
-    id: "P1001",
-    name: "Kain Ihram Pria Premium",
-    description:
-      "Kain ihram tanpa jahitan dengan bahan katun premium yang lembut dan mudah menyerap keringat.",
-    basePrice: 350000,
-    category: "Pakaian & Ihram",
-    imageUrl: "/img/product-list/kain-ihram-1.jpg",
-    images: [
-      "/img/product-detail/kain-ihram-1.jpg",
-      "/img/product-detail/kain-ihram-2.jpg",
-      "/img/product-detail/kain-ihram-3.jpg",
-    ],
-    stock: 150,
-    rating: 4.6,
-    paymentType: "rupiah",
-    variants: [
-      {
-        id: "V_UKURAN",
-        name: "Ukuran",
-        options: [
-          { id: "UK_M", value: "M", priceModifier: 0 },
-          { id: "UK_L", value: "L", priceModifier: 0 },
-          { id: "UK_XL", value: "XL", priceModifier: 25000 },
-          { id: "UK_XXL", value: "XXL", priceModifier: 50000 },
+export const ProductsData: IProduct[] = [
+    // Produk dengan VARIAN & DISKON (jenis = uang)
+    {
+        id: 1,
+        nama_produk: "Bantal Leher Travel",
+        deskripsi: "Bantal leher empuk yang dirancang khusus untuk memberikan kenyamanan maksimal selama perjalanan jauh. Terbuat dari bahan berkualitas tinggi yang lembut di kulit dan mampu menopang leher secara ergonomis. Cocok digunakan saat naik pesawat, bus, kereta, atau perjalanan kendaraan pribadi agar tidur lebih nyaman dan mengurangi pegal di area leher.",
+        harga: 85000,
+        stok: 25,
+        kategori_id: 2,
+        jenis_id: 1,
+        gambar_utama: "/img/bantal.png",
+        created_at: "2025-10-29T13:46:55.000000Z",
+        updated_at: "2025-10-29T13:46:55.000000Z",
+
+        kategori: {
+            id: 2,
+            nama_kategori: "Aksesoris Ibadah",
+            deskripsi: "Beragam aksesoris ibadah yang membantu jamaah merasa lebih nyaman dan praktis selama perjalanan dan pelaksanaan ibadah.",
+            gambar_icon: "/icons/aksesori.png",
+            created_at: "2025-10-29T13:46:55.000000Z",
+            updated_at: "2025-10-29T13:46:55.000000Z",
+        },
+
+        jenis: {
+            id: 1,
+            nama_jenis: "uang",
+            deskripsi: "Pembayaran dilakukan menggunakan mata uang rupiah secara langsung.",
+            created_at: "2025-10-29T13:46:55.000000Z",
+            updated_at: "2025-10-29T13:46:55.000000Z",
+        },
+
+        varian: [
+            {
+                id: 1,
+                produk_id: 1,
+                warna: "Biru",
+                ukuran: null,
+                stok: 20,
+                tambahan_harga: 10000,
+                kode_varian: "#87CEEB",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+            },
+            {
+                id: 2,
+                produk_id: 1,
+                warna: "Hitam",
+                ukuran: null,
+                stok: 5,
+                tambahan_harga: 0,
+                kode_varian: "#000000",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+            },
         ],
-      },
-      {
-        id: "V_GENDER",
-        name: "Gender",
-        options: [{ id: "G_PRIA", value: "Pria", priceModifier: 0 }],
-      },
-    ],
-    createdAt: "2025-10-01T00:00:00Z",
-  },
-  {
-    id: "P1002",
-    name: "Mukena Premium Travel",
-    description:
-      "Mukena bahan parasut ringan dan mudah dilipat, ideal untuk perjalanan ibadah.",
-    basePrice: 275000,
-    category: "Pakaian & Ihram",
-    imageUrl: "/img/product-list/mukena-travel.jpg",
-    images: [
-      "/img/product-detail/mukena-1.jpg",
-      "/img/product-detail/mukena-2.jpg",
-    ],
-    stock: 120,
-    rating: 4.8,
-    paymentType: "rupiah",
-    variants: [
-      {
-        id: "V_GENDER",
-        name: "Gender",
-        options: [{ id: "G_WANITA", value: "Wanita", priceModifier: 0 }],
-      },
-    ],
-    createdAt: "2025-10-03T00:00:00Z",
-  },
-  {
-    id: "P1003",
-    name: "Tas Selempang Travel Anti Air",
-    description:
-      "Tas kecil anti air dengan banyak kompartemen, cocok untuk menyimpan paspor dan uang selama perjalanan.",
-    basePrice: 180000,
-    category: "Perlengkapan Travel",
-    imageUrl: "/img/product-list/tas-travel.jpg",
-    images: [
-      "/img/product-detail/tas-1.jpg",
-      "/img/product-detail/tas-2.jpg",
-    ],
-    stock: 200,
-    rating: 4.4,
-    paymentType: "rupiah",
-    variants: [
-      {
-        id: "V_GENDER",
-        name: "Gender",
-        options: [{ id: "G_UNISEX", value: "Unisex", priceModifier: 0 }],
-      },
-    ],
-    createdAt: "2025-10-05T00:00:00Z",
-  },
-  {
-    id: "P1004",
-    name: "Sabun Cair Travel Halal 100ml",
-    description:
-      "Sabun cair tanpa alkohol dengan ukuran travel-friendly, aman untuk dibawa ke pesawat.",
-    basePrice: 45000,
-    category: "Kesehatan & Kebersihan",
-    imageUrl: "/img/product-list/sabun-travel.jpg",
-    images: [
-      "/img/product-detail/sabun-1.jpg",
-      "/img/product-detail/sabun-2.jpg",
-    ],
-    stock: 500,
-    rating: 4.9,
-    paymentType: "rupiah",
-    variants: [],
-    createdAt: "2025-10-06T00:00:00Z",
-  },
-  {
-    id: "P1005",
-    name: "Buku Panduan Haji & Umroh Lengkap",
-    description:
-      "Panduan lengkap pelaksanaan ibadah haji dan umroh sesuai sunnah, mudah dipahami dan praktis.",
-    basePrice: 85000,
-    category: "Buku & Panduan",
-    imageUrl: "/img/product-list/buku-panduan.jpg",
-    images: [
-      "/img/product-detail/buku-1.jpg",
-      "/img/product-detail/buku-2.jpg",
-    ],
-    stock: 300,
-    rating: 4.7,
-    paymentType: "rupiah",
-    variants: [],
-    createdAt: "2025-10-07T00:00:00Z",
-  },
-  {
-    id: "P1006",
-    name: "Souvenir Tasbih Kayu Cendana",
-    description:
-      "Tasbih 33 butir dari kayu cendana pilihan, aroma lembut dan elegan, cocok untuk oleh-oleh jamaah.",
-    basePrice: 65000,
-    category: "Oleh-oleh & Souvenir",
-    imageUrl: "/img/product-list/tasbih.jpg",
-    images: [
-      "/img/product-detail/tasbih-1.jpg",
-      "/img/product-detail/tasbih-2.jpg",
-    ],
-    stock: 400,
-    rating: 4.5,
-    paymentType: "rupiah",
-    variants: [
-      {
-        id: "V_GENDER",
-        name: "Gender",
-        options: [{ id: "G_UNISEX", value: "Unisex", priceModifier: 0 }],
-      },
-    ],
-    createdAt: "2025-10-08T00:00:00Z",
-  },
-  {
-    id: "P1007",
-    name: "Paket Bundling Perlengkapan Umroh",
-    description:
-      "Paket lengkap perlengkapan umroh berisi kain ihram, sabun halal, dan tas travel kecil.",
-    basePrice: 650000,
-    category: "Paket Bundling",
-    imageUrl: "/img/product-list/paket-bundling.jpg",
-    images: [
-      "/img/product-detail/paket-1.jpg",
-      "/img/product-detail/paket-2.jpg",
-    ],
-    stock: 100,
-    rating: 4.9,
-    paymentType: "rupiah",
-    variants: [],
-    createdAt: "2025-10-09T00:00:00Z",
-  },
-  {
-    id: "P1001_DUP",
-    name: "Kain Ihram Pria Premium",
-    description:
-      "Kain ihram tanpa jahitan dengan bahan katun premium yang lembut dan mudah menyerap keringat.",
-    basePrice: 350000,
-    category: "Pakaian & Ihram",
-    imageUrl: "/img/product-list/kain-ihram-1.jpg",
-    images: [
-      "/img/product-detail/kain-ihram-1.jpg",
-      "/img/product-detail/kain-ihram-2.jpg",
-      "/img/product-detail/kain-ihram-3.jpg",
-    ],
-    stock: 150,
-    rating: 4.6,
-    paymentType: "rupiah",
-    variants: [
-      {
-        id: "V_UKURAN",
-        name: "Ukuran",
-        options: [
-          { id: "UK_M", value: "M", priceModifier: 0 },
-          { id: "UK_L", value: "L", priceModifier: 0 },
-          { id: "UK_XL", value: "XL", priceModifier: 25000 },
-          { id: "UK_XXL", value: "XXL", priceModifier: 50000 },
+
+        diskon: [
+            {
+                id: 1,
+                produk_id: 1,
+                varian_id: 1,
+                persentase: "50",
+                harga_potongan: 50000,
+                tanggal_mulai: "2025-10-25 00:00:00",
+                tanggal_selesai: "2025-11-05 23:59:59",
+                aktif: 1,
+                created_at: "2025-10-29T13:46:55.000000Z",
+            },
         ],
-      },
-      {
-        id: "V_GENDER",
-        name: "Gender",
-        options: [{ id: "G_PRIA", value: "Pria", priceModifier: 0 }],
-      },
-    ],
-    createdAt: "2025-10-10T00:00:00Z",
-  },
-  {
-    id: "P1002_DUP",
-    name: "Gamis Wanita Syar'i Premium",
-    description:
-      "Gamis longgar, nyaman, dan adem, cocok untuk ibadah dan aktivitas harian.",
-    basePrice: 450000,
-    category: "Pakaian & Ihram",
-    imageUrl: "/img/product-list/bantal-leher-2.jpg",
-    images: [
-      "/img/product-detail/gamis-wanita-1.jpg",
-      "/img/product-detail/gamis-wanita-2.jpg",
-    ],
-    stock: 80,
-    rating: 4.8,
-    paymentType: "rupiah",
-    variants: [
-      {
-        id: "V_WARNA_G",
-        name: "Warna",
-        options: [
-          { id: "W_PUTIH", name: "Putih", value: "Putih", priceModifier: 0 },
-          { id: "W_HITAM", name: "Hitam", value: "Hitam", priceModifier: 0 },
-          { id: "W_NAVY", name: "Navy", value: "Navy", priceModifier: 0 },
-          { id: "W_MOCCA", name: "Mocca", value: "#D2B48C", priceModifier: 5000 },
+
+        koleksi: [
+            {
+                id: 1,
+                nama_koleksi: "Pria",
+                deskripsi: "Pilihan produk yang cocok untuk kebutuhan perjalanan dan aktivitas laki-laki, baik santai maupun ibadah.",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+                pivot: { produk_id: 1, koleksi_id: 1 },
+            },
         ],
-      },
-      {
-        id: "V_UKURAN_G",
-        name: "Ukuran",
-        options: [
-          { id: "UK_M", value: "M", priceModifier: 0 },
-          { id: "UK_L", value: "L", priceModifier: 0 },
-          { id: "UK_XL", value: "XL", priceModifier: 15000 },
+    },
+
+    // Produk pembelian POIN (diskon otomatis null)
+    {
+        id: 2,
+        nama_produk: "Tasbih Digital",
+        deskripsi: "Tasbih digital praktis dengan tombol penghitung otomatis yang memudahkan pengguna dalam melakukan dzikir tanpa perlu menghitung secara manual. Didesain ringkas sehingga nyaman digenggam, serta memiliki tampilan layar jelas yang memudahkan penglihatan di berbagai kondisi pencahayaan. Sangat ideal digunakan selama ibadah, perjalanan, atau aktivitas harian.",
+        harga: 3,
+        stok: 90,
+        kategori_id: 2,
+        jenis_id: 2,
+        gambar_utama: "/img/tasbih-digital.png",
+        created_at: "2025-10-29T13:46:55.000000Z",
+        updated_at: "2025-10-29T13:46:55.000000Z",
+
+        kategori: {
+            id: 2,
+            nama_kategori: "Aksesoris Ibadah",
+            deskripsi: "Berbagai alat pendukung ibadah yang memudahkan dan memberi kenyamanan saat beribadah.",
+            gambar_icon: "/icons/tasbih.png",
+            created_at: "2025-10-29T13:46:55.000000Z",
+            updated_at: "2025-10-29T13:46:55.000000Z",
+        },
+
+        jenis: {
+            id: 2,
+            nama_jenis: "poin",
+            deskripsi: "Pembelian produk dilakukan menggunakan poin yang diperoleh dari sistem reward.",
+            created_at: "2025-10-29T13:46:55.000000Z",
+            updated_at: "2025-10-29T13:46:55.000000Z",
+        },
+
+        varian: [
+            {
+                id: 1,
+                produk_id: 3,
+                warna: "Hitam",
+                ukuran: null,
+                stok: 90,
+                tambahan_harga: 0,
+                kode_varian: "#000000",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+            },
         ],
-      },
-      {
-        id: "V_GENDER_G",
-        name: "Gender",
-        options: [{ id: "G_WANITA", value: "Wanita", priceModifier: 0 }],
-      },
-    ],
-    createdAt: "2025-10-11T00:00:00Z",
-  },
-  {
-    id: "A2001",
-    name: "Tasbih Digital LED",
-    description:
-      "Tasbih digital dengan layar LED dan penghitung otomatis. Cocok digunakan di tempat gelap.",
-    basePrice: 3,
-    category: "Aksesoris Ibadah",
-    imageUrl: "/img/product-list/tas-kabin-2.jpg",
-    images: [
-      "/img/product-detail/tasbih-digital-1.jpg",
-      "/img/product-detail/tasbih-digital-2.jpg",
-    ],
-    stock: 300,
-    rating: 3.3,
-    paymentType: "poin",
-    variants: [
-      {
-        id: "V_WARNA_T",
-        name: "Warna",
-        options: [
-          { id: "WT_HITAM", name: "Hitam", value: "Hitam", priceModifier: 0 },
-          { id: "WT_PUTIH", name: "Putih", value: "Putih", priceModifier: 0 },
-          { id: "WT_BIRU", name: "Biru", value: "Biru", priceModifier: 0 },
-          { id: "WT_PINK", name: "Pink", value: "#FFC0CB", priceModifier: 5000 },
-          { id: "WT_MERAH", name: "Merah", value: "#FF0000", priceModifier: 5000 },
-          { id: "WT_NAVY", name: "Navy", value: "Navy", priceModifier: 5000 },
-          { id: "WT_HIJAU", name: "Hijau", value: "#008000", priceModifier: 5000 },
+
+        diskon: null,
+
+        koleksi: [
+            {
+                id: 4,
+                nama_koleksi: "Lainnya",
+                deskripsi: "Kategori untuk produk yang dapat digunakan oleh siapa saja tanpa batasan gender atau peruntukan.",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+                pivot: { produk_id: 3, koleksi_id: 4 },
+            },
         ],
-      },
-    ],
-    createdAt: "2025-10-12T00:00:00Z",
-  },
-  {
-    id: "P1008",
-    name: "Baju Koko Premium Bordir Lengan Panjang",
-    description:
-      "Baju koko dengan bahan katun halus, bordir elegan, dan nyaman dipakai untuk ibadah atau acara resmi.",
-    basePrice: 275000,
-    category: "Pakaian & Ihram",
-    imageUrl: "/img/product-list/baju-koko.jpg",
-    images: [
-      "/img/product-detail/baju-koko-1.jpg",
-      "/img/product-detail/baju-koko-2.jpg",
-    ],
-    stock: 180,
-    rating: 4.7,
-    paymentType: "rupiah",
-    variants: [
-      {
-        id: "V_WARNA_KOKO",
-        name: "Warna",
-        options: [
-          { id: "WK_PUTIH", name: "Putih", value: "Putih", priceModifier: 0 },
-          { id: "WK_COKLAT", name: "Coklat", value: "#8B4513", priceModifier: 10000 },
-          { id: "WK_HITAM", name: "Hitam", value: "Hitam", priceModifier: 15000 },
+    },
+
+    // Produk tanpa VARIAN dan tanpa DISKON
+    {
+        id: 3,
+        nama_produk: "Sabun Travel Halal",
+        deskripsi: "Sabun cair halal berukuran kecil yang sangat cocok dibawa saat bepergian. Formulanya lembut di kulit, aman untuk berbagai jenis kulit termasuk kulit sensitif. Dikemas dalam botol yang praktis dan tidak mudah bocor, membuatnya ideal untuk perjalanan ibadah, perjalanan bisnis, maupun aktivitas outdoor.",
+        harga: 45000,
+        stok: 120,
+        kategori_id: 3,
+        jenis_id: 1,
+        gambar_utama: "/img/sabun.png",
+        created_at: "2025-10-29T13:46:55.000000Z",
+        updated_at: "2025-10-29T13:46:55.000000Z",
+
+        kategori: {
+            id: 3,
+            nama_kategori: "Kesehatan & Kebersihan",
+            deskripsi: "Produk-produk kebersihan yang membantu menjaga kesehatan dan kenyamanan selama perjalanan.",
+            gambar_icon: "/icons/clean.png",
+            created_at: "2025-10-29T13:46:55.000000Z",
+            updated_at: "2025-10-29T13:46:55.000000Z",
+        },
+
+        jenis: {
+            id: 1,
+            nama_jenis: "uang",
+            deskripsi: "Pembayaran menggunakan rupiah secara langsung.",
+            created_at: "2025-10-29T13:46:55.000000Z",
+            updated_at: "2025-10-29T13:46:55.000000Z",
+        },
+
+        varian: null,
+
+        diskon: null,
+
+        koleksi: [
+            {
+                id: 4,
+                nama_koleksi: "Lainnya",
+                deskripsi: "Kategori umum untuk berbagai produk yang tidak memiliki penyesuaian khusus.",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+                pivot: { produk_id: 2, koleksi_id: 4 },
+            },
         ],
-      },
-      {
-        id: "V_UKURAN_KOKO",
-        name: "Ukuran",
-        options: [
-          { id: "UK_M", value: "M", priceModifier: 0 },
-          { id: "UK_L", value: "L", priceModifier: 0 },
-          { id: "UK_XL", value: "XL", priceModifier: 20000 },
-          { id: "UK_XXL", value: "XXL", priceModifier: 30000 },
+    },
+
+    // Produk TANPA KOLEKSI → otomatis masuk "Lainnya"
+    {
+        id: 4,
+        nama_produk: "Botol Minum Travel",
+        deskripsi: "Botol minum lipat yang praktis untuk dibawa kemana saja. Didesain dari bahan food-grade yang aman dan tidak meninggalkan bau. Bentuknya fleksibel namun tetap kuat, sangat cocok untuk perjalanan jauh, aktivitas luar ruangan, ataupun penggunaan sehari-hari. Membantu menjaga hidrasi tanpa harus membawa botol besar yang memakan tempat.",
+        harga: 65000,
+        stok: 70,
+        kategori_id: 3,
+        jenis_id: 1,
+        gambar_utama: "/img/botol.png",
+        created_at: "2025-10-29T13:46:55.000000Z",
+        updated_at: "2025-10-29T13:46:55.000000Z",
+
+        kategori: {
+            id: 3,
+            nama_kategori: "Kesehatan & Kebersihan",
+            deskripsi: "Kumpulan produk yang mendukung sanitasi dan kebersihan pribadi selama perjalanan.",
+            gambar_icon: "/icons/botol.png",
+            created_at: "2025-10-29T13:46:55.000000Z",
+            updated_at: "2025-10-29T13:46:55.000000Z",
+        },
+
+        jenis: {
+            id: 1,
+            nama_jenis: "uang",
+            deskripsi: "Pembelian menggunakan mata uang rupiah.",
+            created_at: "2025-10-29T13:46:55.000000Z",
+            updated_at: "2025-10-29T13:46:55.000000Z",
+        },
+
+        varian: [
+            {
+                id: 1,
+                produk_id: 4,
+                warna: "Biru",
+                ukuran: null,
+                stok: 70,
+                tambahan_harga: 0,
+                kode_varian: "#00AEEF",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+            },
         ],
-      },
-    ],
-    createdAt: "2025-10-13T00:00:00Z",
-  },
-  {
-    id: "P1009",
-    name: "Jaket Travel Muslimah Waterproof",
-    description:
-      "Jaket ringan tahan air dengan desain panjang menutupi aurat, dilengkapi hoodie dan saku dalam.",
-    basePrice: 375000,
-    category: "Perlengkapan Travel",
-    imageUrl: "/img/product-list/jaket-muslimah.jpg",
-    images: [
-      "/img/product-detail/jaket-muslimah-1.jpg",
-      "/img/product-detail/jaket-muslimah-2.jpg",
-    ],
-    stock: 95,
-    rating: 4.9,
-    paymentType: "rupiah",
-    variants: [
-      {
-        id: "V_WARNA_JK",
-        name: "Warna",
-        options: [
-          { id: "W_NAVY", name: "Navy", value: "Navy", priceModifier: 0 },
-          { id: "W_ARMY", name: "Army", value: "#4B5320", priceModifier: 5000 },
-          { id: "W_MAROON", name: "Maroon", value: "#800000", priceModifier: 5000 },
+
+        diskon: null,
+
+        koleksi: [
+            {
+                id: 4,
+                nama_koleksi: "Lainnya",
+                deskripsi: "Kategori universal yang cocok untuk semua pengguna.",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+                pivot: { produk_id: 4, koleksi_id: 4 },
+            },
         ],
-      },
-      {
-        id: "V_UKURAN_JK",
-        name: "Ukuran",
-        options: [
-          { id: "UK_S", value: "S", priceModifier: 0 },
-          { id: "UK_M", value: "M", priceModifier: 0 },
-          { id: "UK_L", value: "L", priceModifier: 15000 },
-          { id: "UK_XL", value: "XL", priceModifier: 25000 },
+    },
+
+    // Produk dengan banyak varian kombinasi warna + ukuran
+    {
+        id: 5,
+        nama_produk: "Jaket Travel Premium",
+        deskripsi: "Jaket travel premium yang dirancang untuk memberikan kenyamanan maksimal dalam berbagai kondisi perjalanan. Terbuat dari bahan ringan namun mampu memberikan kehangatan yang optimal pada cuaca dingin. Memiliki desain stylish, adem dipakai, dan tidak membuat gerah. Cocok digunakan untuk perjalanan umroh, trip luar negeri, pendakian ringan, hingga aktivitas harian.",
+        harga: 150000,
+        stok: 200,
+        kategori_id: 1,
+        jenis_id: 1,
+        gambar_utama: "/img/jaket-travel.png",
+        created_at: "2025-10-29T13:46:55.000000Z",
+        updated_at: "2025-10-29T13:46:55.000000Z",
+
+        kategori: {
+            id: 1,
+            nama_kategori: "Pakaian & Ihram",
+            deskripsi: "Koleksi pakaian ibadah serta perlengkapan tekstil untuk kenyamanan selama perjalanan.",
+            gambar_icon: "/icons/pakaian.png",
+            created_at: "2025-10-29T13:46:55.000000Z",
+            updated_at: "2025-10-29T13:46:55.000000Z",
+        },
+
+        jenis: {
+            id: 1,
+            nama_jenis: "uang",
+            deskripsi: "Pembayaran dilakukan menggunakan mata uang rupiah.",
+            created_at: "2025-10-29T13:46:55.000000Z",
+            updated_at: "2025-10-29T13:46:55.000000Z",
+        },
+
+        varian: [
+            {
+                id: 1,
+                produk_id: 5,
+                warna: "Biru",
+                ukuran: "S",
+                stok: 30,
+                tambahan_harga: 0,
+                kode_varian: "#0000FF",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+            },
+            {
+                id: 2,
+                produk_id: 5,
+                warna: "Biru",
+                ukuran: "M",
+                stok: 40,
+                tambahan_harga: 0,
+                kode_varian: "#0000FF",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+            },
+            {
+                id: 3,
+                produk_id: 5,
+                warna: "Biru",
+                ukuran: "L",
+                stok: 35,
+                tambahan_harga: 5000,
+                kode_varian: "#0000FF",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+            },
+            {
+                id: 4,
+                produk_id: 5,
+                warna: "Biru",
+                ukuran: "XL",
+                stok: 20,
+                tambahan_harga: 10000,
+                kode_varian: "#0000FF",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+            },
+
+            {
+                id: 5,
+                produk_id: 5,
+                warna: "Merah",
+                ukuran: "S",
+                stok: 25,
+                tambahan_harga: 0,
+                kode_varian: "#FF0000",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+            },
+            {
+                id: 6,
+                produk_id: 5,
+                warna: "Merah",
+                ukuran: "M",
+                stok: 30,
+                tambahan_harga: 0,
+                kode_varian: "#FF0000",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+            },
+            {
+                id: 7,
+                produk_id: 5,
+                warna: "Merah",
+                ukuran: "L",
+                stok: 25,
+                tambahan_harga: 5000,
+                kode_varian: "#FF0000",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+            }
         ],
-      },
-    ],
-    createdAt: "2025-10-14T00:00:00Z",
-  },
-  {
-    id: "P1010",
-    name: "Jaket Travel Muslim Unisex Premium",
-    description:
-      "Jaket ringan berbahan water-repellent, cocok untuk perjalanan Haji, Umroh, dan wisata halal. Didesain nyaman untuk pria maupun wanita.",
-    basePrice: 550000,
-    category: "Pakaian & Ihram",
-    imageUrl: "/img/product-list/jaket-travel.jpg",
-    images: [
-      "/img/product-detail/jaket-travel-1.jpg",
-      "/img/product-detail/jaket-travel-2.jpg",
-      "/img/product-detail/jaket-travel-3.jpg",
-    ],
-    stock: 180,
-    rating: 4.9,
-    paymentType: "rupiah",
-    variants: [
-      {
-        id: "V_WARNA_J",
-        name: "Warna",
-        options: [
-          { id: "W_HITAM", name: "Hitam", value: "Hitam", priceModifier: 0 },
-          { id: "W_ABU", name: "Abu-abu", value: "Abu-abu", priceModifier: 0 },
-          { id: "W_NAVY", name: "Navy", value: "Navy", priceModifier: 0 },
-          { id: "W_OLIVE", name: "Hijau Olive", value: "#808000", priceModifier: 20000 },
+
+        diskon: [
+            {
+                id: 1,
+                produk_id: 5,
+                varian_id: 3,
+                persentase: "20",
+                harga_potongan: 30000,
+                tanggal_mulai: "2025-11-01 00:00:00",
+                tanggal_selesai: "2025-11-30 23:59:59",
+                aktif: 1,
+                created_at: "2025-11-01T10:00:00.000000Z",
+            },
+            {
+                id: 2,
+                produk_id: 5,
+                varian_id: 7,
+                persentase: "15",
+                harga_potongan: 22500,
+                tanggal_mulai: "2025-11-05 00:00:00",
+                tanggal_selesai: "2025-11-15 23:59:59",
+                aktif: 1,
+                created_at: "2025-11-05T10:00:00.000000Z",
+            }
         ],
-      },
-      {
-        id: "V_UKURAN_J",
-        name: "Ukuran",
-        options: [
-          { id: "UK_S", value: "S", priceModifier: 0 },
-          { id: "UK_M", value: "M", priceModifier: 0 },
-          { id: "UK_L", value: "L", priceModifier: 20000 },
-          { id: "UK_XL", value: "XL", priceModifier: 30000 },
-        ],
-      },
-      {
-        id: "V_GENDER_J",
-        name: "Gender",
-        options: [{ id: "G_PRIA", value: "Pria", priceModifier: 0 }],
-      },
-    ],
-    createdAt: "2025-10-13T00:00:00Z",
-  },
+
+        koleksi: [
+            {
+                id: 3,
+                nama_koleksi: "Unisex",
+                deskripsi: "Produk yang cocok digunakan baik oleh pria maupun wanita berkat desainnya yang universal dan nyaman.",
+                created_at: "2025-10-29T13:46:55.000000Z",
+                updated_at: "2025-10-29T13:46:55.000000Z",
+                pivot: { produk_id: 5, koleksi_id: 3 }
+            }
+        ]
+    },
 ];

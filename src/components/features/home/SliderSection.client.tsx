@@ -26,32 +26,6 @@ export default function SliderClient({ slides, autoPlay = true }: SliderProps) {
     return () => clearTimeout(timer);
   }, []);
 
-  // refresh pagination dan navigation setelah inisialisasi
-  useEffect(() => {
-    if (swiperRef.current) {
-      const swiper = swiperRef.current;
-      setTimeout(() => {
-        if (
-          swiper.params.navigation &&
-          typeof swiper.params.navigation !== "boolean"
-        ) {
-          swiper.params.navigation.prevEl = prevRef.current;
-          swiper.params.navigation.nextEl = nextRef.current;
-          swiper.navigation.init();
-          swiper.navigation.update();
-        }
-        if (
-          swiper.params.pagination &&
-          typeof swiper.params.pagination !== "boolean"
-        ) {
-          swiper.params.pagination.el = paginationRef.current;
-          swiper.pagination.init();
-          swiper.pagination.update();
-        }
-      }, 100); // kasih waktu refs attach
-    }
-  }, [ready]);
-
   return (
     <div className="w-full overflow-x-hidden">
       <div className="container mx-auto px-4 sm:px-6 py-4 md:py-6 lg:pt-[161px]">
@@ -69,11 +43,32 @@ export default function SliderClient({ slides, autoPlay = true }: SliderProps) {
               }
               pagination={{
                 clickable: true,
-                el: paginationRef.current,
+                el: paginationRef.current, // <= tetap ada
               }}
               navigation={{
-                prevEl: prevRef.current,
+                prevEl: prevRef.current, // <= tetap ada
                 nextEl: nextRef.current,
+              }}
+              onAfterInit={(swiper) => {
+                // pastikan ref sudah ada
+                if (!prevRef.current || !nextRef.current || !paginationRef.current) return;
+
+                // SET navigation
+                swiper.params.navigation = {
+                  ...swiper.params.navigation,
+                  prevEl: prevRef.current,
+                  nextEl: nextRef.current,
+                };
+                swiper.navigation.init();
+                swiper.navigation.update();
+
+                // SET pagination
+                swiper.params.pagination = {
+                  ...swiper.params.pagination,
+                  el: paginationRef.current,
+                };
+                swiper.pagination.init();
+                swiper.pagination.update();
               }}
               className="w-full h-full aspect-[4/2] md:aspect-[8.5/2] overflow-visible rounded-3xl md:rounded-2xl"
             >
@@ -132,7 +127,7 @@ export default function SliderClient({ slides, autoPlay = true }: SliderProps) {
           <div
             ref={paginationRef}
             className="absolute bottom-5 left-1/2 -translate-x-1/2 flex space-x-3 z-[9999] custom-pagination"
-          ></div>
+          />
         </div>
 
         {/* Pagination style */}

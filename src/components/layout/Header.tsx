@@ -2,12 +2,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 // Components
 import { MobileSidebar } from "./MobileSidebar";
+import SignIn from "../features/auth/SignIn";
+import SignUp from "../features/auth/SignUp";
+import Dropdown from "@/components/ui/Dropdown";
+import { useToast } from "@/components/ui/Toast";
 
 // Context
 import { useSearch } from "@/context/SearchContext";
+import { useModal } from "@/context/ModalContext";
+import { useAuth } from "@/context/AuthContext";
 
 // Icons
 import { navIcons } from "@utils/helpers";
@@ -16,14 +23,12 @@ import {
   Package,
   Tag,
   UserRound,
-  Coins,
   LogOut,
   Instagram,
   Facebook,
   Youtube,
   ShoppingCart,
   Search,
-  X
 } from "lucide-react";
 
 // 🧠 Dummy meta keywords (bisa ganti dari API)
@@ -64,6 +69,11 @@ const navLinksMobile = [
 ];
 
 const Header: React.FC = () => {
+  const hydrated = useAuth((s) => s.hydrated);
+  if (!hydrated) return null;
+
+  const router = useRouter();
+
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -83,8 +93,20 @@ const Header: React.FC = () => {
   const [cursorVisible, setCursorVisible] = useState(true);
   const [isInputFocused, setIsInputFocused] = useState(false);
 
+  const user = useAuth((state) => state.user);
+
+  const openModal = useModal((s) => s.openModal);
+  const closeModal = useModal((s) => s.closeModal);
+  const { showToast } = useToast();
+
   // ✅ Ambil query dari URL (misal ?query=tas)
   const queryParam = searchParams.get("query") || "";
+
+  const handleLogout = () => {
+    useAuth.getState().logout();
+    showToast("Berhasil logout", "success");
+    router.push("/");
+  };
 
   // 🧠 Filter suggestion
   useEffect(() => {
@@ -139,7 +161,7 @@ const Header: React.FC = () => {
 
         // Jika sudah lengkap → mulai jeda lalu delete
         if (nextText === currentKeyword) {
-          setTimeout(() => setIsDeleting(true), 2000); // jeda 1 detik
+          setTimeout(() => setIsDeleting(true), 1000); // jeda 1 detik
         }
       } else {
         // Menghapus
@@ -169,6 +191,11 @@ const Header: React.FC = () => {
     return () => clearInterval(interval);
   }, [isInputFocused]);
 
+  const sidebarLinks =
+    user === null
+      ? [...navLinksMobile.filter((s) => s.title !== "Akun")]
+      : [...navLinksMobile];
+
   return (
     <header className="w-full">
       <div className="fixed top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 transition-all duration-300">
@@ -197,15 +224,68 @@ const Header: React.FC = () => {
                 Beli Paket Haji & Umroh
               </a>
             </div>
-            <div className="flex items-center gap-2">
-              <button className="text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors">
-                Masuk
-              </button>
-              <span className="text-sm text-neutral-400">|</span>
-              <button className="text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors">
-                Daftar
-              </button>
-            </div>
+            {user !== null ? (
+              <Dropdown
+                trigger={
+                  <div className="flex items-center gap-2 cursor-pointer">
+                    {user.profile_photo_path ? (
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_API_BAITULLAH}/storage/${user.profile_photo_path}`}
+                        alt="Profile"
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex justify-center items-center w-6 h-6 rounded-full bg-gray-200">
+                        <UserRound className="w-4 h-4 text-neutral-600 hover:text-neutral-900" />
+                      </div>
+                    )}
+                    <p className="text-sm text-neutral-600">{user.name}</p>
+                  </div>
+                }
+                className="flex items-center gap-2"
+              >
+                <div className="flex flex-col text-sm">
+                  <button className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
+                    <UserRound className="w-4 h-4" />
+                    Profil
+                  </button>
+                  <button className="flex items-center gap-2 px-3 py-2 text-primary-500 hover:bg-red-50 text-left cursor-pointer" onClick={() => handleLogout()} >
+                    <LogOut className="w-4 h-4" />
+                    Keluar
+                  </button>
+                </div>
+              </Dropdown>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  className="text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors cursor-pointer"
+                  onClick={() =>
+                    openModal({
+                      title: "Masuk",
+                      size: "md",
+                      mobileMode: "normal",
+                      content: (<SignIn />),
+                    })
+                  }
+                >
+                  Masuk
+                </button>
+                <span className="text-sm text-neutral-400">|</span>
+                <button
+                  className="text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors cursor-pointer"
+                  onClick={() =>
+                    openModal({
+                      title: "Daftar",
+                      size: "md",
+                      mobileMode: "normal",
+                      content: (<SignUp />),
+                    })
+                  }
+                >
+                  Daftar
+                </button>
+              </div>
+            )}
           </div>
 
           {/* 🔸 Main bar */}
@@ -342,9 +422,39 @@ const Header: React.FC = () => {
               <Link href="/cart" className="flex-shrink-0">
                 <ShoppingCart className="w-7 h-7 text-neutral-700 hover:text-black transition" />
               </Link>
-              <Link href="/profile" className="flex-shrink-0 block lg:hidden">
-                <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />
-              </Link>
+
+              {user === null ? (
+                <button
+                  className="flex-shrink-0 block lg:hidden cursor-pointer"
+                  onClick={() => {
+                    openModal({
+                      title: "Masuk",
+                      size: "md",
+                      mobileMode: "full",
+                      content: (<SignIn />),
+                    });
+                  }}
+                >
+                  <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />
+                </button>
+              ) : (
+                <Dropdown
+                  trigger={
+                    <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />
+                  }
+                >
+                  <div className="flex flex-col text-sm">
+                    <button className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
+                      <UserRound className="w-4 h-4" />
+                      Profil
+                    </button>
+                    <button className="flex items-center gap-2 px-3 py-2 text-primary-500 hover:bg-red-50 text-left cursor-pointer" onClick={() => handleLogout()} >
+                      <LogOut className="w-4 h-4" />
+                      Keluar
+                    </button>
+                  </div>
+                </Dropdown>
+              )}
             </div>
           </div>
         </nav>
@@ -354,7 +464,7 @@ const Header: React.FC = () => {
       <MobileSidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        links={navLinksMobile}
+        links={sidebarLinks}
         activePath={pathname}
       />
     </header>

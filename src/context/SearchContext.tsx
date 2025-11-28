@@ -39,10 +39,20 @@ export const SearchProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
 
-    // 2️⃣ Jika kosong dan sudah di ProductList → hapus query tanpa pindah halaman
-    if (trimmed.length === 0 && currentPath === "/productlist") {
-      router.replace("/productlist"); // reset URL tanpa query
-      return;
+    // 2️⃣ Jika kosong, cek dulu apakah user sedang di product detail
+    //    Jika iya → jangan pindah halaman
+    if (trimmed.length === 0) {
+      if (currentPath.startsWith("/product") && currentPath !== "/productlist") {
+        // sedang di product detail → jangan redirect
+        setSearchTerm("");
+        return;
+      }
+
+      // kalau sedang di productlist → reset query
+      if (currentPath === "/productlist") {
+        router.replace("/productlist");
+        return;
+      }
     }
 
     // 3️⃣ Jika ada teks → arahkan ke productlist?query=

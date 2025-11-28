@@ -1,7 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useProduk } from "@hooks/useProduk";
+
+// Hooks
+import { useProducts } from "@hooks/useProducts";
 
 // Components
 import LoadingSpinner from "@components/ui/LoadingSpinner";
@@ -25,16 +27,17 @@ const ProductList: React.FC<ProductListProps> = ({
   showPagination = true,
   searchQuery = "",
 }) => {
-  const { products, loading, error } = useProduk();
+  const { products, loading, error } = useProducts();
+  const productData = Array.isArray(products?.data) ? products.data : [];
   const [currentPage, setCurrentPage] = useState(1);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
 
   // Filter berdasarkan paymentType & searchQuery
-  const filteredProducts = products.filter((p) => {
+  const filteredProducts = productData.filter((p) => {
     const matchesType = paymentType
-      ? p.jenis.nama_jenis === paymentType
+      ? p.jenis.nama_jenis.toLowerCase() === paymentType.toLowerCase()
       : true;
 
     const matchesQuery = searchQuery

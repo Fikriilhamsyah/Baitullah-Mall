@@ -8,7 +8,7 @@ import "swiper/css/thumbs";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 interface ProductImageGalleryProps {
-  images: string[];
+  images: {};
   name: string;
   layout?: "mobile" | "desktop";
 }
@@ -18,6 +18,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
   name,
   layout = "desktop",
 }) => {
+  console.log("images: ", images);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -113,7 +114,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
             <SwiperSlide key={index}>
               <div className="relative">
                 <img
-                  src={img}
+                  src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${img}`}
                   alt={`${name}-${index}`}
                   className="w-full h-auto aspect-[4/5] object-cover cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
                   onClick={() => openPreview(index)}

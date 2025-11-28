@@ -70,6 +70,14 @@ export function HeroSection(props: HeroSectionProps) {
   const inputRef = useRef<HTMLDivElement>(null);
   const { searchTerm, setSearchTerm, handleSearch } = useSearch();
 
+  // Placeholder animated
+  const [animatedPlaceholder, setAnimatedPlaceholder] = useState("");
+  const [keywordIndex, setKeywordIndex] = useState(0);
+  const [charIndex, setCharIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [cursorVisible, setCursorVisible] = useState(true);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
   // ✅ Sinkronisasi defaultSearch
   useEffect(() => {
     if (props.defaultSearch) {
@@ -129,6 +137,57 @@ export function HeroSection(props: HeroSectionProps) {
     setMaxPrice("");
   };
 
+  // Animated placeholder effect
+  useEffect(() => {
+    // Stop animasi jika user mengetik manual
+    if (isInputFocused || searchTerm.trim().length > 0) {
+      setAnimatedPlaceholder("");
+      return;
+    }
+
+    const currentKeyword = metaKeywords[keywordIndex];
+
+    let typingSpeed = isDeleting ? 50 : 100; // lebih cepat saat menghapus
+
+    const timeout = setTimeout(() => {
+      if (!isDeleting) {
+        // Mengetik
+        const nextText = currentKeyword.slice(0, charIndex + 1);
+        setAnimatedPlaceholder(nextText);
+        setCharIndex((prev) => prev + 1);
+
+        // Jika sudah lengkap → mulai jeda lalu delete
+        if (nextText === currentKeyword) {
+          setTimeout(() => setIsDeleting(true), 1000); // jeda 1 detik
+        }
+      } else {
+        // Menghapus
+        const nextText = currentKeyword.slice(0, charIndex - 1);
+        setAnimatedPlaceholder(nextText);
+        setCharIndex((prev) => prev - 1);
+
+        // Jika sudah terhapus → lanjut ke keyword berikutnya
+        if (nextText === "") {
+          setIsDeleting(false);
+          setKeywordIndex((prev) => (prev + 1) % metaKeywords.length);
+        }
+      }
+    }, typingSpeed);
+
+    return () => clearTimeout(timeout);
+  }, [charIndex, isDeleting, keywordIndex, searchTerm]);
+
+  // Cursor blinking effect
+  useEffect(() => {
+    if (isInputFocused) return;
+
+    const interval = setInterval(() => {
+      setCursorVisible((prev) => !prev);
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [isInputFocused]);
+
   return (
     <section>
       <div className="w-full bg-white hero-mobile-container md:hero-tablet-container px-4 md:px-6 py-4 md:py-6 pt-[80px] md:pt-[89px] text-white">
@@ -138,19 +197,36 @@ export function HeroSection(props: HeroSectionProps) {
             <div ref={inputRef} className="flex-grow relative">
               <input
                 type="text"
-                placeholder="Cari produk..."
+                placeholder={
+                  !isInputFocused && searchTerm.length === 0
+                    ? `${animatedPlaceholder}${cursorVisible ? " |" : ""}`
+                    : ""
+                }
                 value={searchTerm}
+                onFocus={() => {
+                  setIsInputFocused(true);
+                  setShowSuggestions(suggestions.length > 0);
+                }}
+
+                onBlur={() => {
+                  setIsInputFocused(false);
+
+                  // Reset animasi supaya mulai dari awal
+                  if (searchTerm.length === 0) {
+                    setAnimatedPlaceholder("");
+                    setCharIndex(0);
+                    setIsDeleting(false);
+                  }
+                }}
+
                 onChange={(e) => {
                   const value = e.target.value;
                   setSearchTerm(value);
 
+                  // Jika kosong → tampilkan semua produk
                   if (value.trim().length === 0) {
                     handleSearch("");
-                    if (props.onSearch) props.onSearch("");
                   }
-                }}
-                onFocus={() => {
-                  if (suggestions.length > 0) setShowSuggestions(true);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && searchTerm.trim().length > 0) {

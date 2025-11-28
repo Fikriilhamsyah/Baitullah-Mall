@@ -1,15 +1,19 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { cn } from "@utils/helpers";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Eye, EyeOff } from "lucide-react";
 
 interface InputFieldProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   icon?: LucideIcon;
   variant?: "default" | "rounded";
-  type?: "text" | "number" | "textarea" | "select";
+  type?: "text" | "number" | "textarea" | "select" | "email" | "password";
   options?: { value: string; label: string }[];
+  autoComplete?: string;
+  id?: string;
+  name?: string;
+  required?: boolean;
 }
 
 export const InputField: React.FC<InputFieldProps> = ({
@@ -21,8 +25,18 @@ export const InputField: React.FC<InputFieldProps> = ({
   className,
   value,
   onChange,
+  autoComplete,
+  id,
+  name,
+  required,
   ...props
 }) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [isTouched, setIsTouched] = useState(false);
+
+  /** FIELD ERROR (jika required & sudah disentuh & kosong) */
+  const hasError = required && isTouched && (!value || value === "");
+
   const roundedStyle =
     variant === "rounded" ? "rounded-full" : "rounded-lg";
 
@@ -30,26 +44,23 @@ export const InputField: React.FC<InputFieldProps> = ({
     "w-full bg-white text-neutral-800 border border-gray-300",
     "focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none transition-all",
     Icon ? "pl-10" : "pl-4",
-    "pr-4 py-2",
+    "pr-10 py-2", // pr-10 agar ada space jika password icon kanan
     roundedStyle,
     className
   );
 
-  // 🔹 Fungsi untuk mencegah input negatif di field number
+  // 🔹 Mencegah input negatif type=number
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-
-    // Kosongkan atau validasi agar tidak di bawah 0
     if (value === "" || Number(value) >= 0) {
       onChange?.(e);
     } else {
-      // Reset ke 0 jika user masukkan negatif
       e.target.value = "0";
       onChange?.(e);
     }
   };
 
-  // 🔹 Fungsi handler select agar tetap sinkron dengan state React
+  // 🔹 Select tetap sync
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onChange?.(e as any);
   };
@@ -63,6 +74,7 @@ export const InputField: React.FC<InputFieldProps> = ({
       )}
 
       <div className="relative flex items-center">
+        {/* Icon kiri */}
         {Icon && (
           <Icon
             size={18}
@@ -70,17 +82,24 @@ export const InputField: React.FC<InputFieldProps> = ({
           />
         )}
 
+        {/* TEXTAREA */}
         {type === "textarea" ? (
           <textarea
+            id={id}
+            name={name}
             {...(props as any)}
             className={cn(
               baseClasses,
               "resize-none h-24",
-              variant === "rounded" && "rounded-lg" // biar textarea tetap natural
+              variant === "rounded" && "rounded-lg"
             )}
           />
+
         ) : type === "select" ? (
+          // SELECT INPUT
           <select
+            id={id}
+            name={name}
             value={value ?? ""}
             onChange={handleSelectChange}
             {...(props as any)}
@@ -93,20 +112,81 @@ export const InputField: React.FC<InputFieldProps> = ({
               </option>
             ))}
           </select>
+
         ) : type === "number" ? (
+          // NUMBER INPUT
           <input
+            id={id}
+            name={name}
             {...props}
             type="number"
             min={0}
+            inputMode="numeric"
+            pattern="[0-9]*" 
             value={value}
             onChange={handleNumberChange}
+            autoComplete={autoComplete}
             className={baseClasses}
           />
+
+        ) : type === "email" ? (
+          <input
+            id={id}
+            name={name}
+            {...props}
+            type="email"
+            inputMode="email"
+            autoComplete={autoComplete ?? "email"}
+            value={value}
+            onChange={onChange}
+            className={baseClasses}
+          />
+
+        ) : type === "password" ? (
+          // PASSWORD INPUT + TOGGLE
+          <>
+            <input
+              id={id}
+              name={name}
+              {...props}
+              type={showPassword ? "text" : "password"}
+              value={value}
+              onChange={onChange}
+              autoComplete={autoComplete ?? "current-password"}
+              className={baseClasses}
+            />
+
+            <button
+              type="button"
+              className="absolute right-3 text-neutral-600 hover:text-neutral-900 transition"
+              onClick={() => setShowPassword((p) => !p)}
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </>
+
         ) : (
-          <input {...props} type={type} className={baseClasses} />
+          // INPUT DEFAULT
+          <input
+            id={id}
+            name={name}
+            {...props}
+            type={type}
+            value={value}
+            onChange={onChange}
+            autoComplete={autoComplete}
+            className={baseClasses}
+          />
+        )}
+
+        {/* ERROR MESSAGE */}
+        {hasError && (
+          <p className="text-xs text-red-500">Field ini wajib diisi</p>
         )}
       </div>
 
+      {/* Contoh Penggunaan */}
       {/* Input default */}
       {/* <InputField placeholder="Cari produk..." icon={Search} /> */}
 
