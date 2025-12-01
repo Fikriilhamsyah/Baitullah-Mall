@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ICategory } from "../types/ICategory";
-import { api } from "../services/api"; // 📌 sekarang pakai API asli
-// import { mockApi } from "../services/api"; // bisa hapus kalau sudah tidak dipakai
+import { api } from "../services/api";
+import { ApiResponse } from "../types/ApiResponse";
 
 export const useCategories = () => {
   const [categories, setCategories] = useState<ICategory[]>([]);
@@ -15,14 +15,16 @@ export const useCategories = () => {
         setError(null);
 
         const response = await api.getCategories();
-        setCategories(response.data);
-
+        const result = response.data as ApiResponse<ICategory[]>;
+        setCategories(result.data);
+        
       } catch (err) {
-        let errorMessage = "Terjadi kesalahan";
+        console.error("useCategories Error: ", err);
+
+        let errorMessage = "Gagal memuat kategori";
         if (err instanceof Error) errorMessage = err.message;
 
         setError(errorMessage);
-        console.error(err);
       } finally {
         setLoading(false);
       }

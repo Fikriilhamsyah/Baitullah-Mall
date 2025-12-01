@@ -1,6 +1,6 @@
 import { ISlide } from "../types/ISlide";
 
-export const slides: ISlide[] = [
+export const SlidesData: ISlide[] = [
   {
     imageLg: "/img/banner/banner-slider-8-lg.webp",
     imageMdSm: "/img/banner/banner-slider-8-md-sm.webp",

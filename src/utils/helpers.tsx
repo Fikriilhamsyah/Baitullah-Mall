@@ -1,5 +1,4 @@
 import React from "react";
-import { ProductCategory } from "../types/IProduct";
 import {
   Shirt,
   Sparkles,
@@ -14,16 +13,6 @@ import {
   Box,
   CreditCard,
 } from "lucide-react";
-
-// Icon kategori
-export const categoryIcons: Record<ProductCategory, React.ReactNode> = {
-  "Pakaian & Ihram": <Shirt className="w-4 h-4" />,
-  "Aksesoris Ibadah": <Sparkles className="w-4 h-4" />,
-  "Perlengkapan Travel": <Navigation className="w-4 h-4" />,
-  "Kesehatan & Kebersihan": <HeartPulse className="w-4 h-4" />,
-  "Buku & Panduan": <BookOpen className="w-4 h-4" />,
-  "Paket Bundling": <Package className="w-4 h-4" />,
-};
 
 // Icon Navbar
 export const navIcons = {

@@ -8,34 +8,38 @@ import "swiper/css/thumbs";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 interface ProductImageGalleryProps {
-  images: {};
+  images: any; // bisa produk object
   name: string;
   layout?: "mobile" | "desktop";
 }
 
 const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
-  images,
+  images: product,
   name,
   layout = "desktop",
 }) => {
-  console.log("images: ", images);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const mainSwiperRef = useRef<any>(null);
   const thumbsContainerRef = useRef<HTMLDivElement>(null);
 
+  // 🔹 Siapkan array gambar: varian + gambar utama
+  const images: string[] = [
+    product.gambar_utama,
+    ...(product.varian?.map((v: any) => v.gambar) || []),
+  ];
+
   const totalImages = images.length;
 
-  // ✅ Ketika slide utama berubah, scroll thumbnail ke tengah
+  // ✅ Scroll thumbnail ke tengah saat activeIndex berubah
   useEffect(() => {
     const container = thumbsContainerRef.current;
     if (!container) return;
     const activeThumb = container.children[activeIndex] as HTMLElement;
     if (activeThumb) {
       const containerWidth = container.offsetWidth;
-      const thumbCenter =
-        activeThumb.offsetLeft + activeThumb.offsetWidth / 2;
+      const thumbCenter = activeThumb.offsetLeft + activeThumb.offsetWidth / 2;
       const scrollPosition = thumbCenter - containerWidth / 2;
       container.scrollTo({
         left: scrollPosition,
@@ -132,7 +136,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
           ))}
         </Swiper>
 
-        {/* 🔹 Thumbnail Scrollable (bukan drag swiper) */}
+        {/* 🔹 Thumbnail Scrollable */}
         {images.length > 1 && (
           <div
             ref={thumbsContainerRef}
@@ -151,7 +155,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
                 }`}
               >
                 <img
-                  src={img}
+                  src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${img}`}
                   alt={`${name}-thumb-${index}`}
                   className="w-full h-full object-cover"
                   onError={(e) =>
@@ -183,29 +187,27 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
               <X className="w-5 h-5" />
             </button>
 
-            {/* Tombol Navigasi Kiri */}
+            {/* Tombol Navigasi */}
             {images.length > 1 && (
-              <button
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg"
-                onClick={handlePrevImage}
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-            )}
-
-            {/* Tombol Navigasi Kanan */}
-            {images.length > 1 && (
-              <button
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg"
-                onClick={handleNextImage}
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
+              <>
+                <button
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg"
+                  onClick={handlePrevImage}
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-800 p-2 rounded-full shadow-lg"
+                  onClick={handleNextImage}
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
             )}
 
             {/* Gambar Preview */}
             <img
-              src={previewImage}
+              src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${previewImage}`}
               alt="Preview"
               className="max-w-full max-h-[85vh] rounded-lg object-contain shadow-xl"
             />

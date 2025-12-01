@@ -8,8 +8,10 @@ import "swiper/css/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SlidesData } from "@/data/SlidesData";
 
+type SlideType = typeof SlidesData[number];
+
 interface SliderProps {
-  slides: SlidesData[];
+  slides: SlideType[];
   autoPlay?: boolean;
 }
 
@@ -20,7 +22,6 @@ export default function SliderClient({ slides, autoPlay = true }: SliderProps) {
   const swiperRef = useRef<any>(null);
   const [ready, setReady] = useState(false);
 
-  // pastikan render ulang setelah ref siap
   useEffect(() => {
     const timer = setTimeout(() => setReady(true), 50);
     return () => clearTimeout(timer);
@@ -41,32 +42,31 @@ export default function SliderClient({ slides, autoPlay = true }: SliderProps) {
                   ? { delay: 3000, disableOnInteraction: false }
                   : false
               }
+              /** ========= FIX TYPE ERROR ========= **/
               pagination={{
                 clickable: true,
-                el: paginationRef.current, // <= tetap ada
+                el: paginationRef.current as any,
               }}
               navigation={{
-                prevEl: prevRef.current, // <= tetap ada
-                nextEl: nextRef.current,
+                prevEl: prevRef.current as any,
+                nextEl: nextRef.current as any,
               }}
               onAfterInit={(swiper) => {
-                // pastikan ref sudah ada
-                if (!prevRef.current || !nextRef.current || !paginationRef.current) return;
+                if (
+                  !prevRef.current ||
+                  !nextRef.current ||
+                  !paginationRef.current
+                )
+                  return;
 
-                // SET navigation
-                swiper.params.navigation = {
-                  ...swiper.params.navigation,
-                  prevEl: prevRef.current,
-                  nextEl: nextRef.current,
-                };
+                const nav = swiper.params.navigation as any;
+                nav.prevEl = prevRef.current;
+                nav.nextEl = nextRef.current;
                 swiper.navigation.init();
                 swiper.navigation.update();
 
-                // SET pagination
-                swiper.params.pagination = {
-                  ...swiper.params.pagination,
-                  el: paginationRef.current,
-                };
+                const pag = swiper.params.pagination as any;
+                pag.el = paginationRef.current;
                 swiper.pagination.init();
                 swiper.pagination.update();
               }}

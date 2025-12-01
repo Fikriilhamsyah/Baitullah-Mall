@@ -1,10 +1,21 @@
 "use client";
 import React, { useEffect, useState } from "react";
+
+// Icons
 import { X } from "lucide-react";
+
+// Framer Motion
 import { motion, AnimatePresence } from "framer-motion";
+
+// Components
 import { InputField } from "../../ui/InputField";
 import CheckboxGroup from "../../ui/CheckboxGroup";
 import { Button } from "../../ui/Button";
+
+// Hooks
+import { useCategories } from "@hooks/useCategories";
+import { useCollection } from "@hooks/useCollection";
+import { usePaymentType } from "@/hooks/usePaymentType";
 
 interface ProductFilterProps {
   open: boolean;
@@ -14,14 +25,16 @@ interface ProductFilterProps {
   totalCount: number;
   totalAll: number;
   category: string[];
-  gender: string[];
+  collectionFilter: string[];
+  paymentTypeFilter: string[];
   sortBy: string;
   minPrice: number | "";
   maxPrice: number | "";
   productType: string[];
 
   onChangeCategory: (val: string[]) => void;
-  onChangeGender: (val: string[]) => void;
+  onChangeCollectionFilter: (val: string[]) => void;
+  onChangePaymentTypeFilter: (val: string[]) => void;
   onChangeSort: (val: string) => void;
   onChangeMinPrice: (val: number | "") => void;
   onChangeMaxPrice: (val: number | "") => void;
@@ -36,19 +49,29 @@ export function ProductFilter({
   totalCount,
   totalAll,
   category,
-  gender,
+  collectionFilter,
+  paymentTypeFilter,
   sortBy,
   minPrice,
   maxPrice,
   productType,
   onChangeCategory,
-  onChangeGender,
+  onChangeCollectionFilter,
+  onChangePaymentTypeFilter,
   onChangeSort,
   onChangeMinPrice,
   onChangeMaxPrice,
   onChangeProductType,
   onResetFilters,
 }: ProductFilterProps) {
+  const { categories, loading: loadingCategories, error: categoryError } = useCategories();
+  const { collection, loading: loadingCollection, error: collectionError } = useCollection();
+  const { paymentType, loading: loadingPaymentType, error: paymentTypeError } = usePaymentType();
+
+  const categoryList = Array.isArray(categories) ? categories : [];
+  const collectionList = Array.isArray(collection) ? collection : [];
+  const paymentTypeList = Array.isArray(paymentType) ? paymentType : [];
+
   // 🔒 Disable scroll body ketika sidebar aktif
   useEffect(() => {
     if (open) {
@@ -165,12 +188,9 @@ export function ProductFilter({
                     Jenis Pembayaran Produk
                   </p>
                   <CheckboxGroup
-                    options={[
-                      { label: "Produk Biasa", value: "uang" },
-                      { label: "Tukar Poin", value: "poin" },
-                    ]}
-                    selected={productType}
-                    onChange={onChangeProductType}
+                    options={paymentTypeList.map((pay) => ({ label: pay.nama_jenis, value: pay.nama_jenis, }))}
+                    selected={paymentTypeFilter}
+                    onChange={onChangePaymentTypeFilter}
                   />
                 </div>
 
@@ -180,34 +200,21 @@ export function ProductFilter({
                     Kategori
                   </p>
                   <CheckboxGroup
-                    options={[
-                      { label: "Pakaian & Ihram", value: "Pakaian & Ihram" },
-                      { label: "Aksesoris Ibadah", value: "Aksesoris Ibadah" },
-                      { label: "Perlengkapan Travel", value: "Perlengkapan Travel" },
-                      { label: "Kesehatan & Kebersihan", value: "Kesehatan & Kebersihan" },
-                      { label: "Buku Panduan", value: "Buku & Panduan" },
-                      { label: "Oleh-oleh & Souvenir", value: "Oleh-oleh & Souvenir" },
-                      { label: "Paket Bundling", value: "Paket Bundling" },
-                    ]}
+                    options={categoryList.map(cat => ({ label: cat.nama_kategori, value: cat.nama_kategori }))}
                     selected={category}
                     onChange={onChangeCategory}
                   />
                 </div>
 
-                {/* Gender */}
+                {/* Koleksi / Gender */}
                 <div>
                   <p className="text-sm md:text-md font-bold text-neutral-700 mb-2">
                     Gender
                   </p>
                   <CheckboxGroup
-                    options={[
-                      { label: "Pria", value: "Pria" },
-                      { label: "Wanita", value: "Wanita" },
-                      { label: "Unisex", value: "Unisex" },
-                      { label: "Lainnya", value: "Lainnya" },
-                    ]}
-                    selected={gender}
-                    onChange={onChangeGender}
+                    options={collectionList.map(col => ({ label: col.nama_koleksi, value: col.nama_koleksi }))}
+                    selected={collectionFilter}
+                    onChange={onChangeCollectionFilter}
                   />
                 </div>
 

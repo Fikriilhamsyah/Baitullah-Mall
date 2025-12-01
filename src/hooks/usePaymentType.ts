@@ -1,22 +1,22 @@
 import { useEffect, useState } from "react";
-import { ICollection } from "@/types/ICollection";
+import { IJenis } from "@/types/IProduct";
 import { api } from "@/services/api";
 import { ApiResponse } from "@/types/ApiResponse";
 
-export const useCollection = () => {
-  const [collection, setCollection] = useState<ICollection[]>([]);
+export const usePaymentType = () => {
+  const [paymentType, setPaymentType] = useState<IJenis[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const getCollection = async () => {
+    const getPaymentType = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const res = await api.getCollection();
-        const result = res.data as ApiResponse<ICollection[]>;
-        setCollection(result.data);
+        const res = await api.getPaymentType();
+        const result = res.data as ApiResponse<IJenis[]>;
+        setPaymentType(result.data);
 
       } catch (err) {
         console.error("useCategories Error: ", err);
@@ -30,8 +30,8 @@ export const useCollection = () => {
       }
     };
 
-    getCollection();
+    getPaymentType();
   }, []);
 
-  return { collection, loading, error };
+  return { paymentType, loading, error };
 };

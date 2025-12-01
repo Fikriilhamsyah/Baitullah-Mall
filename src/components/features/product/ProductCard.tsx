@@ -18,15 +18,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const variantColors =
     product.varian?.map((o) => o.kode_varian) || [];
 
-  const groupedVariants = Object.values(
-    product.varian?.reduce((acc: any, v) => {
-      const key = v.kode_warna;
-      if (!acc[key]) {
-        acc[key] = { warna: v.warna, kode_warna: v.kode_warna };
-      }
-      return acc;
-    }, {}) || {}
-  );
+  const groupedVariants =
+    product.varian
+      ? Object.values(
+          product.varian.reduce<Record<string, { warna: string | null; kode_warna: string }>>(
+            (acc, v) => {
+              if (!v.kode_warna) return acc; // guard optional
+              if (!acc[v.kode_warna]) {
+                acc[v.kode_warna] = { warna: v.warna, kode_warna: v.kode_warna };
+              }
+              return acc;
+            },
+            {}
+          )
+        )
+      : [];
 
   const sizeOrder = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
@@ -108,7 +114,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </p>
 
         {/* Rating */}
-        {product.rating && <ProductRatingStars rating={product.rating} />}
+        {/* {product.rating && <ProductRatingStars rating={product.rating} />} */}
 
         {/* Jumlah tersedia */}
         {product.varian && (

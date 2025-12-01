@@ -19,24 +19,26 @@ import { Button } from "@/components/ui/Button";
 import { useProducts } from "@hooks/useProducts";
 import { useCategories } from "@hooks/useCategories";
 import { useCollection } from "@hooks/useCollection";
+import { usePaymentType } from "@hooks/usePaymentType";
 
 export default function ProductListPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const kategoriId = searchParams.get("kategori_id");
+
   const { products, loading: productLoading, error } = useProducts();
   const { categories, loading: loadingCategories, error: categoryError } = useCategories();
   const { collection, loading: loadingCollection, error: collectionError } = useCollection();
+  const { paymentType, loading: loadingPaymentType, error: payementTypeError } = usePaymentType();
 
-  const categoryList = categories?.data ?? [];
-  const collectionList = Array.isArray(collection)
-    ? collection
-    : Array.isArray(collection?.data)
-    ? collection.data
-    : [];
+  const categoryList = Array.isArray(categories) ? categories : [];
+  const collectionList = Array.isArray(collection) ? collection : [];
+  const paymentTypeList = Array.isArray(paymentType) ? paymentType : [];
 
+  // State
   const [category, setCategory] = useState<string[]>([]);
-  const [collectionFilter, setCollectionFilter] = useState<number[]>([]);
+  const [collectionFilter, setCollectionFilter] = useState<string[]>([]);
+  const [paymentTypeFilter, setPaymentTypeFilter] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>("");
   const [productType, setProductType] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState<number | "">("");
@@ -50,43 +52,51 @@ export default function ProductListPage() {
   const [showScrollDown, setShowScrollDown] = useState(true);
   const [showScrollUp, setShowScrollUp] = useState(false);
 
-  const kategoriMap: Record<string, string> = {
-    "1": "Pakaian & Ihram",
-    "2": "Aksesoris Ibadah",
-    "3": "Perlengkapan Travel",
-    "4": "Kesehatan & Kebersihan",
-    "5": "Buku & Panduan",
-    "6": "Oleh-oleh & Souvenir",
-    "7": "Paket Bundling",
-  };
+  // 🔹 Ambil filter awal dari URL + kategori API
+  useEffect(() => {
+    let initialCategory: string[] = [];
+    const initialCollectionFilter = searchParams.get("collection")?.split(",") || [];
+    const initialSort = searchParams.get("sort") || "";
+    const initialType = searchParams.get("type")?.split(",") || [];
+    const initialMin = searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : "";
+    const initialMax = searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : "";
+    const page = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
 
+    // Ambil dari URL atau kategori_id tapi pakai nama kategori dari API
+    if (kategoriId && categoryList.length > 0) {
+      const kategoriIdNumber = Number(kategoriId); // convert ke number
+      const matchedCategory = categoryList.find(cat => cat.id === kategoriIdNumber);
+      const urlCategory = searchParams.get("category");
+      if (matchedCategory || urlCategory) {
+        initialCategory = [urlCategory || matchedCategory?.nama_kategori || ""].filter(Boolean);
+      }
+    } else {
+      initialCategory = searchParams.get("category")?.split(",") || [];
+    }
+
+    setCategory(initialCategory);
+    setCollectionFilter(initialCollectionFilter);
+    setPaymentTypeFilter(initialType);
+    setSortBy(initialSort);
+    setProductType(initialType);
+    setMinPrice(initialMin);
+    setMaxPrice(initialMax);
+    setCurrentPage(page);
+  }, [kategoriId, categoryList]);
+
+  // 🔹 Scroll effect untuk sidebar
   useEffect(() => {
     const scrollArea = document.getElementById("filterScrollArea");
     if (!scrollArea) return;
 
     const handleScroll = () => {
-      if (scrollArea.scrollTop > 20) setShowScrollDown(false);
-      else setShowScrollDown(true);
-
-      if (scrollArea.scrollTop > 100) setShowScrollUp(true);
-      else setShowScrollUp(false);
+      setShowScrollDown(scrollArea.scrollTop <= 20);
+      setShowScrollUp(scrollArea.scrollTop > 100);
     };
 
     scrollArea.addEventListener("scroll", handleScroll);
     return () => scrollArea.removeEventListener("scroll", handleScroll);
   }, []);
-
-  useEffect(() => {
-    if (!kategoriId) return;
-
-    const mappedCategory = kategoriMap[kategoriId];
-    const urlCategory = searchParams.get("category");
-
-    if (mappedCategory || urlCategory) {
-      setCategory([urlCategory || mappedCategory]);
-      setCurrentPage(1);
-    }
-  }, [kategoriId]);
 
   const scrollDown = () => {
     const scrollArea = document.getElementById("filterScrollArea");
@@ -98,53 +108,22 @@ export default function ProductListPage() {
     scrollArea?.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // 🔹 Ambil filter dari URL hanya sekali
-  useEffect(() => {
-    if (kategoriId) return;
-
-    const initialCategory = searchParams.get("category")?.split(",") || [];
-    const initialCollectionFilter = searchParams.get("collection")?.split(",").map(Number) || [];
-    const initialSort = searchParams.get("sort") || "";
-    const initialType = searchParams.get("type")?.split(",") || [];
-    const initialMin = searchParams.get("minPrice")
-      ? Number(searchParams.get("minPrice"))
-      : "";
-    const initialMax = searchParams.get("maxPrice")
-      ? Number(searchParams.get("maxPrice"))
-      : "";
-    const page = searchParams.get("page")
-      ? Number(searchParams.get("page"))
-      : 1;
-
-    setCategory(initialCategory);
-    setCollectionFilter(initialCollectionFilter);
-    setSortBy(initialSort);
-    setProductType(initialType);
-    setMinPrice(initialMin);
-    setMaxPrice(initialMax);
-    setCurrentPage(page);
-  }, [kategoriId]);
-
-  // 🔹 Update URL hanya jika berubah
+  // 🔹 Update URL setiap filter berubah
   useEffect(() => {
     const params = new URLSearchParams();
 
     if (query) params.set("query", query);
     if (category.length) params.set("category", category.join(","));
     if (collectionFilter.length) params.set("collection", collectionFilter.join(","));
+    if (paymentTypeFilter.length) params.set("type", paymentTypeFilter.join(","));
     if (productType.length) params.set("type", productType.join(","));
     if (minPrice !== "") params.set("minPrice", String(minPrice));
     if (maxPrice !== "") params.set("maxPrice", String(maxPrice));
     if (sortBy) params.set("sort", sortBy);
     if (currentPage > 1) params.set("page", String(currentPage));
 
-    const newUrl = `?${params.toString()}`;
-    const currentUrl = `?${searchParams.toString()}`;
-
-    if (newUrl !== currentUrl) {
-      router.replace(newUrl, { scroll: false });
-    }
-  }, [category, collectionFilter, minPrice, maxPrice, sortBy, currentPage, query]);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [category, collectionFilter, paymentTypeFilter, productType, minPrice, maxPrice, sortBy, currentPage, query]);
 
   // 🔹 Simulasi loading awal
   useEffect(() => {
@@ -154,56 +133,29 @@ export default function ProductListPage() {
 
   // 🔹 Filtering & Sorting
   const filteredProducts = useMemo(() => {
-    const list = Array.isArray(products)
-      ? products
-      : Array.isArray(products?.data)
-      ? products.data
-      : [];
+    const list = Array.isArray(products) ? products : [];
 
-    let result = list.filter((p) => {
+    return list.filter((p) => {
       const matchesQuery = query ? p.nama_produk.toLowerCase().includes(query) : true;
-      const matchesCategory =
-        category.length > 0 ? category.includes(p.kategori.nama_kategori) : true;
-      const matchesCollection = collectionFilter.length
-        ? collectionFilter.includes(p.koleksi_id)
+      const matchesCategory = category.length
+        ? category.includes(p.kategori.nama_kategori)
         : true;
-      const matchesType =
-        productType.length > 0 ? productType.includes(p.jenis.nama_jenis) : true;
-
+      const matchesCollection = collectionFilter.length
+        ? collectionFilter.includes(String(p.koleksi))
+        : true;
+      const matchesPaymentType = paymentTypeFilter.length
+        ? paymentTypeFilter.includes(String(p.jenis))
+        : true;
+      const matchesType = productType.length
+        ? productType.includes(p.jenis.nama_jenis)
+        : true;
       const matchesPrice =
-        (minPrice === "" || Number(p.harga) >= Number(minPrice)) &&
-        (maxPrice === "" || Number(p.harga) <= Number(maxPrice));
+        (minPrice === "" || p.harga >= Number(minPrice)) &&
+        (maxPrice === "" || p.harga <= Number(maxPrice));
 
-      return (
-        matchesQuery &&
-        matchesCategory &&
-        matchesCollection &&
-        matchesType &&
-        matchesPrice
-      );
+      return matchesQuery && matchesCategory && matchesCollection && matchesPaymentType && matchesType && matchesPrice;
     });
-
-    if (sortBy) {
-      switch (sortBy) {
-        case "termahal":
-          result.sort((a, b) => Number(b.harga) - Number(a.harga));
-          break;
-        case "termurah":
-          result.sort((a, b) => Number(a.harga) - Number(b.harga));
-          break;
-        case "terbaru":
-          result.sort(
-            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          );
-          break;
-        case "terlaris":
-          result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-          break;
-      }
-    }
-
-    return result;
-  }, [products, category, productType, minPrice, maxPrice, sortBy, query, collectionFilter]);
+  }, [products, category, collectionFilter, paymentTypeFilter, productType, minPrice, maxPrice, query]);
 
   // 🔹 Pagination
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
@@ -226,14 +178,18 @@ export default function ProductListPage() {
           categoryFilter={false}
           filterButtonLabel={true}
           defaultSearch={query}
-          totalCount={filteredProducts.length}
-          totalAll={products?.length || 0}
+          totalCount={totalCount}
+          totalAll={totalAll}
           category={category}
+          collectionFilter={collectionFilter}
+          paymentTypeFilter={paymentTypeFilter}
           productType={productType}
           sortBy={sortBy}
           minPrice={minPrice}
           maxPrice={maxPrice}
           onChangeCategory={setCategory}
+          onChangeCollectionFilter={setCollectionFilter}
+          onChangePaymentTypeFilter={setPaymentTypeFilter}
           onChangeProductType={setProductType}
           onChangeSort={setSortBy}
           onChangeMinPrice={setMinPrice}
@@ -275,7 +231,10 @@ export default function ProductListPage() {
           <div className="grid grid-cols-12 gap-4">
             {/* Sidebar Filter */}
             <div className="hidden lg:block col-span-3">
-              <div className="sticky top-[160px] h-[calc(100vh-140px)] overflow-y-auto bg-neutral-100 p-4 pt-12" id="filterScrollArea">
+              <div
+                className="sticky top-[160px] h-[calc(100vh-140px)] overflow-y-auto bg-neutral-100 p-4 pt-12"
+                id="filterScrollArea"
+              >
                 {/* Scroll Buttons */}
                 <motion.button
                   onClick={scrollDown}
@@ -313,12 +272,14 @@ export default function ProductListPage() {
                     setMinPrice("");
                     setMaxPrice("");
                   }}
-                  fullWidth={true}
+                  fullWidth
                 />
 
                 <div className="flex justify-between items-center mb-8 mt-8">
                   <p className="text-md font-normal text-neutral-600">Menampilkan produk</p>
-                  <p className="text-md font-semibold text-primary-600">{totalCount} / {totalAll}</p>
+                  <p className="text-md font-semibold text-primary-600">
+                    {totalCount} / {totalAll}
+                  </p>
                 </div>
 
                 <div className="space-y-6">
@@ -348,16 +309,13 @@ export default function ProductListPage() {
                     </div>
                   </div>
 
-                  {/* Jenis Pembayaran Produk */}
+                  {/* Jenis Produk */}
                   <div>
                     <p className="text-md font-bold text-neutral-700 mb-2">Jenis Pembayaran Produk</p>
                     <CheckboxGroup
-                      options={[
-                        { label: "Produk Biasa", value: "uang" },
-                        { label: "Tukar Poin", value: "poin" },
-                      ]}
-                      selected={productType}
-                      onChange={setProductType}
+                      options={paymentTypeList.map((pay) => ({ label: pay.nama_jenis, value: pay.nama_jenis }))}
+                      selected={paymentTypeFilter}
+                      onChange={setPaymentTypeFilter}
                     />
                   </div>
 
@@ -365,7 +323,10 @@ export default function ProductListPage() {
                   <div>
                     <p className="text-md font-bold text-neutral-700 mb-2">Kategori</p>
                     <CheckboxGroup
-                      options={categoryList.map(cat => ({ label: cat.nama_kategori, value: cat.nama_kategori }))}
+                      options={categoryList.map((cat) => ({
+                        label: cat.nama_kategori,
+                        value: cat.nama_kategori,
+                      }))}
                       selected={category}
                       onChange={setCategory}
                     />
@@ -375,7 +336,10 @@ export default function ProductListPage() {
                   <div>
                     <p className="text-md font-bold text-neutral-700 mb-2">Gender</p>
                     <CheckboxGroup
-                      options={collectionList.map(col => ({ label: col.nama_koleksi, value: col.id }))}
+                      options={collectionList.map((col) => ({
+                        label: col.nama_koleksi,
+                        value: col.nama_koleksi,
+                      }))}
                       selected={collectionFilter}
                       onChange={setCollectionFilter}
                     />

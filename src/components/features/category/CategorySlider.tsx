@@ -80,7 +80,7 @@ export const CategorySlider: React.FC = () => {
   const nextRef = useRef<HTMLButtonElement>(null);
 
   const { categories, loading, error } = useCategories();
-  const categoryList = categories?.data ?? [];
+  const categoryList = categories ?? [];
 
   useEffect(() => {
     if (!swiper || !prevRef.current || !nextRef.current) return;
@@ -117,7 +117,7 @@ export const CategorySlider: React.FC = () => {
               categoryList.map((cat) => (
               <SwiperSlide key={cat.id}>
                   <button
-                    onClick={() => router.push(`/productlist?kategori_id=${cat.kategori_id}&category=${encodeURIComponent(cat.nama_kategori)}&page=1`)}
+                    onClick={() => router.push(`/productlist?kategori_id=${cat.id}&category=${encodeURIComponent(cat.nama_kategori)}&page=1`)}
                     className="flex flex-col items-center space-y-3 group"
                   >
                   <div className="w-full h-full rounded-full overflow-hidden border-2 border-[#299A4D]/30 group-hover:border-[#299A4D] transition-all duration-300">

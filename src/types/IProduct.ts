@@ -1,9 +1,6 @@
-// 1. Jenis Pembayaran
-export type TPaymentType = "uang" | "poin";
-
 export interface IJenis {
   id: number;
-  nama_jenis: TPaymentType;
+  nama_jenis: string;
   deskripsi: string;
   created_at: string;
   updated_at: string;
@@ -51,27 +48,22 @@ export interface IDiskon {
   created_at: string;
 }
 
-// 5. Koleksi Produk / Gender
-export type TKoleksiNama = "Pria" | "Wanita" | "Unisex" | "Lainnya";
-
 export interface IKoleksi {
   id: number;
-  nama_koleksi: TKoleksiNama;
+  nama_koleksi: string;
   deskripsi: string;
   created_at: string;
   updated_at: string;
-  pivot: {
-    produk_id: number;
-    koleksi_id: number;
-  };
+  koleksi_count: number;
 }
 
-// 6. PRODUK FINAL
+// 5. PRODUK FINAL
 export interface IProduct {
   id: number;
   nama_produk: string;
   deskripsi: string;
   harga: number;
+  koleksi_id: number;
   stok: number;
   kategori_id: number;
   jenis_id: number;

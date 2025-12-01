@@ -36,13 +36,15 @@ interface HeroSectionProps {
   totalCount?: number;
   totalAll?: number;
   category?: string[];
-  gender?: string[];
+  collectionFilter?: string[];
+  paymentTypeFilter?: string[];
   productType?: string[];
   sortBy?: string;
   minPrice?: number | "";
   maxPrice?: number | "";
   onChangeCategory?: (val: string[]) => void;
-  onChangeGender?: (val: string[]) => void;
+  onChangeCollectionFilter?: (val: string[]) => void;
+  onChangePaymentTypeFilter?: (val: string[]) => void;
   onChangeSort?: (val: string) => void;
   onChangeMinPrice?: (val: number | "") => void;
   onChangeMaxPrice?: (val: number | "") => void;
@@ -51,10 +53,10 @@ interface HeroSectionProps {
 }
 
 export function HeroSection(props: HeroSectionProps) {
-  // 🧩 STATE UTAMA UNTUK FILTER
+  // STATE UTAMA UNTUK FILTER
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [collectionFilter, setCollectionFilter] = useState<string[]>([]);
   const [category, setCategory] = useState<string[]>([]);
-  const [gender, setGender] = useState<string[]>([]);
   const [productType, setProductType] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<string>("");
   const [minPrice, setMinPrice] = useState<string>("");
@@ -64,7 +66,7 @@ export function HeroSection(props: HeroSectionProps) {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [totalAll, setTotalAll] = useState<number>(0);
 
-  // 🔍 SEARCH STATE
+  // SEARCH STATE
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLDivElement>(null);
@@ -78,21 +80,21 @@ export function HeroSection(props: HeroSectionProps) {
   const [cursorVisible, setCursorVisible] = useState(true);
   const [isInputFocused, setIsInputFocused] = useState(false);
 
-  // ✅ Sinkronisasi defaultSearch
+  // Sinkronisasi defaultSearch
   useEffect(() => {
     if (props.defaultSearch) {
       setSearchTerm(props.defaultSearch);
     }
   }, [props.defaultSearch, setSearchTerm]);
 
-  // ✅ Panggil props.onSearch() saat defaultSearch berubah
+  // Panggil props.onSearch() saat defaultSearch berubah
   useEffect(() => {
     if (props.defaultSearch && props.onSearch) {
       props.onSearch(props.defaultSearch);
     }
   }, [props.defaultSearch]);
 
-  // ✅ Filter saran berdasarkan searchTerm
+  // Filter saran berdasarkan searchTerm
   useEffect(() => {
     if (searchTerm.trim().length > 0) {
       const source = props.metaKeywords ?? metaKeywords;
@@ -107,7 +109,7 @@ export function HeroSection(props: HeroSectionProps) {
     }
   }, [searchTerm, props.metaKeywords]);
 
-  // ✅ Tutup dropdown saran ketika klik di luar
+  // Tutup dropdown saran ketika klik di luar
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
@@ -118,7 +120,7 @@ export function HeroSection(props: HeroSectionProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ✅ Handler pencarian
+  // Handler pencarian
   const handleSearchClick = () => {
     if (searchTerm.trim().length > 0) {
       handleSearch(searchTerm.trim());
@@ -127,10 +129,10 @@ export function HeroSection(props: HeroSectionProps) {
     }
   };
 
-  // ✅ Handler Reset Filter
+  // Handler Reset Filter
   const handleResetFilters = () => {
     setCategory([]);
-    setGender([]);
+    setCollectionFilter([]);
     setProductType([]);
     setSortBy("");
     setMinPrice("");
@@ -193,7 +195,7 @@ export function HeroSection(props: HeroSectionProps) {
       <div className="w-full bg-white hero-mobile-container md:hero-tablet-container px-4 md:px-6 py-4 md:py-6 pt-[80px] md:pt-[89px] text-white">
         <div className="container mx-auto">
           <div className="relative flex items-center gap-2">
-            {/* 🔍 Input Search */}
+            {/* Input Search */}
             <div ref={inputRef} className="flex-grow relative">
               <input
                 type="text"
@@ -237,7 +239,7 @@ export function HeroSection(props: HeroSectionProps) {
                 className="w-full px-5 py-2.5 pr-12 rounded-md bg-white text-neutral-800 placeholder-neutral-400 border border-[#33C060] focus:outline-none focus:ring-1 focus:ring-[#33C060] transition"
               />
 
-              {/* 🔘 Tombol Search */}
+              {/* Tombol Search */}
               <button
                 type="button"
                 disabled={searchTerm.trim().length === 0}
@@ -255,7 +257,7 @@ export function HeroSection(props: HeroSectionProps) {
                 <Search className="w-4 h-4" />
               </button>
 
-              {/* 🔽 Dropdown Saran */}
+              {/* Dropdown Saran */}
               {showSuggestions && suggestions.length > 0 && (
                 <ul className="absolute mt-1 left-0 right-0 bg-white text-neutral-800 shadow-md rounded-lg overflow-hidden z-20">
                   {suggestions.map((kw, index) => (
@@ -274,7 +276,7 @@ export function HeroSection(props: HeroSectionProps) {
               )}
             </div>
 
-            {/* ⚙️ Tombol Filter */}
+            {/* Tombol Filter */}
             {props.filterButtonLabel && (
               <button
                 onClick={() => setIsFilterOpen(true)}
@@ -289,7 +291,7 @@ export function HeroSection(props: HeroSectionProps) {
             )}
           </div>
 
-          {/* 🧭 Category Carousel */}
+          {/* Category Carousel */}
           {props.categoryFilter && <CategoryCarousel />}
 
           {/* 🪟 Sidebar Filter */}
@@ -299,13 +301,15 @@ export function HeroSection(props: HeroSectionProps) {
             totalCount={props.totalCount || 0}
             totalAll={props.totalAll || 0}
             category={props.category || []}
-            gender={props.gender || []}
+            collectionFilter={props.collectionFilter || []}
+            paymentTypeFilter={props.paymentTypeFilter || []}
             sortBy={props.sortBy || ""}
             minPrice={props.minPrice || ""}
             maxPrice={props.maxPrice || ""}
             productType={props.productType || []}
             onChangeCategory={props.onChangeCategory || (() => {})}
-            onChangeGender={props.onChangeGender || (() => {})}
+            onChangeCollectionFilter={props.onChangeCollectionFilter || (() => {})}
+            onChangePaymentTypeFilter={props.onChangePaymentTypeFilter || (() => {})}
             onChangeSort={props.onChangeSort || (() => {})}
             onChangeMinPrice={props.onChangeMinPrice || (() => {})}
             onChangeMaxPrice={props.onChangeMaxPrice || (() => {})}

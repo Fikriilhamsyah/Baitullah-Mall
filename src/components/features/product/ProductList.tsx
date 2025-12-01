@@ -28,14 +28,13 @@ const ProductList: React.FC<ProductListProps> = ({
   searchQuery = "",
 }) => {
   const { products, loading, error } = useProducts();
-  const productData = Array.isArray(products?.data) ? products.data : [];
   const [currentPage, setCurrentPage] = useState(1);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
 
   // Filter berdasarkan paymentType & searchQuery
-  const filteredProducts = productData.filter((p) => {
+  const filteredProducts = products.filter((p) => {
     const matchesType = paymentType
       ? p.jenis.nama_jenis.toLowerCase() === paymentType.toLowerCase()
       : true;

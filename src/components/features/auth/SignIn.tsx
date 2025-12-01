@@ -47,6 +47,10 @@ const SignIn = () => {
 
     try {
       const res = await login({ email, password });
+      if (!res) {
+        showToast("Login gagal", "error");
+        return; // *stop eksekusi*
+      }
 
       // SIMPAN TOKEN KE COOKIE 7 HARI
       setAuthToken(res.token);

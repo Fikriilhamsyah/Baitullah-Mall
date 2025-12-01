@@ -17,7 +17,6 @@ import Pagination from "@/components/ui/Pagination";
 
 // Utils
 import { formatPrice } from "@/utils/formatters";
-import { colorMaster } from "@/data/ColorProductData";
 
 // Icon
 import { ShoppingCart, Star, MessageCircleMore } from "lucide-react";
@@ -30,7 +29,6 @@ interface ProductDetailProps {
 
 const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }) => {
   const { product, loading, error } = useProductById(id);
-  const productData = product?.data;
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -52,7 +50,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
 
   // 🔹 GROUP VARIAN MENJADI: warna → array ukuran
   const groupVariants = () => {
-    if (!productData?.varian) return { colors: [], map: {} };
+    if (!product?.varian) return { colors: [], map: {} };
 
     const map: Record<
       string,
@@ -67,15 +65,16 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
       }
     > = {};
 
-    productData.varian.forEach((v: any) => {
-      if (!map[v.warna]) {
-        map[v.warna] = {
-          kode: v.kode_varian,
+    product.varian.forEach((v: any) => {
+      const warnaKey = v.warna; // gunakan langsung nama warna
+      if (!map[warnaKey]) {
+        map[warnaKey] = {
+          kode: v.kode_warna || "#f3f3f3", // ambil dari API
           sizes: [],
         };
       }
 
-      map[v.warna].sizes.push({
+      map[warnaKey].sizes.push({
         ukuran: v.ukuran,
         tambahan_harga: v.tambahan_harga,
         varian_id: v.id,
@@ -93,19 +92,19 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
 
   // Set default: warna pertama → ukuran pertama
   useEffect(() => {
-    if (!productData || !colors.length) return;
+    if (!product || !colors.length) return;
 
     if (!selectedColor) setSelectedColor(colors[0]);
 
     if (colors[0] && groupedVariants[colors[0]].sizes.length > 0) {
       setSelectedSize(groupedVariants[colors[0]].sizes[0].ukuran);
     }
-  }, [productData]);
+  }, [product]);
 
   // 🔹 Hitung harga total
   const calculateTotalPrice = () => {
-    if (!productData) return 0;
-    let base = productData.harga;
+    if (!product) return 0;
+    let base = product.harga;
 
     if (selectedColor && selectedSize !== null) {
       const sizeObj = groupedVariants[selectedColor].sizes.find(
@@ -119,7 +118,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
-  if (!productData) return null;
+  if (!product) return null;
 
   const totalPrice = calculateTotalPrice();
 
@@ -127,8 +126,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
     <div className="">
       {/* GALLERY MOBILE */}
       <ProductImageGallery
-        images={productData}
-        name={productData.nama_produk}
+        images={product}
+        name={product.nama_produk}
         layout="mobile"
       />
 
@@ -141,8 +140,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                 {/* GALLERY DESKTOP */}
                 <div className="lg:col-span-4">
                   <ProductImageGallery
-                    images={[productData.gambar_utama, ...(productData.images || [])]}
-                    name={productData.nama_produk}
+                    images={product}
+                    name={product.nama_produk}
                     layout="desktop"
                   />
                 </div>
@@ -152,23 +151,23 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
 
                   <div>
                     <div className="text-sm text-[#299A4D] mb-1">
-                      {productData.kategori.nama_kategori}
+                      {product.kategori.nama_kategori}
                     </div>
 
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                      {productData.nama_produk}
+                      {product.nama_produk}
                     </h1>
 
                     <div className="flex items-center gap-4 mb-3">
-                      <div className="flex items-center text-yellow-500">
+                      {/* <div className="flex items-center text-yellow-500">
                         <Star className="w-5 h-5 fill-yellow-400" />
                         <span className="ml-1 text-gray-700 font-medium">
                           {product.rating?.toFixed(1) ?? "0.0"}
                         </span>
-                      </div>
+                      </div> */}
 
                       <p className="text-gray-600 text-sm">
-                        Stok: <span className="font-semibold">{productData.stok}</span>
+                        Stok: <span className="font-semibold">{product.stok}</span>
                       </p>
                     </div>
                   </div>
@@ -182,13 +181,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
 
                       <div className="flex flex-wrap gap-3">
                         {colors.map((colorName) => {
+                          const colorObj = groupedVariants[colorName];
                           const colorCode =
-                            colorMaster[colorName.toLowerCase()] ||
-                            (/^#([0-9A-F]{3}){1,2}$/i.test(
-                              groupedVariants[colorName].kode
-                            )
-                              ? groupedVariants[colorName].kode
-                              : "#f3f3f3");
+                            colorObj?.kode || "#f3f3f3"; // ambil dari varian.kode_warna
 
                           const selected = selectedColor === colorName;
 
@@ -197,9 +192,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                               <button
                                 onClick={() => {
                                   setSelectedColor(colorName);
-                                  setSelectedSize(
-                                    groupedVariants[colorName].sizes[0]?.ukuran ?? null
-                                  );
+                                  setSelectedSize(colorObj.sizes[0]?.ukuran ?? null);
                                 }}
                                 className={`w-10 h-10 rounded-full border-2 transition-all ${
                                   selected ? "ring-2 ring-neutral-300" : ""
@@ -217,6 +210,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                       </div>
                     </div>
                   )}
+
 
                   {/* VARIAN UKURAN */}
                   {selectedColor &&
@@ -257,7 +251,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                   {/* DESKRIPSI */}
                   <div>
                     <p className="text-xl font-bold text-gray-900 block mb-1">Deskripsi</p>
-                    <p className="text-sm text-gray-700">{productData.deskripsi}</p>
+                    <p className="text-sm text-gray-700">{product.deskripsi}</p>
                   </div>
 
                 </div>
@@ -286,11 +280,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Harga Total</p>
                   <p className="text-2xl font-extrabold text-[#299A4D]">
-                    {productData.jenis.nama_jenis === "poin"
+                    {product.jenis.nama_jenis === "poin"
                       ? totalPrice
                       : formatPrice(totalPrice)}{" "}
                     <span className="text-base text-gray-500 font-normal">
-                      {productData.jenis.nama_jenis === "poin" ? "Poin" : "IDR"}
+                      {product.jenis.nama_jenis === "poin" ? "Poin" : "IDR"}
                     </span>
                   </p>
                 </div>
@@ -315,7 +309,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                         value={quantity}
                         onChange={(e) => {
                           const val = Number(e.target.value);
-                          if (val >= 1 && val <= productData.stok) setQuantity(val);
+                          if (val >= 1 && val <= product.stok) setQuantity(val);
                         }}
                         className="text-center"
                       />
@@ -324,7 +318,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                     <button
                       onClick={() =>
                         setQuantity((prev) =>
-                          prev < productData.stok ? prev + 1 : prev
+                          prev < product.stok ? prev + 1 : prev
                         )
                       }
                       className="w-10 h-10 rounded-full border border-neutral-300 hover:bg-neutral-200 flex items-center justify-center transition-all"
@@ -334,7 +328,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                   </div>
 
                   <p className="text-sm text-gray-500">
-                    Sisa stok: <span className="font-medium">{productData.stok}</span>
+                    Sisa stok: <span className="font-medium">{product.stok}</span>
                   </p>
                 </div>
 
@@ -383,11 +377,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
             <div>
               <p className="text-xs text-gray-500">Harga Total</p>
               <p className="text-md font-extrabold text-[#299A4D]">
-                {productData.jenis.nama_jenis === "poin"
+                {product.jenis.nama_jenis === "poin"
                   ? totalPrice
                   : formatPrice(totalPrice)}{" "}
                 <span className="text-base text-gray-500 font-normal">
-                  {productData.jenis.nama_jenis === "poin" ? "Poin" : "IDR"}
+                  {product.jenis.nama_jenis === "poin" ? "Poin" : "IDR"}
                 </span>
               </p>
             </div>
@@ -428,31 +422,27 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
           <div>
             <p className="text-xs text-gray-500">Harga Total</p>
             <p className="text-md font-extrabold text-[#299A4D]">
-              {productData.jenis.nama_jenis === "poin"
+              {product.jenis.nama_jenis === "poin"
                 ? totalPrice
                 : formatPrice(totalPrice)}{" "}
               <span className="text-base text-gray-500 font-normal">
-                {productData.jenis.nama_jenis === "poin" ? "Poin" : "IDR"}
+                {product.jenis.nama_jenis === "poin" ? "Poin" : "IDR"}
               </span>
             </p>
           </div>
 
           {/* VARIAN WARNA */}
           {colors.length > 0 && (
-            <div>
+            <div className="hidden lg:block">
               <label className="text-sm font-medium text-gray-700 block mb-2">
                 Pilih Warna:
               </label>
 
               <div className="flex flex-wrap gap-3">
                 {colors.map((colorName) => {
+                  const colorObj = groupedVariants[colorName];
                   const colorCode =
-                    colorMaster[colorName.toLowerCase()] ||
-                    (/^#([0-9A-F]{3}){1,2}$/i.test(
-                      groupedVariants[colorName].kode
-                    )
-                      ? groupedVariants[colorName].kode
-                      : "#f3f3f3");
+                    colorObj?.kode || "#f3f3f3"; // ambil dari varian.kode_warna
 
                   const selected = selectedColor === colorName;
 
@@ -461,9 +451,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                       <button
                         onClick={() => {
                           setSelectedColor(colorName);
-                          setSelectedSize(
-                            groupedVariants[colorName].sizes[0]?.ukuran ?? null
-                          );
+                          setSelectedSize(colorObj.sizes[0]?.ukuran ?? null);
                         }}
                         className={`w-10 h-10 rounded-full border-2 transition-all ${
                           selected ? "ring-2 ring-neutral-300" : ""
@@ -481,6 +469,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
               </div>
             </div>
           )}
+
 
           {/* VARIAN UKURAN */}
           {selectedColor &&
@@ -538,7 +527,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                   value={quantity}
                   onChange={(e) => {
                     const val = Number(e.target.value);
-                    if (val >= 1 && val <= productData.stok) setQuantity(val);
+                    if (val >= 1 && val <= product.stok) setQuantity(val);
                   }}
                   className="text-center"
                 />
@@ -547,7 +536,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
               <button
                 onClick={() =>
                   setQuantity((prev) =>
-                    prev < productData.stok ? prev + 1 : prev
+                    prev < product.stok ? prev + 1 : prev
                   )
                 }
                 className="w-10 h-10 rounded-full border border-neutral-300 hover:bg-neutral-200 flex items-center justify-center transition-all"
@@ -557,7 +546,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
             </div>
 
             <p className="text-sm text-gray-500">
-              Sisa stok: <span className="font-medium">{productData.stok}</span>
+              Sisa stok: <span className="font-medium">{product.stok}</span>
             </p>
           </div>
 
@@ -571,31 +560,27 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
           <div>
             <p className="text-xs text-gray-500">Harga Total</p>
             <p className="text-md font-extrabold text-[#299A4D]">
-              {productData.jenis.nama_jenis === "poin"
+              {product.jenis.nama_jenis === "poin"
                 ? totalPrice
                 : formatPrice(totalPrice)}{" "}
               <span className="text-base text-gray-500 font-normal">
-                {productData.jenis.nama_jenis === "poin" ? "Poin" : "IDR"}
+                {product.jenis.nama_jenis === "poin" ? "Poin" : "IDR"}
               </span>
             </p>
           </div>
 
           {/* VARIAN WARNA */}
           {colors.length > 0 && (
-            <div>
+            <div className="hidden lg:block">
               <label className="text-sm font-medium text-gray-700 block mb-2">
                 Pilih Warna:
               </label>
 
               <div className="flex flex-wrap gap-3">
                 {colors.map((colorName) => {
+                  const colorObj = groupedVariants[colorName];
                   const colorCode =
-                    colorMaster[colorName.toLowerCase()] ||
-                    (/^#([0-9A-F]{3}){1,2}$/i.test(
-                      groupedVariants[colorName].kode
-                    )
-                      ? groupedVariants[colorName].kode
-                      : "#f3f3f3");
+                    colorObj?.kode || "#f3f3f3"; // ambil dari varian.kode_warna
 
                   const selected = selectedColor === colorName;
 
@@ -604,9 +589,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                       <button
                         onClick={() => {
                           setSelectedColor(colorName);
-                          setSelectedSize(
-                            groupedVariants[colorName].sizes[0]?.ukuran ?? null
-                          );
+                          setSelectedSize(colorObj.sizes[0]?.ukuran ?? null);
                         }}
                         className={`w-10 h-10 rounded-full border-2 transition-all ${
                           selected ? "ring-2 ring-neutral-300" : ""
@@ -624,6 +607,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
               </div>
             </div>
           )}
+
 
           {/* VARIAN UKURAN */}
           {selectedColor &&
@@ -681,7 +665,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                   value={quantity}
                   onChange={(e) => {
                     const val = Number(e.target.value);
-                    if (val >= 1 && val <= productData.stok) setQuantity(val);
+                    if (val >= 1 && val <= product.stok) setQuantity(val);
                   }}
                   className="text-center"
                 />
@@ -690,7 +674,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
               <button
                 onClick={() =>
                   setQuantity((prev) =>
-                    prev < productData.stok ? prev + 1 : prev
+                    prev < product.stok ? prev + 1 : prev
                   )
                 }
                 className="w-10 h-10 rounded-full border border-neutral-300 hover:bg-neutral-200 flex items-center justify-center transition-all"
@@ -700,7 +684,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
             </div>
 
             <p className="text-sm text-gray-500">
-              Sisa stok: <span className="font-medium">{productData.stok}</span>
+              Sisa stok: <span className="font-medium">{product.stok}</span>
             </p>
           </div>
 

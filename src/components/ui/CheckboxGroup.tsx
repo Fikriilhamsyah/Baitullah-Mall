@@ -6,19 +6,22 @@ interface CheckboxOption {
   value: string;
 }
 
-interface CheckboxGroupProps {
-  options: CheckboxOption[];
-  selected: string[];
-  onChange: (value: string[]) => void;
+interface CheckboxGroupProps<T extends string | number> {
+  options: { label: string; value: T }[];
+  selected: T[];
+  onChange: (selected: T[]) => void;
 }
 
-const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
+export default function CheckboxGroup<T extends string | number>({
   options,
   selected,
   onChange,
-}) => {
-  const toggleValue = (value: string) => {
-    if (selected.includes(value)) {
+}: CheckboxGroupProps<T>) {
+  const toggleValue = (value: T) => {
+    const exist = selected.includes(value);
+    console.log("toggleValue", value, selected);
+
+    if (exist) {
       onChange(selected.filter((v) => v !== value));
     } else {
       onChange([...selected, value]);
@@ -29,44 +32,29 @@ const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
     <div className="flex flex-col gap-2">
       {options.map((opt) => (
         <label
+          className="flex items-center gap-2 cursor-pointer"
           key={opt.value}
-          className="flex items-center gap-2 cursor-pointer group"
         >
           <input
             type="checkbox"
-            value={opt.value}
             checked={selected.includes(opt.value)}
             onChange={() => toggleValue(opt.value)}
-            className={`
-              w-4 h-4 border-gray-300 rounded 
-              text-primary-500 focus:ring-primary-500
-              transition-colors duration-200
-              checked:bg-primary-500 checked:border-primary-500
-              hover:border-primary-500
-            `}
+            className="w-4 h-4 border-gray-300 rounded"
           />
-          <span
-            className={`
-              text-gray-700 text-sm md:text-md 
-              group-hover:text-primary-600 transition-colors
-            `}
-          >
+          <span className="text-sm md:text-md text-neutral-700">
             {opt.label}
           </span>
         </label>
       ))}
     </div>
-
-    // const [preferences, setPreferences] = useState<string[]>([]);
-    // <CheckboxGroup
-    //     options={[
-    //         { label: "Berlangganan Newsletter", value: "newsletter" },
-    //         { label: "Setuju Syarat & Ketentuan", value: "terms" },
-    //     ]}
-    //     selected={preferences}
-    //     onChange={setPreferences}
-    // />
   );
-};
-
-export default CheckboxGroup;
+  // const [preferences, setPreferences] = useState<string[]>([]);
+  // <CheckboxGroup
+  //     options={[
+  //         { label: "Berlangganan Newsletter", value: "newsletter" },
+  //         { label: "Setuju Syarat & Ketentuan", value: "terms" },
+  //     ]}
+  //     selected={preferences}
+  //     onChange={setPreferences}
+  // />
+}

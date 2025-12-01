@@ -2,7 +2,6 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { categoryIcons } from "@utils/helpers";
 import { Package } from "lucide-react";
 import type { ICategory } from "@/types/ICategory";
 
@@ -45,7 +44,7 @@ export function CategoryCarousel() {
   const [indicatorPos, setIndicatorPos] = useState(0);
   const [indicatorWidth] = useState(50);
   const { categories, loading, error } = useCategories();
-  const categoryList = categories?.data ?? [];
+  const categoryList = categories?? [];
 
   const handleScroll = () => {
     const el = scrollRef.current;

@@ -185,11 +185,11 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                   </p>
                   <p className="text-sm text-neutral-600">{user.email}</p>
 
-                  {user.points !== undefined && (
+                  {/* {user.points !== undefined && (
                     <p className="text-base font-bold text-green-600 mt-1">
                       {formatPointsToRupiah(user.points)} Poin
                     </p>
-                  )}
+                  )} */}
                 </div>
               ) : (
                 <div className="flex flex-col items-center p-4 border-b border-gray-200">

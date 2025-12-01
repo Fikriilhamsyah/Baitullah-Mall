@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { IProduct } from "../types/IProduct";
 import { api } from "../services/api";
+import { ApiResponse } from "../types/ApiResponse";
 
 export const useProducts = () => {
   const [products, setProducts] = useState<IProduct[]>([]);
@@ -14,8 +15,9 @@ export const useProducts = () => {
         setError(null);
 
         const response = await api.getProducts();
-        setProducts(response.data);
+        const result = response.data as ApiResponse<IProduct[]>;
 
+        setProducts(result.data);
       } catch (err) {
         let errorMessage = "Terjadi kesalahan";
         if (err instanceof Error) errorMessage = err.message;

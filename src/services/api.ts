@@ -1,17 +1,30 @@
 import axiosClientBaitullahMall from "./axiosClientBaitullahMall";
 import axiosClientBaitullah from "./axiosClientBaitullah";
-import { IProduct } from "../types/IProduct";
+import { ApiResponse } from "@/types/ApiResponse";
+import { IProduct, IJenis } from "../types/IProduct";
 import { ICategory } from "../types/ICategory";
-import { ProductsData } from "../data/ProductsData";
 import { ILogin, ILoginResponse } from "@/types/IUser";
 import { ICollection } from "@/types/ICollection";
 
 export const api = {
-  getProducts: () => axiosClientBaitullahMall.get<IProduct[]>("api/produk"),
-  getProductById: (id: number) => axiosClientBaitullahMall.get<IProduct>(`api/produk/${id}`),
-  getCategories: () => axiosClientBaitullahMall.get<ICategory[]>(`api/kategori`),
-  getCollection: () => axiosClientBaitullahMall.get<ICollection[]>(`api/koleksi`),
-  postLogin: (payload: ILogin) => axiosClientBaitullah.post<ILoginResponse>(`api/login`, payload),
+  postLogin: (payload: ILogin) =>
+    axiosClientBaitullah.post<ApiResponse<ILoginResponse>>(`api/login`, payload),
+
+  getProducts: () =>
+    axiosClientBaitullahMall.get<ApiResponse<IProduct[]>>("api/produk"),
+
+  getProductById: (id: number) =>
+    axiosClientBaitullahMall.get<ApiResponse<IProduct>>(`api/produk/${id}`),
+
+  getCategories: () =>
+    axiosClientBaitullahMall.get<ApiResponse<ICategory[]>>("api/kategori"),
+
+  getCollection: () =>
+    axiosClientBaitullahMall.get<ApiResponse<ICollection[]>>("api/koleksi"),
+
+  getPaymentType: () =>
+    axiosClientBaitullahMall.get<ApiResponse<IJenis[]>>("api/jenis"),
+
 };
 
 // export const mockApi = {
