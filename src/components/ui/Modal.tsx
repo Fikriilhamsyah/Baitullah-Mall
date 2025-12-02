@@ -57,9 +57,9 @@ export default function Modal() {
               fixed z-[1001] left-1/2 top-1/2
               -translate-x-1/2 -translate-y-1/2
               bg-white shadow-xl flex flex-col
-              w-full
-              ${widthClass} ${mobileClass}
-              max-h-[calc(100vh-40px)]
+              w-screen md:w-full h-screen md:h-auto rounded-none md:rounded-xl
+              max-h-[calc(100vh-40px)] mx-0 mt-0 md:mx-4 md:mt-10
+              ${widthClass}
             `}
             initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}

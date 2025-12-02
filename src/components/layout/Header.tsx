@@ -423,38 +423,40 @@ const Header: React.FC = () => {
                 <ShoppingCart className="w-7 h-7 text-neutral-700 hover:text-black transition" />
               </Link>
 
-              {user === null ? (
-                <button
-                  className="flex-shrink-0 block lg:hidden cursor-pointer"
-                  onClick={() => {
-                    openModal({
-                      title: "Masuk",
-                      size: "md",
-                      mobileMode: "full",
-                      content: (<SignIn />),
-                    });
-                  }}
-                >
-                  <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />
-                </button>
-              ) : (
-                <Dropdown
-                  trigger={
+              <div className="block lg:hidden">
+                {user === null ? (
+                  <button
+                    className="flex-shrink-0 block lg:hidden cursor-pointer"
+                    onClick={() => {
+                      openModal({
+                        title: "Masuk",
+                        size: "md",
+                        mobileMode: "full",
+                        content: (<SignIn />),
+                      });
+                    }}
+                  >
                     <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />
-                  }
-                >
-                  <div className="flex flex-col text-sm">
-                    <button className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
-                      <UserRound className="w-4 h-4" />
-                      Profil
-                    </button>
-                    <button className="flex items-center gap-2 px-3 py-2 text-primary-500 hover:bg-red-50 text-left cursor-pointer" onClick={() => handleLogout()} >
-                      <LogOut className="w-4 h-4" />
-                      Keluar
-                    </button>
-                  </div>
-                </Dropdown>
-              )}
+                  </button>
+                ) : (
+                  <Dropdown
+                    trigger={
+                      <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />
+                    }
+                  >
+                    <div className="flex flex-col text-sm">
+                      <button className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
+                        <UserRound className="w-4 h-4" />
+                        Profil
+                      </button>
+                      <button className="flex items-center gap-2 px-3 py-2 text-primary-500 hover:bg-red-50 text-left cursor-pointer" onClick={() => handleLogout()} >
+                        <LogOut className="w-4 h-4" />
+                        Keluar
+                      </button>
+                    </div>
+                  </Dropdown>
+                )}
+              </div>
             </div>
           </div>
         </nav>

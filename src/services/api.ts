@@ -3,12 +3,15 @@ import axiosClientBaitullah from "./axiosClientBaitullah";
 import { ApiResponse } from "@/types/ApiResponse";
 import { IProduct, IJenis } from "../types/IProduct";
 import { ICategory } from "../types/ICategory";
-import { ILogin, ILoginResponse } from "@/types/IUser";
+import { ILogin, IResetPassword, ILoginResponse } from "@/types/IUser";
 import { ICollection } from "@/types/ICollection";
 
 export const api = {
   postLogin: (payload: ILogin) =>
-    axiosClientBaitullah.post<ApiResponse<ILoginResponse>>(`api/login`, payload),
+    axiosClientBaitullah.post<ILoginResponse>(`api/login`, payload),
+
+  postResetPassword: (payload: IResetPassword) =>
+    axiosClientBaitullah.post(`api/reset-password`, payload),
 
   getProducts: () =>
     axiosClientBaitullahMall.get<ApiResponse<IProduct[]>>("api/produk"),

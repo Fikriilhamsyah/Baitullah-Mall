@@ -68,7 +68,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const variantGender =
     product.koleksi && product.koleksi.length > 0
       ? product.koleksi[0].nama_koleksi
-      : "Lainnya";
+      : undefined;
 
   const makeSlug = (name: string | undefined, id: number) => {
     const safeName = name ? name.toLowerCase().replace(/[^a-z0-9]+/g, "-") : "produk";

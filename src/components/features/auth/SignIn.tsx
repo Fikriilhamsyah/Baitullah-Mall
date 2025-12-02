@@ -13,9 +13,10 @@ import { setAuthToken } from "@/utils/authCookie";
 import { useLogin } from "@/hooks/useLogin";
 
 // Components
+import SignUp from './SignUp';
+import ResetPassword from './ResetPassword';
 import { InputField } from '@/components/ui/InputField';
 import { Button } from '@/components/ui/Button';
-import SignUp from './SignUp';
 import { useToast } from "@/components/ui/Toast";
 
 const SignIn = () => {
@@ -47,9 +48,9 @@ const SignIn = () => {
 
     try {
       const res = await login({ email, password });
-      if (!res) {
+      if (!res?.success) {
         showToast("Login gagal", "error");
-        return; // *stop eksekusi*
+        return;
       }
 
       // SIMPAN TOKEN KE COOKIE 7 HARI
@@ -84,6 +85,17 @@ const SignIn = () => {
         size: "md",
         mobileMode: "full",
         content: <SignUp />,
+      });
+    }, 250);
+  };
+
+  const handleToResetPassword = () => {
+    closeModal();
+    setTimeout(() => {
+      openModal({
+        size: "md",
+        mobileMode: "full",
+        content: <ResetPassword />,
       });
     }, 250);
   };
@@ -130,7 +142,10 @@ const SignIn = () => {
         </form>
 
         <div className="flex justify-between items-center">
-          <button className='text-sm text-primary-600'>
+          <button
+            className='text-sm text-primary-600 text-center cursor-pointer'
+            onClick={handleToResetPassword}
+          >
             Lupa Password?
           </button>
 

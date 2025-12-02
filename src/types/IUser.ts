@@ -28,6 +28,10 @@ export interface ILoginResponse {
   token: string;
 }
 
+export interface IResetPassword {
+  phone: number | string;
+}
+
 export const formatPointsToRupiah = (points: number): string => {
   return `${points.toLocaleString("id-ID")}`;
 };

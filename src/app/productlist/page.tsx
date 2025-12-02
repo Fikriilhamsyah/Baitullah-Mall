@@ -52,10 +52,36 @@ export default function ProductListPage() {
   const [showScrollDown, setShowScrollDown] = useState(true);
   const [showScrollUp, setShowScrollUp] = useState(false);
 
+  /**
+   * Normalisasi nilai collection param:
+   * - Jika URL atau UI mengirim nama_koleksi -> cari id dari collectionList
+   * - Simpan filter sebagai string id (lebih stabil)
+   * - Tapi saat mencocokkan, kita tetap menerima nama jika produk punya nama (fallback)
+   */
+  const normalizeCollectionParam = (rawValues: string[] = []) => {
+    if (!collectionList || collectionList.length === 0) {
+      // kalau belum ada daftar koleksi, kembalikan apa adanya supaya tidak hilang
+      return rawValues;
+    }
+
+    return rawValues.map((v) => {
+      // jika v sudah angka (id), gunakan itu
+      if (/^\d+$/.test(v)) return String(Number(v));
+      // jika v adalah nama koleksi -> temukan id
+      const matched = collectionList.find(
+        (col: any) => String(col.nama_koleksi).toLowerCase() === String(v).toLowerCase()
+      );
+      if (matched) return String(matched.id);
+      // jika tidak match, tetap kembalikan original (baik itu nama unik atau lain)
+      return v;
+    });
+  };
+
   // 🔹 Ambil filter awal dari URL + kategori API
   useEffect(() => {
     let initialCategory: string[] = [];
-    const initialCollectionFilter = searchParams.get("collection")?.split(",") || [];
+    const rawInitialCollection = searchParams.get("collection")?.split(",") || [];
+    const initialCollectionFilter = normalizeCollectionParam(rawInitialCollection);
     const initialSort = searchParams.get("sort") || "";
     const initialType = searchParams.get("type")?.split(",") || [];
     const initialMin = searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : "";
@@ -82,7 +108,8 @@ export default function ProductListPage() {
     setMinPrice(initialMin);
     setMaxPrice(initialMax);
     setCurrentPage(page);
-  }, [kategoriId, categoryList]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kategoriId, categoryList, collectionList]);
 
   // 🔹 Scroll effect untuk sidebar
   useEffect(() => {
@@ -123,7 +150,7 @@ export default function ProductListPage() {
     if (currentPage > 1) params.set("page", String(currentPage));
 
     router.replace(`?${params.toString()}`, { scroll: false });
-  }, [category, collectionFilter, paymentTypeFilter, productType, minPrice, maxPrice, sortBy, currentPage, query]);
+  }, [category, collectionFilter, paymentTypeFilter, productType, minPrice, maxPrice, sortBy, currentPage, query, router]);
 
   // 🔹 Simulasi loading awal
   useEffect(() => {
@@ -131,31 +158,84 @@ export default function ProductListPage() {
     return () => clearTimeout(timer);
   }, []);
 
+  /**
+   * Helper: ambil koleksi produk dalam bentuk array objek {id, nama_koleksi}
+   * - mendukung p.koleksi sebagai array IKoleksi[]
+   * - juga mendukung p.koleksi sebagai angka/string id (fallback)
+   * - juga mendukung p.koleksi_id (field API yang kamu kirim)
+   */
+  const getProductCollections = (p: any): { id: number | null; nama_koleksi: string }[] => {
+    if (!p) return [];
+
+    // kasus ideal: p.koleksi adalah array
+    if (Array.isArray(p.koleksi) && p.koleksi.length > 0) {
+      return p.koleksi.map((k: any) => ({
+        id: k?.id ?? null,
+        nama_koleksi: k?.nama_koleksi ?? "",
+      }));
+    }
+
+    // kalau p.koleksi adalah single object
+    if (p.koleksi && typeof p.koleksi === "object" && (p.koleksi as any).id) {
+      return [{ id: (p.koleksi as any).id, nama_koleksi: (p.koleksi as any).nama_koleksi ?? "" }];
+    }
+
+    // kalau API menyertakan koleksi_id (satu angka referensi)
+    if (p.koleksi_id !== undefined && p.koleksi_id !== null) {
+      // coba cari nama koleksi dari collectionList jika tersedia
+      const matched = collectionList.find((col: any) => Number(col.id) === Number(p.koleksi_id));
+      return [{ id: Number(p.koleksi_id), nama_koleksi: matched?.nama_koleksi ?? "" }];
+    }
+
+    // kalau p.koleksi adalah primitive id (number/string)
+    if (typeof p.koleksi === "number" || typeof p.koleksi === "string") {
+      return [{ id: Number(p.koleksi), nama_koleksi: "" }];
+    }
+
+    return [];
+  };
+
   // 🔹 Filtering & Sorting
   const filteredProducts = useMemo(() => {
     const list = Array.isArray(products) ? products : [];
 
     return list.filter((p) => {
       const matchesQuery = query ? p.nama_produk.toLowerCase().includes(query) : true;
+
+      // category compares category name (existing behavior)
       const matchesCategory = category.length
         ? category.includes(p.kategori.nama_kategori)
         : true;
+
+      // collectionFilter: kita menggunakan collectionFilter berisi id (string) -- tapi terima juga nama jika ada
+      const productCollections = getProductCollections(p); // typed array
       const matchesCollection = collectionFilter.length
-        ? collectionFilter.includes(String(p.koleksi))
+        ? productCollections.length > 0 &&
+          productCollections.some((k) =>
+            // match by id (collectionFilter is normalized to ids when possible)
+            collectionFilter.includes(String(k.id)) ||
+            // fallback: match by nama_koleksi (case-insensitive)
+            collectionFilter.some(cf => String(cf).toLowerCase() === String(k.nama_koleksi).toLowerCase())
+          )
         : true;
+
+      // paymentTypeFilter: compare with p.jenis.nama_jenis
       const matchesPaymentType = paymentTypeFilter.length
-        ? paymentTypeFilter.includes(String(p.jenis))
+        ? !!(p.jenis && paymentTypeFilter.includes(p.jenis.nama_jenis))
         : true;
+
+      // productType: also compare with p.jenis.nama_jenis (if you use productType separately)
       const matchesType = productType.length
-        ? productType.includes(p.jenis.nama_jenis)
+        ? !!(p.jenis && productType.includes(p.jenis.nama_jenis))
         : true;
+
       const matchesPrice =
         (minPrice === "" || p.harga >= Number(minPrice)) &&
         (maxPrice === "" || p.harga <= Number(maxPrice));
 
       return matchesQuery && matchesCategory && matchesCollection && matchesPaymentType && matchesType && matchesPrice;
     });
-  }, [products, category, collectionFilter, paymentTypeFilter, productType, minPrice, maxPrice, query]);
+  }, [products, category, collectionFilter, paymentTypeFilter, productType, minPrice, maxPrice, query, collectionList]);
 
   // 🔹 Pagination
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
@@ -188,7 +268,11 @@ export default function ProductListPage() {
           minPrice={minPrice}
           maxPrice={maxPrice}
           onChangeCategory={setCategory}
-          onChangeCollectionFilter={setCollectionFilter}
+          onChangeCollectionFilter={(vals) => {
+            // vals coming from UI are nama_koleksi by original code; normalize to ids if possible
+            const normalized = normalizeCollectionParam(vals);
+            setCollectionFilter(normalized);
+          }}
           onChangePaymentTypeFilter={setPaymentTypeFilter}
           onChangeProductType={setProductType}
           onChangeSort={setSortBy}
@@ -335,13 +419,18 @@ export default function ProductListPage() {
                   {/* Koleksi / Gender */}
                   <div>
                     <p className="text-md font-bold text-neutral-700 mb-2">Gender</p>
+                    {/* gunakan id sebagai value agar URL lebih stabil; label tetap nama */}
                     <CheckboxGroup
                       options={collectionList.map((col) => ({
                         label: col.nama_koleksi,
-                        value: col.nama_koleksi,
+                        value: String(col.id),
                       }))}
                       selected={collectionFilter}
-                      onChange={setCollectionFilter}
+                      onChange={(vals) => {
+                        // jika UI sends names instead of ids (older code), normalize
+                        const normalized = normalizeCollectionParam(vals);
+                        setCollectionFilter(normalized);
+                      }}
                     />
                   </div>
                 </div>
