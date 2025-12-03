@@ -68,16 +68,44 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const variantGender =
     product.koleksi && product.koleksi.length > 0
       ? product.koleksi[0].nama_koleksi
-      : undefined;
+      : "Lainnya";
 
-  const makeSlug = (name: string | undefined, id: number) => {
+  /**
+   * Helper slug:
+   * - makeLegacySlug: lama => "id-nama-produk"
+   * - makeEncryptedSlug: baru => "e.<base64url>"  (prefix "e." untuk mudah deteksi)
+   *
+   * Kita pakai base64 dari JSON {id, name} lalu encodeURIComponent untuk safety.
+   */
+  const makeLegacySlug = (name: string | undefined, id: number) => {
     const safeName = name ? name.toLowerCase().replace(/[^a-z0-9]+/g, "-") : "produk";
     return `${id}-${safeName}`;
   };
 
+  const makeEncryptedSlug = (name: string | undefined, id: number) => {
+    const payload = { id, name: name ?? "" };
+    try {
+      const json = JSON.stringify(payload);
+      // btoa may throw on non-latin1 chars; use encodeURIComponent to be safe in URL
+      const base64 = typeof window !== "undefined" ? btoa(unescape(encodeURIComponent(json))) : Buffer.from(json).toString("base64");
+      const urlSafe = encodeURIComponent(base64);
+      return `e.${urlSafe}`; // prefix e. untuk menandakan encrypted slug
+    } catch (err) {
+      // fallback ke legacy slug kalau error
+      return makeLegacySlug(name, id);
+    }
+  };
+
+  // Pilihan: gunakan encrypted slug di navigasi (lebih aman).
+  // Jika mau revert ke legacy cukup panggil makeLegacySlug.
+  const handleClick = () => {
+    const slug = makeEncryptedSlug(product.nama_produk, product.id);
+    router.push(`/productdetail/${slug}`);
+  };
+
   return (
     <div
-      onClick={() => router.push(`/productdetail/${makeSlug(product.nama_produk, product.id)}`)}
+      onClick={handleClick}
       className="bg-white overflow-hidden cursor-pointer md:transform md:transition-all md:duration-300 md:hover:shadow-md md:hover:-translate-y-1"
     >
       {/* Gambar Thumbnail */}

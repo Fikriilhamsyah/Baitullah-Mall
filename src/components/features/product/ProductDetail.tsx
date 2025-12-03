@@ -226,12 +226,41 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
     <div className="">
       {/* GALLERY MOBILE */}
       <ProductImageGallery images={product} name={product.nama_produk} layout="mobile" />
+      {/* --- Harga: tampilkan min & max harga varian --- */}
+      <div className="block lg:hidden container mx-auto px-4 md:px-6 py-4 md:py-6">
+        {(() => {
+          const base = product.harga ?? 0;
+          const variantPrices =
+            Array.isArray(product.varian) && product.varian.length > 0
+              ? product.varian.map((v: any) => base + (v.tambahan_harga ?? 0))
+              : [base];
+
+          const minPrice = Math.min(...variantPrices);
+          const maxPrice = Math.max(...variantPrices);
+
+          const isPoin = product.jenis?.nama_jenis === "poin";
+          const format = (val: number) => (isPoin ? String(val) : formatPrice(val));
+
+          return (
+            <div>
+              <p className="text-md text-gray-500">Harga</p>
+              <p className="text-md font-extrabold text-[#299A4D]">
+                {format(minPrice)} - {format(maxPrice)}{" "}
+                <span className="text-base text-gray-500 font-normal">
+                  {isPoin ? "Poin" : "IDR"}
+                </span>
+              </p>
+            </div>
+          );
+        })()}
+      </div>
+
 
       <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 pt-0 lg:pt-[161px]">
         <div className="container mx-auto">
           <div className="grid md:grid-cols-12 gap-8">
             <div className="col-span-8">
-              <div className="grid md:grid-cols-12 gap-8 border-b border-neutral-200 pb-8">
+              <div className="grid md:grid-cols-12 gap-0 lg:gap-8 border-b border-neutral-200 pb-8">
                 {/* GALLERY DESKTOP */}
                 <div className="lg:col-span-4">
                   <ProductImageGallery images={product} name={product.nama_produk} layout="desktop" />
@@ -244,7 +273,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                       {product.kategori.nama_kategori}
                     </div>
 
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2 w-full">{product.nama_produk}</h1>
+                    <h1 className="text-xl lg:text-3xl font-bold text-gray-900 mb-2 w-full">{product.nama_produk}</h1>
 
                     <div className="flex items-center gap-4 mb-3 w-full">
                       {/* <div className="flex items-center text-yellow-500">
@@ -484,18 +513,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
       {/* FOOTER HARGA MOBILE */}
       <div className="w-full block lg:hidden mt-8">
         <div
-          className="fixed bottom-0 z-10 w-full bg-white/80 backdrop-blur-md"
+          className="fixed bottom-0 z-10 w-full bg-white/80 backdrop-blur-md border-t border-gray-200"
           style={{ boxShadow: "0 -6px 18px rgba(177,177,177,0.25)" }}
         >
           <div className="container mx-auto px-4 py-4 space-y-2">
-            <div>
-              <p className="text-xs text-gray-500">Harga Total</p>
-              <p className="text-md font-extrabold text-[#299A4D]">
-                {product.jenis.nama_jenis === "poin" ? totalPrice : formatPrice(totalPrice)}{" "}
-                <span className="text-base text-gray-500 font-normal">{product.jenis.nama_jenis === "poin" ? "Poin" : "IDR"}</span>
-              </p>
-            </div>
-
             {isLoggedIn ? (
               <div className="flex gap-3">
                 <Button
@@ -561,7 +582,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
 
           {/* VARIAN WARNA (BottomSheet) */}
           {colors.length > 0 && (
-            <div className="hidden lg:block">
+            <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">Pilih Warna:</label>
 
               <div className="flex flex-wrap gap-3">
@@ -685,7 +706,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
             </p>
           </div>
 
-          <Button label="Masukkan Keranjang" iconRight={ShoppingCart} color="primary" onClick={() => setOpenA(false)} />
+          <Button label="Tambahkan ke Keranjang" iconRight={ShoppingCart} color="primary" onClick={() => setOpenA(false)} />
         </div>
       </BottomSheet>
 
@@ -702,7 +723,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
 
           {/* VARIAN WARNA */}
           {colors.length > 0 && (
-            <div className="hidden lg:block">
+            <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">Pilih Warna:</label>
 
               <div className="flex flex-wrap gap-3">

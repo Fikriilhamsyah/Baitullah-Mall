@@ -4,12 +4,48 @@ import { useParams, useRouter } from "next/navigation";
 import ProductDetail from "@/components/features/product/ProductDetail";
 
 export default function ProductDetailPage() {
-  const { slug } = useParams(); // misal: "P1001-tas-ihram-premium"
+  const { slug } = useParams(); // contoh: "e.<base64url>" atau legacy "123-tas-ihram"
   const router = useRouter();
 
-  // Pisahkan ID dan nama produk dari slug
-  const [id, ...nameParts] = (slug as string).split("-");
-  const name = nameParts.join(" ");
+  let id: number | null = null;
+  let name = "";
+
+  if (typeof slug === "string") {
+    // Deteksi encrypted slug: prefix "e."
+    if (slug.startsWith("e.")) {
+      const encoded = slug.slice(2);
+      try {
+        const base64 = decodeURIComponent(encoded);
+        // atob + decodeURIComponent(unescape(...)) untuk restore utf-8
+        const json = typeof window !== "undefined"
+          ? decodeURIComponent(escape(atob(base64)))
+          : Buffer.from(base64, "base64").toString("utf-8");
+        const parsed = JSON.parse(json);
+        id = Number(parsed.id);
+        name = parsed.name ?? "";
+      } catch (err) {
+        // jika gagal decode, coba fallback ke legacy parsing
+        const parts = slug.split("-");
+        id = Number(parts[0]) || null;
+        name = parts.slice(1).join(" ");
+      }
+    } else {
+      // legacy format: "id-some-slugged-name"
+      const parts = slug.split("-");
+      id = Number(parts[0]) || null;
+      name = parts.slice(1).join(" ");
+    }
+  }
+
+  // safety: jika id null/NaN, redirect ke halaman sebelumnya atau ke daftar produk
+  if (id === null || Number.isNaN(id)) {
+    // redirect back atau ke home
+    if (typeof window !== "undefined") {
+      // gunakan router.back() agar UX lebih baik
+      router.back();
+    }
+    return null;
+  }
 
   console.log("Slug:", slug);
   console.log("Extracted ID:", id);

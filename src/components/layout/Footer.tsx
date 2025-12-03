@@ -1,10 +1,44 @@
 import React from "react";
 import Image from "next/image";
 import { Facebook, Instagram, Youtube, Mail, PhoneCall } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
-  return (
-    <footer className="bg-gradient-to-b from-[#FFFFFF] to-[#FAFAFA] text-black">
+  const pathname = usePathname();
+
+  const isProductDetail =
+    !!pathname &&
+    (pathname.startsWith("/productdetail") || pathname.startsWith("/product/") || pathname === "/product");
+  const isCart = pathname === "/cart";
+
+  const pbClass = isProductDetail ? "pb-[7.5rem] lg:pb-0" : isCart ? "pb-20 lg:pb-0" : "pb-0";
+
+  const renderSecondaryFoot = () => (
+    <div>
+      <div className="w-full h-20 md:h-30 bg-neutral-200"></div>
+      <div className="container mx-auto px-4 md:px-6 md:px-6 py-4 md:py-6 mb-5 flex flex-col lg:flex-row justify-between items-center">
+        <p className="text-xs md:text-sm text-center md:text-start text-gray-500 font-normal">© 2025 PT. Bangkit Membangun Negeri. Hak cipta dilindungi undang-undang</p>
+        {/* Sosial Media */}
+        <div className="flex justify-center md:justify-start gap-3 pt-3 lg:pt-0">
+          <a href="#" aria-label="Facebook" className="hover:scale-110 transition">
+            <Facebook className="w-5 h-5" />
+          </a>
+          <a href="#" aria-label="Instagram" className="hover:scale-110 transition">
+            <Instagram className="w-5 h-5" />
+          </a>
+          <a href="#" aria-label="YouTube" className="hover:scale-110 transition">
+            <Youtube className="w-5 h-5" />
+          </a>
+          <a href="#" aria-label="Email" className="hover:scale-110 transition">
+            <Mail className="w-5 h-5" />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderDefaultFoot = () => (
+    <div>
       {/* Brand Section */}
       <div className="container mx-auto px-4 md:px-6 mb-5">
         <div className="hidden md:flex flex-col items-start">
@@ -167,6 +201,12 @@ export default function Footer() {
           </div>
         </div>
       </div>
+    </div>
+  );
+
+  return (
+    <footer className={`bg-gradient-to-b from-[#FFFFFF] to-[#FAFAFA] text-black ${pbClass}`}>
+      {pathname === "/checkout" ? renderSecondaryFoot() : renderDefaultFoot()}
     </footer>
   );
 }

@@ -1,18 +1,24 @@
+// Axios Client
 import axiosClientBaitullahMall from "./axiosClientBaitullahMall";
 import axiosClientBaitullah from "./axiosClientBaitullah";
+
+// Types
 import { ApiResponse } from "@/types/ApiResponse";
 import { IProduct, IJenis } from "../types/IProduct";
 import { ICategory } from "../types/ICategory";
 import { ILogin, IResetPassword, ILoginResponse } from "@/types/IUser";
 import { ICollection } from "@/types/ICollection";
+import { ICartByIdUser, IPostCart } from "@/types/ICart";
 
 export const api = {
+  // Auth
   postLogin: (payload: ILogin) =>
     axiosClientBaitullah.post<ILoginResponse>(`api/login`, payload),
 
   postResetPassword: (payload: IResetPassword) =>
     axiosClientBaitullah.post(`api/reset-password`, payload),
 
+  // Product
   getProducts: () =>
     axiosClientBaitullahMall.get<ApiResponse<IProduct[]>>("api/produk"),
 
@@ -28,6 +34,12 @@ export const api = {
   getPaymentType: () =>
     axiosClientBaitullahMall.get<ApiResponse<IJenis[]>>("api/jenis"),
 
+  // Transaction
+  getCartAll: () =>
+    axiosClientBaitullahMall.get<ApiResponse<IPostCart[]>>("api/keranjang"),
+
+  getCartByIdUser: (userId: number) =>
+    axiosClientBaitullahMall.get<ApiResponse<ICartByIdUser[]>>(`api/keranjang/user/${userId}`),
 };
 
 // export const mockApi = {

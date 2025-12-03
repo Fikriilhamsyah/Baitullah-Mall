@@ -29,6 +29,7 @@ import {
   Youtube,
   ShoppingCart,
   Search,
+  ChevronDown,
 } from "lucide-react";
 
 // 🧠 Dummy meta keywords (bisa ganti dari API)
@@ -196,53 +197,90 @@ const Header: React.FC = () => {
       ? [...navLinksMobile.filter((s) => s.title !== "Akun")]
       : [...navLinksMobile];
 
-  return (
-    <header className="w-full">
-      <div className="fixed top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 transition-all duration-300">
-        <nav
-          className={`container mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ${
-            isScrolled ? "py-3" : "py-3"
-          }`}
-        >
-          {/* 🔝 Topbar */}
-          <div className="hidden lg:flex justify-between items-center pb-5">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-neutral-600 font-normal">Ikuti Kami</span>
-                <a href="#" aria-label="Instagram" className="hover:scale-110 transition">
-                  <Instagram className="w-4 h-4 text-neutral-600 hover:text-neutral-900" />
-                </a>
-                <a href="#" aria-label="Facebook" className="hover:scale-110 transition">
-                  <Facebook className="w-4 h-4 text-neutral-600 hover:text-neutral-900" />
-                </a>
-                <a href="#" aria-label="YouTube" className="hover:scale-110 transition">
-                  <Youtube className="w-4 h-4 text-neutral-600 hover:text-neutral-900" />
-                </a>
-              </div>
-              <span className="text-sm text-neutral-400">|</span>
-              <a href="https://baitullah.co.id/" target="_blank" className="text-sm text-neutral-600 hover:text-neutral-900 font-normal transition">
-                Beli Paket Haji & Umroh
-              </a>
-            </div>
-            {user !== null ? (
+  const renderSecondaryNav = () => (
+    <nav
+      className={`container mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ${
+        isScrolled ? "py-3" : "py-3"
+      }`}
+    >
+      {/* 🔸 Main bar */}
+      <div className="flex justify-between items-center gap-4">
+        {/* Kiri: Logo */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="hidden lg:block w-10 h-10" />
+          {/* Mobile Menu Button */}
+          <div className="lg:hidden">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 rounded-md text-neutral-600 hover:bg-gray-100 focus:ring-2 focus:ring-primary-500"
+            >
+              {navIcons.menu}
+            </button>
+          </div>
+          {/* Logo */}
+          <Link href="/" className="flex lg:hidden items-center">
+            <img
+              src="/img/logo/logo-baitullah-mall.webp"
+              alt="Baitullah Mall"
+              className="h-9 lg:h-12 w-auto object-contain transition-all"
+            />
+          </Link>
+        </div>
+
+        {/* Tengah: Search + Nav */}
+        <div className="hidden lg:flex mx-10">
+          {/* Logo */}
+          <Link href="/">
+            <img
+              src="/img/logo/logo-baitullah-mall.webp"
+              alt="Baitullah Mall"
+              className="h-9 lg:h-12 w-auto object-contain transition-all"
+            />
+          </Link>
+        </div>
+
+        {/* Kanan: Cart & Profile */}
+        <div className="flex items-center gap-4">
+          {user === null ? (
+            <button
+              className="flex-shrink-0 cursor-pointer"
+              onClick={() => {
+                openModal({
+                  title: "Masuk",
+                  size: "md",
+                  mobileMode: "full",
+                  content: (<SignIn />),
+                });
+              }}
+            >
+              <ShoppingCart className="w-7 h-7 text-neutral-700 hover:text-black transition" />
+            </button>
+          ) : (
+            <Link href="/cart" className="flex-shrink-0 cursor-pointer">
+              <ShoppingCart className="w-7 h-7 text-neutral-700 hover:text-black transition" />
+            </Link>
+          )}
+
+          <div className="block lg:hidden">
+            {user === null ? (
+              <button
+                className="flex-shrink-0 block lg:hidden cursor-pointer"
+                onClick={() => {
+                  openModal({
+                    title: "Masuk",
+                    size: "md",
+                    mobileMode: "full",
+                    content: (<SignIn />),
+                  });
+                }}
+              >
+                <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />
+              </button>
+            ) : (
               <Dropdown
                 trigger={
-                  <div className="flex items-center gap-2 cursor-pointer">
-                    {user.profile_photo_path ? (
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_API_BAITULLAH}/storage/${user.profile_photo_path}`}
-                        alt="Profile"
-                        className="w-6 h-6 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex justify-center items-center w-6 h-6 rounded-full bg-gray-200">
-                        <UserRound className="w-4 h-4 text-neutral-600 hover:text-neutral-900" />
-                      </div>
-                    )}
-                    <p className="text-sm text-neutral-600">{user.name}</p>
-                  </div>
+                  <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />
                 }
-                className="flex items-center gap-2"
               >
                 <div className="flex flex-col text-sm">
                   <button className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
@@ -255,211 +293,298 @@ const Header: React.FC = () => {
                   </button>
                 </div>
               </Dropdown>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button
-                  className="text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors cursor-pointer"
-                  onClick={() =>
-                    openModal({
-                      title: "Masuk",
-                      size: "md",
-                      mobileMode: "normal",
-                      content: (<SignIn />),
-                    })
-                  }
-                >
-                  Masuk
-                </button>
-                <span className="text-sm text-neutral-400">|</span>
-                <button
-                  className="text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors cursor-pointer"
-                  onClick={() =>
-                    openModal({
-                      title: "Daftar",
-                      size: "md",
-                      mobileMode: "normal",
-                      content: (<SignUp />),
-                    })
-                  }
-                >
-                  Daftar
-                </button>
-              </div>
             )}
           </div>
+        </div>
+      </div>
+    </nav>
+  );
 
-          {/* 🔸 Main bar */}
-          <div className="flex justify-between items-center gap-4">
-            {/* Kiri: Logo */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {/* Mobile Menu Button */}
-              <div className="lg:hidden">
-                <button
-                  onClick={() => setIsSidebarOpen(true)}
-                  className="p-2 rounded-md text-neutral-600 hover:bg-gray-100 focus:ring-2 focus:ring-primary-500"
-                >
-                  {navIcons.menu}
-                </button>
-              </div>
-
-              {/* Logo */}
-              <Link href="/" className="flex items-center">
-                <img
-                  src="/img/logo/logo-baitullah-mall.webp"
-                  alt="Baitullah Mall"
-                  className="h-9 lg:h-12 w-auto object-contain transition-all"
-                />
-              </Link>
-            </div>
-
-            {/* Tengah: Search + Nav */}
-            <div className="hidden lg:flex flex-col w-full mx-10">
-              {/* 🔍 Search Bar with Suggestion */}
-              <div ref={inputRef} className="relative flex justify-center w-full mb-3">
-                <div className="relative w-full">
-                  <input
-                    type="text"
-                    placeholder={
-                      !isInputFocused && searchTerm.length === 0
-                        ? `${animatedPlaceholder}${cursorVisible ? " |" : ""}`
-                        : ""
-                    }
-                    value={searchTerm}
-                    onFocus={() => {
-                      setIsInputFocused(true);
-                      setShowSuggestions(suggestions.length > 0);
-                    }}
-
-                    onBlur={() => {
-                      setIsInputFocused(false);
-
-                      // Reset animasi supaya mulai dari awal
-                      if (searchTerm.length === 0) {
-                        setAnimatedPlaceholder("");
-                        setCharIndex(0);
-                        setIsDeleting(false);
-                      }
-                    }}
-
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setSearchTerm(value);
-
-                      // Jika kosong → tampilkan semua produk
-                      if (value.trim().length === 0) {
-                        handleSearch("");
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && searchTerm.trim().length > 0) {
-                        e.preventDefault();
-                        handleSearch(searchTerm.trim());
-                        setShowSuggestions(false);
-                      }
-                    }}
-                    className="w-full px-5 py-2.5 pr-12 rounded-md bg-white text-neutral-800 placeholder-neutral-400 border border-[#33C060] focus:outline-none focus:ring-1 focus:ring-[#33C060] transition"
+  const renderDefaultNav = () => (
+    <nav
+      className={`container mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ${
+        isScrolled ? "py-3" : "py-3"
+      }`}
+    >
+      {/* 🔝 Topbar */}
+      <div className="hidden lg:flex justify-between items-center pb-5">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-neutral-600 font-normal">Ikuti Kami</span>
+            <a href="#" aria-label="Instagram" className="hover:scale-110 transition">
+              <Instagram className="w-4 h-4 text-neutral-600 hover:text-neutral-900" />
+            </a>
+            <a href="#" aria-label="Facebook" className="hover:scale-110 transition">
+              <Facebook className="w-4 h-4 text-neutral-600 hover:text-neutral-900" />
+            </a>
+            <a href="#" aria-label="YouTube" className="hover:scale-110 transition">
+              <Youtube className="w-4 h-4 text-neutral-600 hover:text-neutral-900" />
+            </a>
+          </div>
+          <span className="text-sm text-neutral-400">|</span>
+          <a href="https://baitullah.co.id/" target="_blank" className="text-sm text-neutral-600 hover:text-neutral-900 font-normal transition">
+            Beli Paket Haji & Umroh
+          </a>
+        </div>
+        {user !== null ? (
+          <Dropdown
+            trigger={
+              <div className="flex items-center gap-2 cursor-pointer">
+                {user.profile_photo_path ? (
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_API_BAITULLAH}/storage/${user.profile_photo_path}`}
+                    alt="Profile"
+                    className="w-6 h-6 rounded-full object-cover"
                   />
-                  <button
-                    type="button"
-                    disabled={searchTerm.trim().length === 0}
-                    onClick={() => handleSearch(searchTerm)}
-                    className={`
-                      absolute right-1 top-1/2 -translate-y-1/2 
-                      p-2.5 rounded-md transition cursor-pointer
-                      ${searchTerm.trim().length === 0 
-                        ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
-                        : "bg-[#33C060] hover:bg-[#299A4D] text-white"}
-                    `}
-                  >
-                    <Search className="w-4 h-4" />
-                  </button>
-
-                  {/* 🔡 Suggestion dropdown */}
-                  {showSuggestions && suggestions.length > 0 && (
-                    <ul className="absolute mt-1 left-0 right-0 bg-white text-neutral-800 shadow-md rounded-lg overflow-hidden z-20">
-                      {suggestions.map((kw, index) => (
-                        <li
-                          key={index}
-                          onClick={() => {
-                            setSearchTerm(kw);
-                            setShowSuggestions(false);
-                          }}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                        >
-                          {kw}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-
-              {/* 🔗 Nav Link */}
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-6">
-                  {navLinks.map((link) => {
-                    const isActive = pathname === link.href;
-                    return (
-                      <Link
-                        key={link.id}
-                        href={link.href}
-                        className={`text-xs font-normal transition-colors ${
-                          isActive
-                            ? "text-neutral-900"
-                            : "text-neutral-600 hover:text-neutral-900 font-semibold"
-                        }`}
-                      >
-                        {link.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* Kanan: Cart & Profile */}
-            <div className="flex items-center gap-4">
-              <Link href="/cart" className="flex-shrink-0">
-                <ShoppingCart className="w-7 h-7 text-neutral-700 hover:text-black transition" />
-              </Link>
-
-              <div className="block lg:hidden">
-                {user === null ? (
-                  <button
-                    className="flex-shrink-0 block lg:hidden cursor-pointer"
-                    onClick={() => {
-                      openModal({
-                        title: "Masuk",
-                        size: "md",
-                        mobileMode: "full",
-                        content: (<SignIn />),
-                      });
-                    }}
-                  >
-                    <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />
-                  </button>
                 ) : (
-                  <Dropdown
-                    trigger={
-                      <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />
-                    }
-                  >
-                    <div className="flex flex-col text-sm">
-                      <button className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
-                        <UserRound className="w-4 h-4" />
-                        Profil
-                      </button>
-                      <button className="flex items-center gap-2 px-3 py-2 text-primary-500 hover:bg-red-50 text-left cursor-pointer" onClick={() => handleLogout()} >
-                        <LogOut className="w-4 h-4" />
-                        Keluar
-                      </button>
-                    </div>
-                  </Dropdown>
+                  <div className="flex justify-center items-center w-6 h-6 rounded-full bg-gray-200">
+                    <UserRound className="w-4 h-4 text-neutral-600 hover:text-neutral-900" />
+                  </div>
                 )}
+                <p className="text-sm text-neutral-600">{user.name}</p>
+                <ChevronDown className="h-6 w-6 text-neutral-500" />
               </div>
+            }
+            className="flex items-center gap-2"
+          >
+            <div className="flex flex-col text-sm">
+              <button className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
+                <UserRound className="w-4 h-4" />
+                Profil
+              </button>
+              <button className="flex items-center gap-2 px-3 py-2 text-primary-500 hover:bg-red-50 text-left cursor-pointer" onClick={() => handleLogout()} >
+                <LogOut className="w-4 h-4" />
+                Keluar
+              </button>
+            </div>
+          </Dropdown>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors cursor-pointer"
+              onClick={() =>
+                openModal({
+                  title: "Masuk",
+                  size: "md",
+                  mobileMode: "normal",
+                  content: (<SignIn />),
+                })
+              }
+            >
+              Masuk
+            </button>
+            <span className="text-sm text-neutral-400">|</span>
+            <button
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors cursor-pointer"
+              onClick={() =>
+                openModal({
+                  title: "Daftar",
+                  size: "md",
+                  mobileMode: "normal",
+                  content: (<SignUp />),
+                })
+              }
+            >
+              Daftar
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* 🔸 Main bar */}
+      <div className="flex justify-between items-center gap-4">
+        {/* Kiri: Logo */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Mobile Menu Button */}
+          <div className="lg:hidden">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 rounded-md text-neutral-600 hover:bg-gray-100 focus:ring-2 focus:ring-primary-500"
+            >
+              {navIcons.menu}
+            </button>
+          </div>
+
+          {/* Logo */}
+          <Link href="/" className="flex items-center">
+            <img
+              src="/img/logo/logo-baitullah-mall.webp"
+              alt="Baitullah Mall"
+              className="h-9 lg:h-12 w-auto object-contain transition-all"
+            />
+          </Link>
+        </div>
+
+        {/* Tengah: Search + Nav */}
+        <div className="hidden lg:flex flex-col w-full mx-10">
+          {/* 🔍 Search Bar with Suggestion */}
+          <div ref={inputRef} className="relative flex justify-center w-full mb-3">
+            <div className="relative w-full">
+              <input
+                type="text"
+                placeholder={
+                  !isInputFocused && searchTerm.length === 0
+                    ? `${animatedPlaceholder}${cursorVisible ? " |" : ""}`
+                    : ""
+                }
+                value={searchTerm}
+                onFocus={() => {
+                  setIsInputFocused(true);
+                  setShowSuggestions(suggestions.length > 0);
+                }}
+
+                onBlur={() => {
+                  setIsInputFocused(false);
+
+                  // Reset animasi supaya mulai dari awal
+                  if (searchTerm.length === 0) {
+                    setAnimatedPlaceholder("");
+                    setCharIndex(0);
+                    setIsDeleting(false);
+                  }
+                }}
+
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSearchTerm(value);
+
+                  // Jika kosong → tampilkan semua produk
+                  if (value.trim().length === 0) {
+                    handleSearch("");
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && searchTerm.trim().length > 0) {
+                    e.preventDefault();
+                    handleSearch(searchTerm.trim());
+                    setShowSuggestions(false);
+                  }
+                }}
+                className="w-full px-5 py-2.5 pr-12 rounded-md bg-white text-neutral-800 placeholder-neutral-400 border border-[#33C060] focus:outline-none focus:ring-1 focus:ring-[#33C060] transition"
+              />
+              <button
+                type="button"
+                disabled={searchTerm.trim().length === 0}
+                onClick={() => handleSearch(searchTerm)}
+                className={`
+                  absolute right-1 top-1/2 -translate-y-1/2 
+                  p-2.5 rounded-md transition cursor-pointer
+                  ${searchTerm.trim().length === 0 
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
+                    : "bg-[#33C060] hover:bg-[#299A4D] text-white"}
+                `}
+              >
+                <Search className="w-4 h-4" />
+              </button>
+
+              {/* 🔡 Suggestion dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <ul className="absolute mt-1 left-0 right-0 bg-white text-neutral-800 shadow-md rounded-lg overflow-hidden z-20">
+                  {suggestions.map((kw, index) => (
+                    <li
+                      key={index}
+                      onClick={() => {
+                        setSearchTerm(kw);
+                        setShowSuggestions(false);
+                      }}
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                    >
+                      {kw}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
-        </nav>
+
+          {/* 🔗 Nav Link */}
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-6">
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.id}
+                    href={link.href}
+                    className={`text-xs font-normal transition-colors ${
+                      isActive
+                        ? "text-neutral-900"
+                        : "text-neutral-600 hover:text-neutral-900 font-semibold"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Kanan: Cart & Profile */}
+        <div className="flex items-center gap-4">
+          {user === null ? (
+            <button
+              className="flex-shrink-0 cursor-pointer"
+              onClick={() => {
+                openModal({
+                  title: "Masuk",
+                  size: "md",
+                  mobileMode: "full",
+                  content: (<SignIn />),
+                });
+              }}
+            >
+              <ShoppingCart className="w-7 h-7 text-neutral-700 hover:text-black transition" />
+            </button>
+          ) : (
+            <Link href="/cart" className="flex-shrink-0 cursor-pointer">
+              <ShoppingCart className="w-7 h-7 text-neutral-700 hover:text-black transition" />
+            </Link>
+          )}
+
+          <div className="block lg:hidden">
+            {user === null ? (
+              <button
+                className="flex-shrink-0 block lg:hidden cursor-pointer"
+                onClick={() => {
+                  openModal({
+                    title: "Masuk",
+                    size: "md",
+                    mobileMode: "full",
+                    content: (<SignIn />),
+                  });
+                }}
+              >
+                <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />
+              </button>
+            ) : (
+              <Dropdown
+                trigger={
+                  <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />
+                }
+              >
+                <div className="flex flex-col text-sm">
+                  <button className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
+                    <UserRound className="w-4 h-4" />
+                    Profil
+                  </button>
+                  <button className="flex items-center gap-2 px-3 py-2 text-primary-500 hover:bg-red-50 text-left cursor-pointer" onClick={() => handleLogout()} >
+                    <LogOut className="w-4 h-4" />
+                    Keluar
+                  </button>
+                </div>
+              </Dropdown>
+            )}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+
+  return (
+    <header className="w-full">
+      <div className="fixed top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 transition-all duration-300">
+        {pathname === "/checkout" ? renderSecondaryNav() : renderDefaultNav()}
       </div>
 
       {/* 📱 Sidebar Mobile */}
