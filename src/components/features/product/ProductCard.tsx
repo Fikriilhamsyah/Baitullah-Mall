@@ -103,6 +103,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     router.push(`/productdetail/${slug}`);
   };
 
+  const isPoin = String(product.jenis?.nama_jenis ?? "").toLowerCase() === "poin";
+
   return (
     <div
       onClick={handleClick}
@@ -136,9 +138,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
         {/* Harga */}
         <p className="text-xl font-extrabold text-gray-800">
-          {product.jenis.nama_jenis === "poin"
-            ? `${formatDecimal(product.harga)} Poin`
-            : formatPrice(product.harga)}
+          {isPoin ? `${formatDecimal(product.harga)} Poin` : formatPrice(product.harga)}
         </p>
 
         {/* Rating */}

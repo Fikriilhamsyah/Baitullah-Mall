@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useSearch } from "@/context/SearchContext";
 import { useModal } from "@/context/ModalContext";
 import { useAuth } from "@/context/AuthContext";
+import { useCartByIdUser } from "@/hooks/useCartByIdUse";
 
 // Icons
 import { navIcons } from "@utils/helpers";
@@ -74,8 +75,11 @@ const Header: React.FC = () => {
   if (!hydrated) return null;
 
   const router = useRouter();
-
   const pathname = usePathname();
+
+  const { cartByIdUser, loading: cartByIdUserLoading, error: cartByIdUserError } = useCartByIdUser();
+  const cartCount = cartByIdUser.length;
+
   const searchParams = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -197,6 +201,12 @@ const Header: React.FC = () => {
       ? [...navLinksMobile.filter((s) => s.title !== "Akun")]
       : [...navLinksMobile];
 
+  const badgeRightClass = (() => {
+    if (cartCount > 99) return "-right-5";
+    if (cartCount >= 10) return "-right-4";
+    return "-right-3";
+  })();
+
   const renderSecondaryNav = () => (
     <nav
       className={`container mx-auto px-4 sm:px-6 lg:px-8 transition-all duration-300 ${
@@ -256,9 +266,20 @@ const Header: React.FC = () => {
               <ShoppingCart className="w-7 h-7 text-neutral-700 hover:text-black transition" />
             </button>
           ) : (
-            <Link href="/cart" className="flex-shrink-0 cursor-pointer">
-              <ShoppingCart className="w-7 h-7 text-neutral-700 hover:text-black transition" />
-            </Link>
+            <div className="relative flex-shrink-0 cursor-pointer">
+              <Link href="/cart">
+                <ShoppingCart className="w-7 h-7 text-neutral-700 hover:text-black transition" />
+              </Link>
+              {cartCount > 0 && (
+                <span
+                  className={`absolute -top-3 ${badgeRightClass} inline-flex items-center justify-center py-1 px-2 text-[10px] font-semibold text-white bg-primary-500 rounded-full border-2 border-white z-10`}
+                  aria-label={`${cartCount} item di keranjang`}
+                  aria-live="polite"
+                >
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+            </div>
           )}
 
           <div className="block lg:hidden">
@@ -521,7 +542,7 @@ const Header: React.FC = () => {
         </div>
 
         {/* Kanan: Cart & Profile */}
-        <div className="flex items-center gap-4">
+        <div className="flex gap-4">
           {user === null ? (
             <button
               className="flex-shrink-0 cursor-pointer"
@@ -537,9 +558,20 @@ const Header: React.FC = () => {
               <ShoppingCart className="w-7 h-7 text-neutral-700 hover:text-black transition" />
             </button>
           ) : (
-            <Link href="/cart" className="flex-shrink-0 cursor-pointer">
-              <ShoppingCart className="w-7 h-7 text-neutral-700 hover:text-black transition" />
-            </Link>
+            <div className="relative flex-shrink-0 cursor-pointer">
+              <Link href="/cart">
+                <ShoppingCart className="w-7 h-7 text-neutral-700 hover:text-black transition" />
+              </Link>
+              {cartCount > 0 && (
+                <span
+                  className={`absolute -top-3 ${badgeRightClass} inline-flex items-center justify-center py-1 px-2 text-[10px] font-semibold text-white bg-primary-500 rounded-full border-2 border-white z-10`}
+                  aria-label={`${cartCount} item di keranjang`}
+                  aria-live="polite"
+                >
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+            </div>
           )}
 
           <div className="block lg:hidden">

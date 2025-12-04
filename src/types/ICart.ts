@@ -7,4 +7,5 @@ export interface IPostCart {
 
 export interface ICartByIdUser{
     id: number,
+    id_jenis: number,
 }

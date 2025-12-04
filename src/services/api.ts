@@ -38,6 +38,9 @@ export const api = {
   getCartAll: () =>
     axiosClientBaitullahMall.get<ApiResponse<IPostCart[]>>("api/keranjang"),
 
+  postCart: (payload: IPostCart) =>
+    axiosClientBaitullahMall.post<ApiResponse<IPostCart[]>>("api/keranjang", payload),
+
   getCartByIdUser: (userId: number) =>
     axiosClientBaitullahMall.get<ApiResponse<ICartByIdUser[]>>(`api/keranjang/user/${userId}`),
 };

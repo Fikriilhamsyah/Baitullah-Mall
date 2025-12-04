@@ -87,7 +87,15 @@ const ProductList: React.FC<ProductListProps> = ({
           transition={{ duration: 0.3 }}
           className="flex flex-col items-center justify-center h-64 text-gray-500"
         >
-          <SearchX className="w-12 h-12 mb-3 text-gray-400" />
+          {/* simple friendly SVG */}
+          <svg width="192" height="192" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+            <rect x="1" y="5" width="22" height="15" rx="3" fill="#F8FAFC"/>
+            <path d="M3 7.5H21" stroke="#E6EEF5" strokeWidth="1.2"/>
+            <path d="M7 11h10" stroke="#C9D8E6" strokeWidth="1.6" strokeLinecap="round"/>
+            <circle cx="8.5" cy="15.5" r="1.6" fill="#E6EEF5"/>
+            <circle cx="15.5" cy="15.5" r="1.6" fill="#E6EEF5"/>
+            <path d="M9.5 6.5c0-1.1.9-2 2-2h0c1.1 0 2 .9 2 2v1" stroke="#B7C9DB" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
           <p className="text-lg font-medium">Produk tidak ditemukan</p>
           <p className="text-sm text-gray-400 mt-1 text-center max-w-sm">
             Coba ubah kata kunci pencarian atau periksa filter yang kamu gunakan.

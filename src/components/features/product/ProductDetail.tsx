@@ -5,6 +5,10 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useProductById } from "@hooks/useProductById";
 import { ReviewsData } from "@/data/ReviewsData";
+import { usePostCart } from "@/hooks/useCartPost";
+
+// Types
+import { IPostCart } from "@/types/ICart";
 
 // Components
 import LoadingSpinner from "@components/ui/LoadingSpinner";
@@ -16,6 +20,7 @@ import ProductImageGallery from "./ProductImageGallery";
 import ProductReviewCard from "./ProductReviewCard";
 import Pagination from "@/components/ui/Pagination";
 import SignIn from '@components/features/auth/SignIn';
+import { useToast } from "@/components/ui/Toast";
 
 // Context
 import { useModal } from "@/context/ModalContext";
@@ -35,8 +40,10 @@ interface ProductDetailProps {
 const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }) => {
   const { product, loading, error } = useProductById(id);
   const user = useAuth((state) => state.user);
+  const { postCart, loading: postCartLoading } = usePostCart();
   const openModal = useModal((s) => s.openModal);
   const closeModal = useModal((s) => s.closeModal);
+  const { showToast } = useToast();
 
   const isLoggedIn = !!user;
 
@@ -215,6 +222,74 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
     (reviewPage - 1) * REVIEWS_PER_PAGE,
     reviewPage * REVIEWS_PER_PAGE
   );
+
+  const handlePostCart = async () => {
+    // ambil user terbaru dari store (hindari closure stale)
+    const currentUser = useAuth.getState().user;
+
+    if (!currentUser) {
+      openModal({
+        title: "Masuk",
+        size: "md",
+        mobileMode: "full",
+        content: (<SignIn />),
+      });
+      return;
+    }
+
+    if (!product) {
+      showToast("Produk tidak tersedia.", "error");
+      return;
+    }
+
+    if ((stokVarian ?? 0) <= 0) {
+      showToast("Stok varian ini sudah habis.", "error");
+      return;
+    }
+
+    // tentukan kodeVarian (sama seperti sebelumnya)
+    let kodeVarian: string = "..."; // gunakan logic kamu sebelumnya
+    if (selectedVarian && selectedVarian.varian_id != null && Array.isArray(product.varian)) {
+      const found = product.varian.find((v: any) => Number(v.id) === Number(selectedVarian.varian_id));
+      kodeVarian = found?.kode_varian ?? String(found?.id ?? "");
+    } else if (Array.isArray(product.varian) && product.varian.length === 1) {
+      kodeVarian = product.varian[0]?.kode_varian ?? String(product.varian[0]?.id ?? "");
+    } else {
+      kodeVarian = (product as any).kode_produk ?? String(product.id ?? product.nama_produk ?? "unknown");
+    }
+
+    const payload: IPostCart = {
+      user_id: currentUser.id,
+      kode_varian: String(kodeVarian),
+      qty: Math.max(1, Math.min(quantity, stokVarian)),
+      harga: unitPrice,
+    };
+
+    try {
+      // disable UI: postCartLoading dari hook; tombol harus membaca postCartLoading
+      const result = await postCart(payload); // usePostCart handles 401 -> logout
+      // jika berhasil:
+      showToast("Berhasil ditambahkan ke keranjang.", "success");
+
+      // optional: refetch cart via hook if you have access to refetch method:
+      // const cartHookRefetch = ...; call it
+      // else rely on window event dispatched by usePostCart
+
+      // jangan reload penuh kecuali memang perlu
+      // jika butuh reload: router.refresh(); // Next 13 refresh (client)
+    } catch (err: any) {
+      // jika usePostCart melempar karena 401, hook sudah memanggil logout()
+      const message = err?.message ?? "Gagal menambahkan ke keranjang.";
+      showToast(message, "error");
+
+      // jika logout terjadi, kamu mungkin ingin memastikan halaman ter-redirect:
+      // router.replace("/"); // opsional
+    } finally {
+      // tutup sheet/cleanup jika perlu
+      setOpenA(false);
+      setOpenB(false);
+    }
+  };
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
@@ -468,11 +543,9 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                         hoverText: "text-white",
                       }}
                       onClick={() => {
-                        // contoh handler: pastikan quantity <= stokVarian
                         if (stokVarian <= 0) return;
                         const qty = Math.min(quantity, stokVarian);
-                        // TODO: panggil fungsi tambah keranjang dengan { product, varian: selectedVarian, qty }
-                        setOpenA(true); // tetap buka bottomsheet sebagai contoh
+                        handlePostCart();
                       }}
                     />
                     <Button
@@ -706,7 +779,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
             </p>
           </div>
 
-          <Button label="Tambahkan ke Keranjang" iconRight={ShoppingCart} color="primary" onClick={() => setOpenA(false)} />
+          <Button label="Tambahkan ke Keranjang{" iconRight={ShoppingCart} color="primary" onClick={() => {setOpenA(false); handlePostCart();}} />
         </div>
       </BottomSheet>
 
