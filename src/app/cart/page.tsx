@@ -7,13 +7,17 @@ import { motion } from "framer-motion";
 import { useCart } from "@/hooks/useCart";
 import { useCartByIdUser } from "@/hooks/useCartByIdUse";
 import { useProducts } from "@hooks/useProducts";
+import useDeleteCartById from "@/hooks/useDeleteCartById";
+import { usePostCart } from "@/hooks/useCartPost";
 
 // Components
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ErrorMessage from "@/components/ui/ErrorMessage";
 import { Button } from "@/components/ui/Button";
 import { InputField } from "@/components/ui/InputField";
-import ProductCard from "@/components/features/product/ProductCard";
+import { useToast } from "@/components/ui/Toast";
+import { useModal } from "@/context/ModalContext";
+import BottomSheet from "@/components/ui/BottomSheet";
 
 // Utils
 import { formatPrice } from "@/utils/formatters";
@@ -25,8 +29,14 @@ import Link from "next/link";
 
 export default function CartPage() {
   const { cart, loading: cartLoading, error: cartError } = useCart();
-  const { cartByIdUser, loading: cartByIdUserLoading, error: cartByIdUserError } = useCartByIdUser();
+  const { cartByIdUser, loading: cartByIdUserLoading, error: cartByIdUserError, refetch } = useCartByIdUser();
   const { products, loading: productsLoading, error: productsError } = useProducts();
+  const { deleteCart, loading: deleteLoading, error: deleteError } = useDeleteCartById();
+  const { postCart, loading: postCartLoading } = usePostCart();
+
+  const { showToast } = useToast();
+  const openModal = useModal(s => s.openModal);
+  const closeModal = useModal(s => s.closeModal);
 
   const loading = cartLoading || productsLoading || cartByIdUserLoading;
   const error = cartError || productsError || cartByIdUserError;
@@ -37,6 +47,11 @@ export default function CartPage() {
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   // Tab aktif berdasarkan id_jenis (null jika belum ada)
   const [activeJenis, setActiveJenis] = useState<number | null>(null);
+  // state untuk menyimpan id item yang sedang dihapus (loading per-item)
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const [confirmId, setConfirmId] = useState<number | null>(null);
+  const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
 
   // Inisialisasi quantities saat cart berubah
   useEffect(() => {
@@ -116,9 +131,6 @@ export default function CartPage() {
     if (activeJenis === null) return [];
     return cartWithProduct.filter((it) => Number(it.cartItem.id_jenis ?? 0) === Number(activeJenis));
   }, [cartWithProduct, activeJenis]);
-
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage message={String(error)} />;
 
   // total hanya hitung yang dipilih
   const totalSelectedValue = useMemo(() => {
@@ -221,6 +233,10 @@ export default function CartPage() {
   // jika tidak ada item selected, disable checkout
   const canCheckout = selectedIsSingleJenis && selected.length > 0;
 
+  // === NOW it's safe to early-return because all Hooks have been called ===
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorMessage message={String(error)} />;
+
   // render tabs: only per jenis (no "Semua")
   const renderTabs = () => {
     return (
@@ -236,7 +252,7 @@ export default function CartPage() {
                 const ids = g.items.map((it: any) => it.cartItem.id);
                 setSelected(ids);
               }}
-              className={`px-3 py-1 rounded-full text-sm font-medium border ${active ? "bg-primary-500 text-white border-primary-500" : "bg-white text-gray-700 border-gray-200"}`}
+              className={`px-3 py-1 rounded-full text-sm font-medium border ${active ? "bg-primary-500 text-white border-primary-500" : "bg-white text-gray-700 border-gray-200 cursor-pointer"}`}
             >
               {g.nama_jenis} <span className={`ml-1 text-xs ${active ? "text-white" : "text-gray-500"}`}>({g.items.length})</span>
             </button>
@@ -244,6 +260,88 @@ export default function CartPage() {
         })}
       </div>
     );
+  };
+
+  const confirmDelete = async (cartId: number) => {
+    try {
+      setDeletingId(cartId);
+
+      // close any open UI
+      try { closeModal(); } catch (e) { /* ignore */ }
+      setBottomSheetOpen(false);
+
+      const res = await deleteCart(cartId);
+
+      if (!res) {
+        showToast("Gagal menghapus item. Coba lagi.", "error");
+        return;
+      }
+
+      if (typeof res.success !== "undefined" && res.success === false) {
+        showToast(res.message ?? "Gagal menghapus item.", "error");
+        return;
+      }
+
+      if (typeof refetch === "function") {
+        await refetch();
+      }
+
+      setSelected((prev) => prev.filter((id) => id !== cartId));
+
+      showToast(res.message ?? "Item berhasil dihapus dari keranjang.", "success");
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("cart:updated", { detail: { userId: cartByIdUser?.[0]?.user_id ?? null } }));
+      }
+    } catch (err: any) {
+      console.error("Gagal menghapus item keranjang:", err);
+      const message = err?.message ?? "Gagal menghapus item. Silakan coba lagi.";
+      showToast(message, "error");
+    } finally {
+      setDeletingId(null);
+      setConfirmId(null);
+    }
+  };
+
+  // helper untuk membuka UI konfirmasi sesuai ukuran layar
+  const handleDeleteClick = (cartId: number) => {
+    // detect small devices (mobile + tablet) using window width < 1024 (tailwind 'lg' breakpoint)
+    const isSmall = typeof window !== "undefined" ? window.innerWidth < 1024 : true;
+    setConfirmId(cartId);
+
+    if (isSmall) {
+      setBottomSheetOpen(true);
+    } else {
+      openModal({
+        title: "Hapus Item",
+        size: "md",
+        mobileMode: "full",
+        content: (
+          <div className="space-y-4">
+            <div className="mt-4 space-y-2">
+              <div className="text-sm font-semibold">Hapus item dari keranjang?</div>
+              <div className="text-xs text-gray-600">Item akan dihapus dan tidak dapat dikembalikan.</div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                label="Batal"
+                color="secondary"
+                onClick={() => {
+                  try { closeModal(); } catch (e) {}
+                  setConfirmId(null);
+                }}
+              />
+              <Button
+                label="Hapus"
+                color="primary"
+                onClick={() => confirmDelete(cartId)}
+              />
+            </div>
+          </div>
+        ),
+      });
+    }
   };
 
   return (
@@ -313,6 +411,8 @@ export default function CartPage() {
                   const itemSubtotal = (Number(price) || 0) * qty;
                   const isPoin = String(cartItem.nama_jenis ?? "").toLowerCase() === "poin";
 
+                  const isDeleting = deletingId === cartItem.id;
+
                   return (
                     <article
                       key={cartItem.id}
@@ -365,10 +465,12 @@ export default function CartPage() {
                               </div>
                           </div>
                           <button
-                              onClick={() => alert("Implement delete API")}
-                              className="text-sm text-red-600 hover:text-red-700"
-                              aria-label={`Hapus ${cartItem.kode_varian}`}
-                              title="Hapus item"
+                            onClick={() => handleDeleteClick(cartItem.id)}
+                            disabled={isDeleting}
+                            aria-busy={isDeleting}
+                            className={`text-sm ${isDeleting ? "text-red-300 cursor-not-allowed" : "text-red-600 hover:text-red-700 cursor-pointer"}`}
+                            aria-label={`Hapus ${cartItem.kode_varian}`}
+                            title="Hapus item"
                           >
                               <Trash2 className="w-4 h-4" />
                           </button>
@@ -514,6 +616,33 @@ export default function CartPage() {
           </div>
         </div>
       </div>
+
+      {/* BottomSheet konfirmasi untuk mobile/tablet */}
+      <BottomSheet open={bottomSheetOpen} onClose={() => { setBottomSheetOpen(false); setConfirmId(null); }}>
+        <div className="py-2">
+          <div className="text-sm font-semibold mb-2">Hapus item dari keranjang?</div>
+          <div className="text-xs text-gray-600 mb-4">Item akan dihapus dan tidak dapat dikembalikan.</div>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              label="Batal"
+              color="secondary"
+              onClick={() => {
+                setBottomSheetOpen(false);
+                setConfirmId(null);
+              }}
+            />
+            <Button
+              label={deletingId === confirmId ? "Menghapus..." : "Hapus"}
+              color="primary"
+              onClick={() => {
+                if (confirmId != null) confirmDelete(confirmId);
+              }}
+              disabled={deletingId === confirmId}
+            />
+          </div>
+        </div>
+      </BottomSheet>
     </div>
   );
 }

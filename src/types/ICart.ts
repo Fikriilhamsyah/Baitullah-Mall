@@ -8,4 +8,7 @@ export interface IPostCart {
 export interface ICartByIdUser{
     id: number,
     id_jenis: number,
+    user_id: number,
+    kode_varian: string,
+    harga: number
 }

@@ -43,6 +43,9 @@ export const api = {
 
   getCartByIdUser: (userId: number) =>
     axiosClientBaitullahMall.get<ApiResponse<ICartByIdUser[]>>(`api/keranjang/user/${userId}`),
+
+  deleteCartByIdCart: (id: number) =>
+    axiosClientBaitullahMall.delete<ICartByIdUser[]>(`api/keranjang/${id}`),
 };
 
 // export const mockApi = {

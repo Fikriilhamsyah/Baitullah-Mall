@@ -88,9 +88,10 @@ export default function Footer() {
         <div>
           <h4 className="text-md font-semibold mb-3 text-center md:text-start">Berdasarkan Koleksi</h4>
           <ul className="space-y-2 text-sm text-black/90 text-center md:text-start">
-            <li><a href="/" className="text-center md:text-start">Pria</a></li>
-            <li><a href="/produk" className="text-center md:text-start">Wanita</a></li>
-            <li><a href="/tentang" className="text-center md:text-start">Unisex</a></li>
+            <li><a href="/productlist?collection=1" className="text-center md:text-start">Pria</a></li>
+            <li><a href="/productlist?collection=2" className="text-center md:text-start">Wanita</a></li>
+            <li><a href="/productlist?collection=3" className="text-center md:text-start">Unisex</a></li>
+            <li><a href="/productlist?collection=4" className="text-center md:text-start">Lainnya</a></li>
           </ul>
         </div>
 
@@ -98,11 +99,11 @@ export default function Footer() {
         <div>
           <h4 className="text-md font-semibold mb-3 text-center md:text-start">Produk</h4>
           <ul className="space-y-2 text-sm text-black/90 text-center md:text-start">
-            <li><a href="/faq" className="text-center md:text-start">Pakaian & Ihram</a></li>
-            <li><a href="/panduan" className="text-center md:text-start">Aksesoris Ibadah</a></li>
-            <li><a href="/kebijakan-privasi" className="text-center md:text-start">Perlengkapan Travel</a></li>
-            <li><a href="/syarat-ketentuan" className="text-center md:text-start">Kesehatan & Kebersihan</a></li>
-            <li><a href="/syarat-ketentuan" className="text-center md:text-start">Buku & Panduan</a></li>
+            <li><a href="/productlist?category=Pakaian+%26+Ihram" className="text-center md:text-start">Pakaian & Ihram</a></li>
+            <li><a href="/productlist?category=Aksesoris+Ibadah" className="text-center md:text-start">Aksesoris Ibadah</a></li>
+            <li><a href="/productlist?category=Perlengkapan+Travel" className="text-center md:text-start">Perlengkapan Travel</a></li>
+            <li><a href="/productlist?category=Kesehatan+%26+Kebersihan" className="text-center md:text-start">Kesehatan & Kebersihan</a></li>
+            <li><a href="/productlist?category=Buku+%26+Panduan" className="text-center md:text-start">Buku & Panduan</a></li>
             <li><a href="/syarat-ketentuan" className="text-center md:text-start">Oleh-oleh & Souvenir</a></li>
             <li><a href="/syarat-ketentuan" className="text-center md:text-start">Paket Bundling</a></li>
           </ul>
