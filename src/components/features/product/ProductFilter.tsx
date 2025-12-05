@@ -212,7 +212,7 @@ export function ProductFilter({
                     Gender
                   </p>
                   <CheckboxGroup
-                    options={collectionList.map(col => ({ label: col.nama_koleksi, value: col.nama_koleksi }))}
+                    options={collectionList.map(col => ({ label: col.nama_koleksi, value: String(col.id) }))}
                     selected={collectionFilter}
                     onChange={onChangeCollectionFilter}
                   />
