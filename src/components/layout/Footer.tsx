@@ -10,8 +10,15 @@ export default function Footer() {
     !!pathname &&
     (pathname.startsWith("/productdetail") || pathname.startsWith("/product/") || pathname === "/product");
   const isCart = pathname === "/cart";
+  const isCheckout = pathname === "/checkout";
 
-  const pbClass = isProductDetail ? "pb-[7.5rem] lg:pb-0" : isCart ? "pb-20 lg:pb-0" : "pb-0";
+  const pbClass = isProductDetail
+    ? "pb-[7.5rem] lg:pb-0"
+    : isCheckout
+    ? "pb-20 lg:pb-0"
+    : isCart
+    ? "pb-20 lg:pb-0"
+    : "pb-0";
 
   const renderSecondaryFoot = () => (
     <div>

@@ -15,7 +15,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useSearch } from "@/context/SearchContext";
 import { useModal } from "@/context/ModalContext";
 import { useAuth } from "@/context/AuthContext";
-import { useCartByIdUser } from "@/hooks/useCartByIdUse";
+import { useCartByIdUser } from "@/hooks/useCartByIdUser";
 
 // Icons
 import { navIcons } from "@utils/helpers";

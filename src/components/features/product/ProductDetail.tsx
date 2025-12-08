@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 // Hooks
 import { useAuth } from "@/context/AuthContext";
@@ -38,6 +39,7 @@ interface ProductDetailProps {
 }
 
 const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }) => {
+  const router = useRouter();
   const { product, loading, error } = useProductById(id);
   const user = useAuth((state) => state.user);
   const { postCart, loading: postCartLoading } = usePostCart();
@@ -62,9 +64,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
      - Jika product.varian === null -> buat satu "pseudo-varian" dari product agar UI tetap bekerja
   */
   const groupVariants = () => {
-    // jika tidak ada varian, return satu varian default berdasarkan product
     if (!product || !product.varian) {
-      // fallback: gunakan product.stok sebagai stok tunggal, warna null/Default
       const single: Record<
         string,
         {
@@ -139,7 +139,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
   const selectedVarian =
     selectedColor && selectedSize !== undefined
       ? groupedVariants[selectedColor]?.sizes.find((s) => s.ukuran === selectedSize) ??
-        // jika ukuran null (satu varian tanpa ukuran), cari ukuran null
         groupedVariants[selectedColor]?.sizes.find((s) => s.ukuran === null) ??
         null
       : null;
@@ -148,39 +147,31 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
   useEffect(() => {
     if (!product) return;
 
-    // jika ada varian (grouped colors lebih dari 0)
     if (colors && colors.length > 0) {
-      // set default warna hanya jika belum ada pilihan
       if (!selectedColor) {
         setSelectedColor(colors[0]);
       }
 
-      // set default ukuran dari warna yang terpilih / pertama
       const colorToUse = selectedColor ?? colors[0];
       const sizesForColor = groupedVariants[colorToUse]?.sizes ?? [];
 
       if (sizesForColor.length > 0) {
-        // pilih ukuran pertama yang bukan undefined (bisa null)
         const defaultSize = sizesForColor[0].ukuran ?? null;
         setSelectedSize(defaultSize);
       } else {
         setSelectedSize(null);
       }
     } else {
-      // tidak ada varian (seharusnya tidak terjadi karena groupVariants membuat Default),
-      // tetapi aman untuk fallback:
       setSelectedColor(null);
       setSelectedSize(null);
     }
 
-    // reset qty saat produk berubah
     setQuantity(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product]);
 
   /* RESET QTY SAAT PILIH VARIAN */
   useEffect(() => {
-    // saat varian berubah, pastikan quantity tidak melebihi stok varian dan minimal 1
     const stok = selectedVarian?.stok ?? product?.stok ?? 0;
     setQuantity((prev) => {
       if (stok <= 0) return 1;
@@ -191,7 +182,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVarian]);
 
-  /* CALCULATE PRICE (unitPrice = product.harga + varian.tambahan_harga jika ada) */
+  /* CALCULATE PRICE */
   const unitPrice = (() => {
     if (!product) return 0;
     const base = product.harga ?? 0;
@@ -199,16 +190,10 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
     return base + tambahan;
   })();
 
-  const calculateTotalPrice = () => {
-    return unitPrice * quantity;
-  };
-
+  const calculateTotalPrice = () => unitPrice * quantity;
   const totalPrice = calculateTotalPrice();
 
-  /* STOK
-     - totalStok: jumlah seluruh varian jika ada; jika tidak ada varian, gunakan product.stok
-     - stokVarian: stok dari varian yang dipilih; jika tidak ada varian, fallback ke product.stok
-  */
+  /* STOK */
   const totalStok =
     product?.varian && Array.isArray(product.varian)
       ? product.varian.reduce((a: number, b: any) => a + (b?.stok ?? 0), 0)
@@ -224,7 +209,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
   );
 
   const handlePostCart = async () => {
-    // ambil user terbaru dari store (hindari closure stale)
     const currentUser = useAuth.getState().user;
 
     if (!currentUser) {
@@ -247,8 +231,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
       return;
     }
 
-    // tentukan kodeVarian (sama seperti sebelumnya)
-    let kodeVarian: string = "..."; // gunakan logic kamu sebelumnya
+    // tentukan kodeVarian
+    let kodeVarian: string = "...";
     if (selectedVarian && selectedVarian.varian_id != null && Array.isArray(product.varian)) {
       const found = product.varian.find((v: any) => Number(v.id) === Number(selectedVarian.varian_id));
       kodeVarian = found?.kode_varian ?? String(found?.id ?? "");
@@ -266,36 +250,81 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
     };
 
     try {
-      // disable UI: postCartLoading dari hook; tombol harus membaca postCartLoading
-      const result = await postCart(payload); // usePostCart handles 401 -> logout
-      // jika berhasil:
+      const result = await postCart(payload);
       showToast("Berhasil ditambahkan ke keranjang.", "success");
-
-      // optional: refetch cart via hook if you have access to refetch method:
-      // const cartHookRefetch = ...; call it
-      // else rely on window event dispatched by usePostCart
-
-      // jangan reload penuh kecuali memang perlu
-      // jika butuh reload: router.refresh(); // Next 13 refresh (client)
     } catch (err: any) {
-      // jika usePostCart melempar karena 401, hook sudah memanggil logout()
       const message = err?.message ?? "Gagal menambahkan ke keranjang.";
       showToast(message, "error");
-
-      // jika logout terjadi, kamu mungkin ingin memastikan halaman ter-redirect:
-      // router.replace("/"); // opsional
     } finally {
-      // tutup sheet/cleanup jika perlu
       setOpenA(false);
       setOpenB(false);
     }
   };
 
+  // ---------- NEW: prepare checkout payload and navigate ----------
+  const goToCheckout = () => {
+    if (!product) {
+      showToast("Produk tidak ditemukan.", "error");
+      return;
+    }
+
+    if (!isLoggedIn) {
+      openModal({
+        title: "Masuk",
+        size: "md",
+        mobileMode: "full",
+        content: (<SignIn />),
+      });
+      return;
+    }
+
+    if ((stokVarian ?? 0) <= 0) {
+      showToast("Stok varian ini sudah habis.", "error");
+      return;
+    }
+
+    // compute kode_varian similar to handlePostCart
+    let kodeVarian: string = "...";
+    if (selectedVarian && selectedVarian.varian_id != null && Array.isArray(product.varian)) {
+      const found = product.varian.find((v: any) => Number(v.id) === Number(selectedVarian.varian_id));
+      kodeVarian = found?.kode_varian ?? String(found?.id ?? "");
+    } else if (Array.isArray(product.varian) && product.varian.length === 1) {
+      kodeVarian = product.varian[0]?.kode_varian ?? String(product.varian[0]?.id ?? "");
+    } else {
+      kodeVarian = (product as any).kode_produk ?? String(product.id ?? product.nama_produk ?? "unknown");
+    }
+
+    const item = {
+      product_id: product.id,
+      nama_produk: product.nama_produk,
+      kode_varian: String(kodeVarian),
+      warna: selectedColor ?? null,
+      ukuran: selectedSize ?? null,
+      qty: Math.max(1, Math.min(quantity, stokVarian)),
+      unit_price: unitPrice,
+      subtotal: unitPrice * Math.max(1, Math.min(quantity, stokVarian)),
+      gambar: product.gambar_utama ?? null,
+      stok_varian: stokVarian,
+      jenis: product.jenis?.nama_jenis ?? "uang",
+    };
+
+    // persist to sessionStorage so checkout page can read it
+    try {
+      const list = [item];
+      sessionStorage.setItem("checkout_items", JSON.stringify(list));
+      // also set a timestamp so checkout knows it's fresh
+      sessionStorage.setItem("checkout_items_at", String(Date.now()));
+      router.push("/checkout");
+    } catch (e) {
+      console.error("Failed to set checkout payload:", e);
+      showToast("Gagal mempersiapkan checkout.", "error");
+    }
+  };
+  // ---------- END new ----------
+
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
   if (!product) return null;
-
-  console.log(`selectedColor ${selectedColor} \nselectedSize ${selectedSize} \nquantity ${quantity} \ntotalPrice ${totalPrice}`);
 
   return (
     <div className="">
@@ -330,7 +359,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
         })()}
       </div>
 
-
       <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 pt-0 lg:pt-[161px]">
         <div className="container mx-auto">
           <div className="grid md:grid-cols-12 gap-8">
@@ -351,13 +379,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                     <h1 className="text-xl lg:text-3xl font-bold text-gray-900 mb-2 w-full">{product.nama_produk}</h1>
 
                     <div className="flex items-center gap-4 mb-3 w-full">
-                      {/* <div className="flex items-center text-yellow-500">
-                        <Star className="w-5 h-5 fill-yellow-400" />
-                        <span className="ml-1 text-gray-700 font-medium">
-                          {product.rating?.toFixed(1) ?? "0.0"}
-                        </span>
-                      </div> */}
-
                       <p className="text-gray-600 text-sm">
                         Stok Total: <span className="font-semibold">{totalStok}</span>
                       </p>
@@ -372,7 +393,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                       <div className="flex flex-wrap gap-3">
                         {colors.map((colorName) => {
                           const colorObj = groupedVariants[colorName];
-                          const colorCode = colorObj?.kode || "#f3f3f3"; // ambil dari varian.kode_warna
+                          const colorCode = colorObj?.kode || "#f3f3f3";
 
                           const selected = selectedColor === colorName;
 
@@ -381,7 +402,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                               <button
                                 onClick={() => {
                                   setSelectedColor(colorName);
-                                  // pilih ukuran pertama yang tersedia untuk warna tersebut
                                   const firstSize = colorObj?.sizes?.[0]?.ukuran ?? null;
                                   setSelectedSize(firstSize);
                                   setQuantity(1);
@@ -529,7 +549,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
 
                 {isLoggedIn ? (
                   <div className="space-y-2">
-                    <Button label="Beli Sekarang" fullWidth color="primary" disabled={stokVarian <= 0} />
+                    <Button label="Beli Sekarang" fullWidth color="primary" disabled={stokVarian <= 0} onClick={goToCheckout} />
                     <Button
                       label="Tambahkan ke Keranjang"
                       iconRight={ShoppingCart}
@@ -544,7 +564,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                       }}
                       onClick={() => {
                         if (stokVarian <= 0) return;
-                        const qty = Math.min(quantity, stokVarian);
                         handlePostCart();
                       }}
                     />
@@ -661,7 +680,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
               <div className="flex flex-wrap gap-3">
                 {colors.map((colorName) => {
                   const colorObj = groupedVariants[colorName];
-                  const colorCode = colorObj?.kode || "#f3f3f3"; // ambil dari varian.kode_warna
+                  const colorCode = colorObj?.kode || "#f3f3f3";
 
                   const selected = selectedColor === colorName;
 
@@ -779,7 +798,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
             </p>
           </div>
 
-          <Button label="Tambahkan ke Keranjang{" iconRight={ShoppingCart} color="primary" onClick={() => {setOpenA(false); handlePostCart();}} />
+          <Button label="Tambahkan ke Keranjang" iconRight={ShoppingCart} color="primary" onClick={() => {setOpenA(false); handlePostCart();}} />
         </div>
       </BottomSheet>
 
@@ -802,7 +821,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
               <div className="flex flex-wrap gap-3">
                 {colors.map((colorName) => {
                   const colorObj = groupedVariants[colorName];
-                  const colorCode = colorObj?.kode || "#f3f3f3"; // ambil dari varian.kode_warna
+                  const colorCode = colorObj?.kode || "#f3f3f3";
 
                   const selected = selectedColor === colorName;
 
@@ -912,7 +931,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
             </p>
           </div>
 
-          <Button label="Beli Sekarang" color="primary" onClick={() => setOpenB(false)} disabled={stokVarian <= 0} />
+          <Button label="Beli Sekarang" color="primary" onClick={() => { setOpenB(false); goToCheckout(); }} disabled={stokVarian <= 0} />
         </div>
       </BottomSheet>
     </div>
