@@ -44,52 +44,55 @@ const AddressForm = () => {
   };
 
   /** Trigger login */
-  const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const err = validate();
-    if (err) {
-      showToast(err, "warning");
-      return;
-    }
+  // const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault();
+  //   const err = validate();
+  //   if (err) {
+  //     showToast(err, "warning");
+  //     return;
+  //   }
 
-    try {
-      const res = await login({ fullName });
-      if (!res?.success) {
-        showToast("Login gagal", "error");
-        return;
-      }
+  //   try {
+  //     const res = await login({ fullName });
+  //     if (!res?.success) {
+  //       showToast("Login gagal", "error");
+  //       return;
+  //     }
 
-      // SIMPAN TOKEN KE COOKIE 7 HARI
-      setAuthToken(res.token);
+  //     // SIMPAN TOKEN KE COOKIE 7 HARI
+  //     setAuthToken(res.token);
 
-      // SIMPAN USER + TOKEN KE ZUSTAND
-      AuthContext.getState().setUser(res.user);
-      AuthContext.getState().setToken(res.token);
+  //     // SIMPAN USER + TOKEN KE ZUSTAND
+  //     AuthContext.getState().setUser(res.user);
+  //     AuthContext.getState().setToken(res.token);
 
-      showToast("Berhasil login", "success");
+  //     showToast("Berhasil login", "success");
       
-      closeModal();
-    } catch (e: any) {
-      console.error(e);
+  //     closeModal();
+  //   } catch (e: any) {
+  //     console.error(e);
 
-      /** Jika API balas 401 → password/email salah */
-      if (e?.response?.status === 401) {
-        showToast("Email atau password salah", "error");
-        setErrorMessage("Email atau password salah");
-        return;
-      }
+  //     /** Jika API balas 401 → password/email salah */
+  //     if (e?.response?.status === 401) {
+  //       showToast("Email atau password salah", "error");
+  //       setErrorMessage("Email atau password salah");
+  //       return;
+  //     }
 
-      /** Jika error lain tetap pakai fallback */
-      showToast("Terjadi kesalahan, coba lagi", "error");
-    }
-  };
+  //     /** Jika error lain tetap pakai fallback */
+  //     showToast("Terjadi kesalahan, coba lagi", "error");
+  //   }
+  // };
 
   return (
     <div className="flex flex-col justify-between items-center w-full h-full pb-10 lg:pb-0">
 
       <div className="space-y-4 w-full">
         {/* Form */}
-        <form onSubmit={handleSignIn} className="space-y-4 w-full">
+        <form
+          // onSubmit={handleSignIn}
+          className="space-y-4 w-full"
+        >
             <InputField
                 id="fullName"
                 name="fullName"
