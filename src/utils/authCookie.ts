@@ -8,11 +8,11 @@ const isSecureContext = () => {
   return window.location.protocol === "https:" || window.location.hostname === "localhost";
 };
 
-export const setAuthToken = (token: string) => {
+export const setAuthToken = (token: string, opts?: { days?: number }) => {
   Cookies.set(TOKEN_KEY, token, {
-    secure: isSecureContext(),          // https only di production
-    sameSite: "Strict",
-    expires: 7,            // 7 hari, silahkan ganti
+    secure: isSecureContext(), // https only di production
+    sameSite: "Lax",
+    expires: opts?.days ?? 7, // 7 hari, silahkan ganti
     path: "/",
   });
 };
