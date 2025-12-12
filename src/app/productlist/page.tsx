@@ -307,7 +307,7 @@ export default function ProductListPage() {
                   { value: "termurah", label: "Harga: Rendah ke Tinggi" },
                 ]}
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value)}
               />
             </div>
           </div>
@@ -377,7 +377,7 @@ export default function ProductListPage() {
                           type="number"
                           placeholder="Min"
                           value={minPrice}
-                          onChange={(e) =>
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             setMinPrice(e.target.value === "" ? "" : Number(e.target.value))
                           }
                         />
@@ -385,7 +385,7 @@ export default function ProductListPage() {
                           type="number"
                           placeholder="Max"
                           value={maxPrice}
-                          onChange={(e) =>
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             setMaxPrice(e.target.value === "" ? "" : Number(e.target.value))
                           }
                         />

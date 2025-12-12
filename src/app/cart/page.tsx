@@ -613,7 +613,7 @@ export default function CartPage() {
                           <button onClick={() => decrement(cartItem.id)} className="w-9 h-9 rounded-full border border-neutral-300 flex items-center justify-center hover:bg-neutral-100" aria-label={`Kurangi jumlah ${cartItem.kode_varian}`} disabled={isQtyLoading}>{isQtyLoading ? "..." : "–"}</button>
 
                           <div>
-                            <InputField type="number" min={1} max={maxStock} value={qty} onChange={(e) => {
+                            <InputField type="number" min={1} max={maxStock} value={qty} onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                               const val = Number(e.target.value);
                               if (Number.isNaN(val)) return;
                               updateQuantity(cartItem.id, val, maxStock);

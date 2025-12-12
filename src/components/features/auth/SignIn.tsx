@@ -114,7 +114,7 @@ const SignIn = () => {
                 type="email"
                 value={email}
                 autoComplete="email"
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 required
             />
 
@@ -126,7 +126,7 @@ const SignIn = () => {
                 type="password"
                 value={password}
                 autoComplete="current-password"
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 required
             />
 

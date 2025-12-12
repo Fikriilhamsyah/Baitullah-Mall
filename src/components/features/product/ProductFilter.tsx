@@ -146,7 +146,7 @@ export function ProductFilter({
                         type="number"
                         placeholder="Min"
                         value={minPrice}
-                        onChange={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           onChangeMinPrice(
                             e.target.value === "" ? "" : Number(e.target.value)
                           )
@@ -156,7 +156,7 @@ export function ProductFilter({
                         type="number"
                         placeholder="Max"
                         value={maxPrice}
-                        onChange={(e) =>
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           onChangeMaxPrice(
                             e.target.value === "" ? "" : Number(e.target.value)
                           )
@@ -178,7 +178,7 @@ export function ProductFilter({
                       { value: "termurah", label: "Harga: Rendah ke Tinggi" },
                     ]}
                     value={sortBy}
-                    onChange={(e) => onChangeSort(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onChangeSort(e.target.value)}
                   />
                 </div>
 

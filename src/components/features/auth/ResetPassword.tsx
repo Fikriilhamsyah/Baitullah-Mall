@@ -99,7 +99,7 @@ const ResetPassword: React.FC = () => {
             label="Nomor Telepon"
             type="number"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
             required
           />
 
