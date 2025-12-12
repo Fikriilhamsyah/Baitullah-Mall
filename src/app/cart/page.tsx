@@ -9,10 +9,12 @@ import { useCartByIdUser } from "@/hooks/useCartByIdUser";
 import { useProducts } from "@hooks/useProducts";
 import useDeleteCartById from "@/hooks/useDeleteCartById";
 import { usePostCart } from "@/hooks/useCartPost";
+import usePoin from "@/hooks/usePoin";
+import { useAuth } from "@/context/AuthContext";
 
 // Components
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import ErrorMessage from "@/components/ui/ErrorMessage";
+import ErrorMessage from "@components/ui/ErrorMessage";
 import { Button } from "@/components/ui/Button";
 import { InputField } from "@/components/ui/InputField";
 import { useToast } from "@/components/ui/Toast";
@@ -28,21 +30,32 @@ import { Trash2 } from "lucide-react";
 import Link from "next/link";
 
 /**
- * Alternative implementation using per-item pendingDelta + coalesce timer.
- * - pendingDeltaRef: how many + / - unflushed (can be negative)
- * - flushTimerRef: timeout id per item; when expired we flush one request for the delta
- * - serverQtyRef: last known server qty (for canonical)
- * - quantities state = serverQty + pendingDelta (optimistic)
+ * Notes:
+ * - grouping berdasarkan jenis (product.jenis.nama_jenis jika tersedia, fallback ke cart item)
+ * - variantBerat diambil dari matchedVariant.berat atau fallback
+ * - payload postCart diberi berat & total_berat jika tersedia (backend boleh mengabaikan)
  */
+
+// Helper: normalize teks jenis menjadi 'poin' | 'uang'
+const normalizeJenisString = (s: string | undefined | null) => {
+  const str = (s ?? "").toString().toLowerCase();
+  if (str.includes("poin")) return "poin";
+  return "uang";
+};
 
 export default function CartPage() {
   const router = useRouter();
 
+  const user = useAuth((state) => state.user);
   const { cart, loading: cartLoading, error: cartError } = useCart();
   const { cartByIdUser, loading: cartByIdUserLoading, error: cartByIdUserError, refetch } = useCartByIdUser();
   const { products, loading: productsLoading, error: productsError } = useProducts();
+  const { poin, loading: poinLoading, error: poinError } = usePoin();
   const { deleteCart } = useDeleteCartById();
   const { postCart } = usePostCart();
+
+  // debug
+  // console.table(cartByIdUser)
 
   const { showToast } = useToast();
   const openModal = useModal(s => s.openModal);
@@ -53,9 +66,11 @@ export default function CartPage() {
 
   // --- state & refs ---
   const [selected, setSelected] = useState<number[]>([]);
+  // quantities keyed by cart id
   const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [qtyLoading, setQtyLoading] = useState<Record<number, boolean>>({});
-  const [activeJenis, setActiveJenis] = useState<number | null>(null);
+  // activeJenis is canonical string: 'uang' | 'poin'
+  const [activeJenis, setActiveJenis] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
@@ -86,22 +101,16 @@ export default function CartPage() {
     setQuantities(init);
     quantitiesRef.current = { ...init };
     serverQtyRef.current = server;
-    // select first jenis by default
-    const jenisFirst = cartByIdUser.length > 0 ? cartByIdUser[0].id_jenis ?? null : null;
-    setActiveJenis(jenisFirst);
-    if (jenisFirst != null) {
-      const idsOfFirst = cartByIdUser.filter((c: any) => Number(c.id_jenis) === Number(jenisFirst)).map((c: any) => c.id);
-      setSelected(idsOfFirst);
-    } else {
-      setSelected([]);
-    }
+    // activeJenis will be set after cartWithProduct computed (so keep null for now)
+    setActiveJenis(null);
+
+    // select default later after grouping calculation
   }, [cartByIdUser]);
 
   useEffect(() => { quantitiesRef.current = { ...quantities }; }, [quantities]);
 
   // helper: schedule flush for cartId after COALESCE_MS
   const scheduleFlush = (cartId: number) => {
-    // clear existing
     const prev = flushTimerRef.current[cartId];
     if (prev) clearTimeout(prev);
     flushTimerRef.current[cartId] = window.setTimeout(() => {
@@ -113,11 +122,9 @@ export default function CartPage() {
   // flushPending: send one request setting qty = serverQty + pendingDelta
   const flushPending = async (cartId: number) => {
     const delta = pendingDeltaRef.current[cartId] ?? 0;
-    if (delta === 0) return; // nothing to do
+    if (delta === 0) return;
 
-    // if inflight, wait until finished (we'll be retried via scheduleFlush after inflight toggles)
     if (inflightRef.current[cartId]) {
-      // schedule retry shortly
       scheduleFlush(cartId);
       return;
     }
@@ -125,7 +132,6 @@ export default function CartPage() {
     const serverCurrent = serverQtyRef.current[cartId] ?? 0;
     const target = Math.max(1, serverCurrent + delta);
 
-    // if target equals server, just clear pending
     if (serverCurrent === target) {
       pendingDeltaRef.current[cartId] = 0;
       return;
@@ -134,7 +140,6 @@ export default function CartPage() {
     inflightRef.current[cartId] = true;
     setQtyLoading((prev) => ({ ...prev, [cartId]: true }));
 
-    // optimistic UI already applied (quantities hold server+delta), but ensure it's set
     setQuantities((prev) => ({ ...prev, [cartId]: target }));
     quantitiesRef.current = { ...quantitiesRef.current, [cartId]: target };
 
@@ -147,13 +152,32 @@ export default function CartPage() {
       return;
     }
 
-    const payload = {
+    // try to obtain berat per item from product/variant if available
+    let beratPerItem = 0;
+    try {
+      const matchedProduct = Array.isArray(products) ? products.find((p: any) => Array.isArray(p.varian) && p.varian.some((v: any) => String(v.kode_varian) === String(cartItem.kode_varian))) : undefined;
+      const matchedVariant = matchedProduct?.varian?.find((v: any) => String(v.kode_varian) === String(cartItem.kode_varian));
+      if (matchedVariant && typeof matchedVariant.berat === "number") beratPerItem = Number(matchedVariant.berat);
+      else if (matchedProduct && Array.isArray(matchedProduct.varian) && matchedProduct.varian.length === 1) beratPerItem = Number(matchedProduct.varian[0]?.berat ?? 0);
+      else beratPerItem = Number(cartItem.berat ?? 0) || 0;
+    } catch (e) {
+      beratPerItem = Number(cartItem.berat ?? 0) || 0;
+    }
+    const totalBerat = beratPerItem * target;
+
+    const payload: any = {
       cart_id: cartId,
       qty: target,
       harga: cartItem.harga,
       user_id: cartItem.user_id,
       kode_varian: cartItem.kode_varian,
     };
+
+    // attach berat info if available (backend may accept or ignore)
+    // @ts-ignore
+    payload.berat = beratPerItem;
+    // @ts-ignore
+    payload.total_berat = totalBerat;
 
     try {
       const res = await postCart(payload);
@@ -163,11 +187,10 @@ export default function CartPage() {
         setQuantities((prev) => ({ ...prev, [cartId]: target }));
         quantitiesRef.current = { ...quantitiesRef.current, [cartId]: target };
         if (typeof refetch === "function") {
-          try { await refetch(); } catch (_) { /* ignore */ }
+          try { await refetch(); } catch (_) {}
         }
         showToast("Kuantitas berhasil diperbarui.", "success");
       } else {
-        // rollback
         pendingDeltaRef.current[cartId] = 0;
         setQuantities((prev) => ({ ...prev, [cartId]: rollback }));
         quantitiesRef.current = { ...quantitiesRef.current, [cartId]: rollback };
@@ -189,18 +212,16 @@ export default function CartPage() {
     }
   };
 
-  // increment / decrement will update pendingDeltaRef and quantities optimistically, then scheduleFlush
+  // increment / decrement / updateQuantity (same semantics as before)
   const increment = (cartId: number, max?: number) => {
-    // short click lock to filter insane double-clicks
     const last = (flushTimerRef.current as any)[`__click_lock_${cartId}`] ?? 0;
     const now = Date.now();
-    if (now - last < 60) return; // ignore extremely rapid duplicates
+    if (now - last < 60) return;
     (flushTimerRef.current as any)[`__click_lock_${cartId}`] = now;
 
     const server = serverQtyRef.current[cartId] ?? 0;
     const pending = pendingDeltaRef.current[cartId] ?? 0;
     const visible = (quantitiesRef.current[cartId] ?? server) ;
-    // compute next visible and delta
     const nextVisible = typeof max === "number" ? Math.min(visible + 1, max) : visible + 1;
     const newDelta = (pending) + (nextVisible - visible);
 
@@ -208,8 +229,6 @@ export default function CartPage() {
     const newQty = Math.max(1, server + newDelta);
     setQuantities((prev) => ({ ...prev, [cartId]: newQty }));
     quantitiesRef.current = { ...quantitiesRef.current, [cartId]: newQty };
-
-    // schedule flush
     scheduleFlush(cartId);
   };
 
@@ -229,24 +248,20 @@ export default function CartPage() {
     const newQty = Math.max(1, server + newDelta);
     setQuantities((prev) => ({ ...prev, [cartId]: newQty }));
     quantitiesRef.current = { ...quantitiesRef.current, [cartId]: newQty };
-
     scheduleFlush(cartId);
   };
 
-  // when user types absolute value, we apply replace-last semantics:
   const updateQuantity = (cartId: number, newQtyRaw: number, max?: number) => {
     let newQty = Number(newQtyRaw);
     if (Number.isNaN(newQty) || newQty < 1) newQty = 1;
     if (typeof max === "number" && newQty > max) newQty = max;
 
-    // replace any pending delta with delta = newQty - serverQty
     const server = serverQtyRef.current[cartId] ?? 0;
     const delta = Math.max(1, newQty) - server;
     pendingDeltaRef.current[cartId] = delta;
     setQuantities((prev) => ({ ...prev, [cartId]: newQty }));
     quantitiesRef.current = { ...quantitiesRef.current, [cartId]: newQty };
 
-    // clear any prior timer and schedule flush (replace semantics)
     const prevTimer = flushTimerRef.current[cartId];
     if (prevTimer) {
       clearTimeout(prevTimer);
@@ -255,7 +270,7 @@ export default function CartPage() {
     scheduleFlush(cartId);
   };
 
-  // --- rest of your existing code: mapping cartWithProduct, groups, UI rendering ---
+  // --- map cartWithProduct: match product & variant, determine normalizedJenis & variantBerat ---
   const cartWithProduct = useMemo(() => {
     if (!Array.isArray(cartByIdUser) || !Array.isArray(products)) return [];
     return cartByIdUser.map((c: any) => {
@@ -266,62 +281,108 @@ export default function CartPage() {
         const v = p.varian.find((x: any) => String(x.kode_varian) === String(c.kode_varian));
         if (v) { matchedProduct = p; matchedVariant = v; break; }
       }
+
       const qtyLocal = quantities[c.id] ?? Number(c.qty) ?? 1;
       const price = Number(c.harga) || 0;
       const subtotal = price * qtyLocal;
-      return { cartItem: c, product: matchedProduct, variant: matchedVariant, subtotal, qtyLocal, price };
+
+      // Determine jenis with priority:
+      // 1) product.jenis.nama_jenis (if matchedProduct exists)
+      // 2) cart item fields (c.id_jenis or c.nama_jenis)
+      // normalize to 'poin' | 'uang'
+      let normalizedJenis = "uang";
+      if (matchedProduct && matchedProduct.jenis && matchedProduct.jenis.nama_jenis) {
+        normalizedJenis = normalizeJenisString(matchedProduct.jenis.nama_jenis);
+      } else if (typeof c.id_jenis !== "undefined" && c.id_jenis !== null) {
+        // if id_jenis numeric and equals 2 => poin
+        const idJenisNum = Number(c.id_jenis);
+        if (!Number.isNaN(idJenisNum) && idJenisNum === 2) normalizedJenis = "poin";
+        else normalizedJenis = "uang";
+      } else if (c.nama_jenis) {
+        normalizedJenis = normalizeJenisString(String(c.nama_jenis));
+      } else {
+        normalizedJenis = "uang";
+      }
+
+      // variantBerat: prefer matchedVariant.berat (number), fallback product single-variant berat, fallback c.berat or 0
+      let variantBerat = 0;
+      if (matchedVariant && typeof matchedVariant.berat === "number") variantBerat = Number(matchedVariant.berat);
+      else if (matchedProduct && Array.isArray(matchedProduct.varian) && matchedProduct.varian.length === 1) variantBerat = Number(matchedProduct.varian[0]?.berat ?? 0);
+      else variantBerat = Number(c.berat ?? 0) || 0;
+
+      return { cartItem: c, product: matchedProduct, variant: matchedVariant, subtotal, qtyLocal, price, normalizedJenis, variantBerat };
     });
   }, [cartByIdUser, products, quantities]);
 
+  // --- groups computed from cartWithProduct ---
   const groups = useMemo(() => {
-    const map = new Map<number, { id_jenis: number; nama_jenis: string; items: any[] }>();
+    const map = new Map<string, { id_jenis: string; nama_jenis: string; items: any[] }>();
     for (const it of cartWithProduct) {
-      const ji = Number(it.cartItem.id_jenis ?? 0);
-      const nama = it.cartItem.nama_jenis ?? (ji === 2 ? "Poin" : "Uang");
-      if (!map.has(ji)) map.set(ji, { id_jenis: ji, nama_jenis: nama, items: [] });
-      map.get(ji)!.items.push(it);
+      const key = String(it.normalizedJenis ?? "uang");
+      const nama = key === "poin" ? "Poin" : "Uang";
+      if (!map.has(key)) map.set(key, { id_jenis: key, nama_jenis: nama, items: [] });
+      map.get(key)!.items.push(it);
     }
-    return Array.from(map.values()).sort((a, b) => a.id_jenis - b.id_jenis);
+    const arr = Array.from(map.values());
+    // stable ordering: Uang first, Poin second if present
+    const order = ["uang", "poin"];
+    arr.sort((a, b) => order.indexOf(a.id_jenis) - order.indexOf(b.id_jenis));
+    return arr;
   }, [cartWithProduct]);
+
+  // ensure activeJenis defaults to first group if null
+  useEffect(() => {
+    if (activeJenis) return;
+    if (groups.length > 0) {
+      setActiveJenis(groups[0].id_jenis);
+      // select items of that jenis by default
+      const ids = groups[0].items.map((it: any) => it.cartItem.id);
+      setSelected(ids);
+    } else {
+      setActiveJenis(null);
+      setSelected([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups]);
 
   const displayedItems = useMemo(() => {
     if (activeJenis === null) return [];
-    return cartWithProduct.filter((it) => Number(it.cartItem.id_jenis ?? 0) === Number(activeJenis));
+    return cartWithProduct.filter((it) => (it.normalizedJenis ?? "uang") === activeJenis);
   }, [cartWithProduct, activeJenis]);
 
-  const totalSelectedValue = useMemo(() => {
-    return cartWithProduct.reduce((s: number, it: any) => {
-      if (!selected.includes(it.cartItem.id)) return s;
-      return s + (it.subtotal || 0);
-    }, 0);
+  // totals per jenis for selected items
+  const totalsByType = useMemo(() => {
+    return cartWithProduct.reduce((acc: { uang: number; poin: number }, it: any) => {
+      if (!selected.includes(it.cartItem.id)) return acc;
+      if (it.normalizedJenis === "poin") acc.poin += it.subtotal || 0;
+      else acc.uang += it.subtotal || 0;
+      return acc;
+    }, { uang: 0, poin: 0 });
   }, [cartWithProduct, selected]);
 
+  const totalSelectedUang = totalsByType.uang;
+  const totalSelectedPoin = totalsByType.poin;
+
   const selectedJenisSet = useMemo(() => {
-    const set = new Set<number>();
+    const set = new Set<string>();
     for (const id of selected) {
       const found = cartWithProduct.find((it: any) => it.cartItem.id === id);
-      if (found) set.add(Number(found.cartItem.id_jenis ?? 0));
+      if (found) set.add(String(found.normalizedJenis ?? "uang"));
     }
     return set;
   }, [selected, cartWithProduct]);
 
-  const selectedIsSingleJenis = selectedJenisSet.size <= 1 && selected.length > 0;
-  const selectedIsPoin = (() => {
-    if (selected.length === 0) return false;
-    if (!selectedIsSingleJenis) return false;
-    const anySelected = cartWithProduct.find((it: any) => selected.includes(it.cartItem.id));
-    if (!anySelected) return false;
-    const nama = String(anySelected.cartItem.nama_jenis ?? "").toLowerCase();
-    return nama === "poin";
-  })();
+  const selectedIsSingleJenis = selectedJenisSet.size === 1 && selected.length > 0;
+  const selectedJenisString = selectedIsSingleJenis ? Array.from(selectedJenisSet)[0] : null;
+  const selectedIsPoin = selectedJenisString === "poin";
 
   const toggleSelect = (id: number) => {
     const clicked = cartWithProduct.find((it: any) => it.cartItem.id === id);
     if (!clicked) return;
-    const clickedJenis = Number(clicked.cartItem.id_jenis ?? 0);
+    const clickedJenis = clicked.normalizedJenis ?? "uang";
     if (selected.length === 0) { setSelected([id]); return; }
     const existingJenis = Array.from(selectedJenisSet)[0];
-    if (existingJenis !== undefined && Number(existingJenis) !== Number(clickedJenis)) { setSelected([id]); return; }
+    if (existingJenis !== undefined && String(existingJenis) !== String(clickedJenis)) { setSelected([id]); return; }
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
@@ -332,7 +393,7 @@ export default function CartPage() {
     if (allSelected) setSelected((prev) => prev.filter((id) => !displayedIds.includes(id)));
     else {
       const currentJenis = Array.from(selectedJenisSet)[0];
-      if (currentJenis !== undefined && Number(currentJenis) !== Number(activeJenis)) setSelected(displayedIds);
+      if (currentJenis !== undefined && String(currentJenis) !== String(activeJenis)) setSelected(displayedIds);
       else setSelected((prev) => Array.from(new Set([...prev, ...displayedIds])));
     }
   };
@@ -379,8 +440,30 @@ export default function CartPage() {
     });
   };
 
+  const myPoinEntry = React.useMemo(() => {
+      if (!Array.isArray(poin) || !user) return null;
+      return poin.find((p) => Number(p.id_users) === Number(user.id)) ?? null;
+    }, [poin, user]);
+  
+  const myPoinNumber = React.useMemo(() => {
+    if (!myPoinEntry) return 0;
+    const n = Number(myPoinEntry.total_score_sum);
+    return Number.isNaN(n) ? 0 : n;
+  }, [myPoinEntry]);
+
   const goToCheckout = () => {
     if (selected.length === 0) { showToast("Pilih item terlebih dahulu.", "error"); return; }
+
+    if (!selectedIsSingleJenis) {
+      showToast("Pilih item dari jenis yang sama (Uang atau Poin) untuk checkout.", "error");
+      return;
+    }
+
+    if (selectedIsPoin && myPoinNumber < totalSelectedPoin) {
+      showToast("Poin Anda tidak cukup untuk melakukan checkout item ini.", "error");
+      return;
+    }
+
     const items = selected.map((id) => {
       const found = cartWithProduct.find((it: any) => it.cartItem.id === id);
       const ci = found?.cartItem;
@@ -391,10 +474,26 @@ export default function CartPage() {
       const subtotal = unit_price * qty;
       const gambarRel = variant?.gambar ?? productObj?.gambar_utama ?? null;
       const gambar = gambarRel ? `${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${gambarRel}` : null;
+
+      const beratPerItem = Number(found?.variantBerat ?? 0) || 0;
+      const totalBerat = beratPerItem * qty;
+
       return {
-        cart_id: ci?.id, product_id: productObj?.id ?? null, nama_produk: productObj?.nama_produk ?? `Variant ${ci?.kode_varian}`,
-        kode_varian: String(ci?.kode_varian ?? ""), warna: variant?.warna ?? null, ukuran: variant?.ukuran ?? null,
-        qty, unit_price, subtotal, gambar, stok_varian: variant?.stok ?? null, jenis: ci?.nama_jenis ?? null, user_id: ci?.user_id ?? null,
+        cart_id: ci?.id,
+        product_id: productObj?.id ?? null,
+        nama_produk: productObj?.nama_produk ?? `Variant ${ci?.kode_varian}`,
+        kode_varian: String(ci?.kode_varian ?? ""),
+        warna: variant?.warna ?? null,
+        ukuran: variant?.ukuran ?? null,
+        qty,
+        unit_price,
+        subtotal,
+        gambar,
+        stok_varian: variant?.stok ?? null,
+        jenis: found?.normalizedJenis ?? (String(ci?.nama_jenis ?? "").toLowerCase().includes("poin") ? "poin" : "uang"),
+        user_id: ci?.user_id ?? null,
+        berat_per_item: beratPerItem,
+        total_berat: totalBerat,
       };
     });
     try {
@@ -407,12 +506,12 @@ export default function CartPage() {
     }
   };
 
-  const canCheckout = selectedIsSingleJenis && selected.length > 0;
+  const hasEnoughPointsForSelected = selectedIsPoin ? (myPoinNumber >= totalSelectedPoin) : true;
+  const canCheckout = selectedIsSingleJenis && selected.length > 0 && hasEnoughPointsForSelected && !poinLoading;
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={String(error)} />;
 
-  // renderTabs + main UI follow your existing markup but using our increment/decrement/updateQuantity
   const renderTabs = () => (
     <div className="flex gap-2 overflow-auto">
       {groups.map((g) => {
@@ -439,7 +538,16 @@ export default function CartPage() {
 
       {displayedItems.length === 0 ? (
         <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 lg:pb-0 flex flex-col items-center space-y-4">
-          <div className="w-48 h-48 flex items-center justify-center mb-4"> {/* illustration */} </div>
+          <div className="w-48 h-48 flex items-center justify-center mb-4">
+            <svg width="192" height="192" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+              <rect x="1" y="5" width="22" height="15" rx="3" fill="#F8FAFC"/>
+              <path d="M3 7.5H21" stroke="#E6EEF5" strokeWidth="1.2"/>
+              <path d="M7 11h10" stroke="#C9D8E6" strokeWidth="1.6" strokeLinecap="round"/>
+              <circle cx="8.5" cy="15.5" r="1.6" fill="#E6EEF5"/>
+              <circle cx="15.5" cy="15.5" r="1.6" fill="#E6EEF5"/>
+              <path d="M9.5 6.5c0-1.1.9-2 2-2h0c1.1 0 2 .9 2 2v1" stroke="#B7C9DB" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
           <h3 className="text-lg md:text-xl font-semibold text-gray-800 text-center">Tidak ada item di tab ini</h3>
           <p className="text-sm text-gray-500 text-center max-w-md">Tidak ada item pada jenis yang dipilih. Coba jenis lain atau tambahkan produk terlebih dahulu.</p>
           <div className="flex items-center gap-3">
@@ -465,7 +573,7 @@ export default function CartPage() {
                   const qty = quantities[cartItem.id] ?? Number(cartItem.qty) ?? 1;
                   const maxStock = variant?.stok ?? 999999;
                   const itemSubtotal = (Number(price) || 0) * qty;
-                  const isPoin = String(cartItem.nama_jenis ?? "").toLowerCase() === "poin";
+                  const isPoin = item.normalizedJenis === "poin";
                   const isDeleting = deletingId === cartItem.id;
                   const isQtyLoading = Boolean(qtyLoading[cartItem.id]);
 
@@ -487,6 +595,10 @@ export default function CartPage() {
                             <div className="mt-1 text-xs text-gray-500 space-y-1">
                               {variant?.warna && <div>Warna: <span className="font-medium text-gray-700">{variant.warna}</span></div>}
                               {variant?.ukuran !== null && variant?.ukuran !== undefined && variant?.ukuran !== "" && (<div>Ukuran: <span className="font-medium text-gray-700">{variant.ukuran}</span></div>)}
+                              {/* show berat if available */}
+                              {typeof item.variantBerat === "number" && item.variantBerat > 0 && (
+                                <div>Berat per item: <span className="font-medium text-gray-700">{item.variantBerat} gr</span></div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -526,11 +638,30 @@ export default function CartPage() {
                   <div className="text-sm text-gray-600">Item dipilih: <span className="font-medium">{selected.length}</span></div>
                   <div className="flex justify-between items-center">
                     <div className="text-sm text-gray-600">Total</div>
-                    <div className="text-xl font-bold">{selectedIsPoin ? `${formatDecimal(totalSelectedValue)} Poin` : formatPrice(totalSelectedValue)}</div>
+                    <div className="text-xl font-bold">
+                      {selectedIsPoin ? `${formatDecimal(totalSelectedPoin)} Poin` : formatPrice(totalSelectedUang)}
+                    </div>
                   </div>
+
+                  {selectedIsPoin && (
+                    <div className={`text-sm ${myPoinNumber < totalSelectedPoin ? "text-red-600" : "text-gray-600"}`}>
+                      Poin Anda: <span className="font-medium">{formatDecimal(myPoinNumber)}</span>
+                      {myPoinNumber < totalSelectedPoin && <div className="mt-1 text-sm text-red-600">Poin tidak cukup untuk checkout item yang dipilih.</div>}
+                    </div>
+                  )}
+
                   {!selectedIsSingleJenis && selected.length > 0 && (<div className="text-sm text-red-600">Pilihan harus berasal dari jenis yang sama (Uang atau Poin) untuk melanjutkan ke checkout.</div>)}
                   <div className="flex flex-col gap-2">
-                    <Button label="Lanjutkan ke Checkout" color="primary" onClick={() => { if (!canCheckout) return; goToCheckout(); }} disabled={!canCheckout} />
+                    <Button
+                      label="Lanjutkan ke Checkout"
+                      color="primary"
+                      onClick={() => {
+                        if (!selectedIsSingleJenis || selected.length === 0) return;
+                        if (selectedIsPoin && myPoinNumber < totalSelectedPoin) { showToast("Poin Anda tidak cukup untuk melakukan checkout item ini.", "error"); return; }
+                        goToCheckout();
+                      }}
+                      disabled={!canCheckout}
+                    />
                     <div className="text-xs text-gray-500">Dengan klik "Checkout", Anda telah menyetujui Syarat & Ketentuan</div>
                   </div>
                 </div>
@@ -546,10 +677,20 @@ export default function CartPage() {
           <div className="bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-md py-3 px-3 flex items-center justify-between gap-3" style={{ boxShadow: "0 -6px 20px rgba(0,0,0,0.06)" }}>
             <div className="flex flex-col">
               <span className="text-xs text-gray-600">Dipilih: <span className="font-medium">{selected.length}</span></span>
-              <span className="text-base font-semibold">{selectedIsPoin ? `${formatDecimal(totalSelectedValue)} Poin` : formatPrice(totalSelectedValue)}</span>
+              <span className="text-base font-semibold">{selectedIsPoin ? `${formatDecimal(totalSelectedPoin)} Poin` : formatPrice(totalSelectedUang)}</span>
+              {selectedIsPoin && myPoinNumber < totalSelectedPoin && <span className="text-xs text-red-600">Poin tidak cukup untuk checkout.</span>}
             </div>
             <div className="flex items-center gap-2">
-              <Button label="Checkout" color="primary" onClick={() => { if (!canCheckout) return; goToCheckout(); }} disabled={!canCheckout} />
+              <Button
+                label="Checkout"
+                color="primary"
+                onClick={() => {
+                  if (!selectedIsSingleJenis || selected.length === 0) return;
+                  if (selectedIsPoin && myPoinNumber < totalSelectedPoin) { showToast("Poin Anda tidak cukup untuk melakukan checkout item ini.", "error"); return; }
+                  goToCheckout();
+                }}
+                disabled={!canCheckout}
+              />
             </div>
           </div>
         </div>

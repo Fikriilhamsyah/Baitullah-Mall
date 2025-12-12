@@ -1,6 +1,7 @@
 // Axios Client
 import axiosClientBaitullahMall from "./axiosClientBaitullahMall";
 import axiosClientBaitullah from "./axiosClientBaitullah";
+import axiosClientBaiq from "./axiosClientBaiq";
 
 // Types
 import { ApiResponse } from "@/types/ApiResponse";
@@ -9,6 +10,7 @@ import { ICategory } from "../types/ICategory";
 import { ILogin, IResetPassword, ILoginResponse } from "@/types/IUser";
 import { ICollection } from "@/types/ICollection";
 import { ICartByIdUser, IPostCart } from "@/types/ICart";
+import { IAddress, ILocation, IPostAddress, IPostCalculateOngkir } from "@/types/IAddress";
 
 export const api = {
   // Auth
@@ -46,6 +48,33 @@ export const api = {
 
   deleteCartByIdCart: (id: number) =>
     axiosClientBaitullahMall.delete<ICartByIdUser[]>(`api/keranjang/${id}`),
+
+  // BaiQ
+  getPoin: () =>
+    axiosClientBaiq.get(`api/baiq-users-scores/summary`),
+
+  // Raja Ongkir
+  getProvince: () =>
+    axiosClientBaitullahMall.get(`api/rajaongkir/province`),
+
+  getCities: (provinceId: number) =>
+    axiosClientBaitullahMall.get(`api/rajaongkir/city/${provinceId}`),
+
+  getDistricts: (cityId: number) =>
+    axiosClientBaitullahMall.get(`api/rajaongkir/district/${cityId}`),
+
+  getSubDistricts: (districtId: number) =>
+    axiosClientBaitullahMall.get(`api/rajaongkir/subdistrict/${districtId}`),
+
+  // Address
+  getAddress: () =>
+    axiosClientBaitullahMall.get<ApiResponse<IAddress[]>>(`api/alamat`),
+
+  postAddress: (payload: IPostAddress) =>
+    axiosClientBaitullahMall.post<ApiResponse<IPostAddress[]>>("api/alamat", payload),
+
+  postCalculateOngkir: (payload: IPostCalculateOngkir) =>
+    axiosClientBaitullahMall.post<ApiResponse<IPostCalculateOngkir[]>>("api/rajaongkir/calculate", payload),
 };
 
 // export const mockApi = {

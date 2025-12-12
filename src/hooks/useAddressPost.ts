@@ -1,24 +1,24 @@
 import { useState } from "react";
 import { api } from "@/services/api";
 import { ApiResponse } from "@/types/ApiResponse";
-import { IPostCart } from "@/types/ICart";
 import { useAuth } from "@/context/AuthContext";
+import { IPostAddress } from "@/types/IAddress";
 
-export const usePostCart = () => {
-  const [data, setData] = useState<IPostCart[] | null>(null);
+export const useAddressPost = () => {
+  const [data, setData] = useState<IPostAddress[] | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const auth = useAuth.getState(); // use getState for latest
   const logoutFn = useAuth.getState().logout;
 
-  const postCart = async (payload: IPostCart) => {
+  const postAddress = async (payload: IPostAddress) => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await api.postCart(payload);
-      const result = response.data as ApiResponse<IPostCart[]>;
+      const response = await api.postAddress(payload);
+      const result = response.data as ApiResponse<IPostAddress[]>;
 
       setData(Array.isArray(result.data) ? result.data : null);
 
@@ -53,5 +53,5 @@ export const usePostCart = () => {
     }
   };
 
-  return { postCart, data, loading, error };
+  return { postAddress, data, loading, error };
 };

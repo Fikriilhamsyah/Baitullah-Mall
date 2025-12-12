@@ -3,6 +3,7 @@ export interface IPostCart {
     kode_varian: string,
     qty: number,
     harga: number,
+    berat: number | null,
 }
 
 export interface ICartByIdUser{

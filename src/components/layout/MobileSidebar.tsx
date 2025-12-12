@@ -18,6 +18,9 @@ import { formatPointsToRupiah } from "@/types/IUser";
 import { useAuth } from "@/context/AuthContext";
 import { useModal } from "@/context/ModalContext";
 
+// Hooks
+import usePoin from "@/hooks/usePoin";
+
 // Components
 import SignIn from '@/components/features/auth/SignIn';
 import { Button } from "../ui/Button";
@@ -50,6 +53,8 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
   if (!hydrated) return null;
 
   const router = useRouter();
+
+  const { poin, loading: poinLoading, error: poinError, refetch } = usePoin();
 
   const user = useAuth((state) => state.user);
   const openModal = useModal(s => s.openModal);
@@ -118,6 +123,17 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
     };
   }, [isOpen]);
 
+  const myPoinEntry = React.useMemo(() => {
+    if (!Array.isArray(poin) || !user) return null;
+    return poin.find((p) => Number(p.id_users) === Number(user.id)) ?? null;
+  }, [poin, user]);
+
+  const myPoinNumber = React.useMemo(() => {
+    if (!myPoinEntry) return 0;
+    const n = Number(myPoinEntry.total_score_sum);
+    return Number.isNaN(n) ? 0 : n;
+  }, [myPoinEntry]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -185,11 +201,17 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                   </p>
                   <p className="text-sm text-neutral-600">{user.email}</p>
 
-                  {/* {user.points !== undefined && (
+                  {poinLoading ? (
+                    <p className="text-sm text-gray-500 mt-1">Memuat poin...</p>
+                  ) : poinError ? (
+                    <p className="text-sm text-red-500 mt-1">Gagal memuat poin</p>
+                  ) : myPoinEntry ? (
                     <p className="text-base font-bold text-green-600 mt-1">
-                      {formatPointsToRupiah(user.points)} Poin
+                      {formatPointsToRupiah(myPoinNumber)} Poin
                     </p>
-                  )} */}
+                  ) : (
+                    <p className="text-sm text-gray-500 mt-1">0 Poin</p>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col items-center p-4 border-b border-gray-200">

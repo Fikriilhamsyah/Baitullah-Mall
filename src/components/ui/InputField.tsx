@@ -1,21 +1,39 @@
+// components/ui/InputField.tsx
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import { cn } from "@utils/helpers";
 import { LucideIcon, Eye, EyeOff } from "lucide-react";
 
-interface InputFieldProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+type ChangeHandler =
+  | React.ChangeEventHandler<HTMLInputElement>
+  | React.ChangeEventHandler<HTMLTextAreaElement>
+  | React.ChangeEventHandler<HTMLSelectElement>;
+
+export type Option = { value: string; label: string };
+
+interface InputFieldProps {
   label?: string;
   icon?: LucideIcon;
   variant?: "default" | "rounded";
   type?: "text" | "number" | "textarea" | "select" | "email" | "password";
-  options?: { value: string; label: string }[];
+  options?: Option[];
   autoComplete?: string;
   id?: string;
   name?: string;
   required?: boolean;
+  placeholder?: string;
+  value?: any;
+  className?: string;
+  disabled?: boolean;
+  // onChange menerima input/textarea/select
+  onChange?: ChangeHandler;
+  // allow any other html props (kepraktisan)
+  [key: string]: any;
 }
 
+/**
+ * InputField — unified input/select/textarea component
+ */
 export const InputField: React.FC<InputFieldProps> = ({
   label,
   icon: Icon,
@@ -29,10 +47,12 @@ export const InputField: React.FC<InputFieldProps> = ({
   id,
   name,
   required,
+  placeholder,
+  disabled,
   ...props
 }) => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [isTouched, setIsTouched] = useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [isTouched, setIsTouched] = React.useState(false);
 
   /** FIELD ERROR (jika required & sudah disentuh & kosong) */
   const hasError = required && isTouched && (!value || value === "");
@@ -44,36 +64,46 @@ export const InputField: React.FC<InputFieldProps> = ({
     "w-full bg-white text-neutral-800 border border-gray-300",
     "focus:ring-2 focus:ring-primary-400 focus:border-primary-400 outline-none transition-all",
     Icon ? "pl-10" : "pl-4",
-    "pr-10 py-2", // pr-10 agar ada space jika password icon kanan
+    "pr-10 py-2",
     roundedStyle,
     className
   );
 
-  // 🔹 Mencegah input negatif type=number
-  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value === "" || Number(value) >= 0) {
-      onChange?.(e);
+  // NUMBER: mencegah angka negatif
+  const handleNumberChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    const v = e.target.value;
+    if (v === "" || Number(v) >= 0) {
+      (onChange as React.ChangeEventHandler<HTMLInputElement>)?.(e);
     } else {
-      e.target.value = "0";
-      onChange?.(e);
+      const ev = {
+        ...e,
+        target: { ...(e.target as any), value: "0" },
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
+      (onChange as React.ChangeEventHandler<HTMLInputElement>)?.(ev);
     }
   };
 
-  // 🔹 Select tetap sync
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onChange?.(e as any);
+  // SELECT handler
+  const handleSelectChange: React.ChangeEventHandler<HTMLSelectElement> = (e) => {
+    (onChange as React.ChangeEventHandler<HTMLSelectElement>)?.(e);
   };
+
+  // TEXTAREA handler
+  const handleTextareaChange: React.ChangeEventHandler<HTMLTextAreaElement> = (e) => {
+    (onChange as React.ChangeEventHandler<HTMLTextAreaElement>)?.(e);
+  };
+
+  const handleBlur = () => setIsTouched(true);
 
   return (
     <div className="w-full space-y-1">
       {label && (
-        <label className="block text-sm font-medium text-neutral-700">
+        <label htmlFor={id} className="block text-sm font-medium text-neutral-700">
           {label}
         </label>
       )}
 
-      <div className="relative flex items-center">
+      <div className="relative flex flex-col gap-1">
         {/* Icon kiri */}
         {Icon && (
           <Icon
@@ -87,14 +117,18 @@ export const InputField: React.FC<InputFieldProps> = ({
           <textarea
             id={id}
             name={name}
-            {...(props as any)}
+            placeholder={placeholder}
+            value={value ?? ""}
+            onChange={handleTextareaChange}
+            onBlur={handleBlur}
+            disabled={disabled}
             className={cn(
               baseClasses,
               "resize-none h-24",
               variant === "rounded" && "rounded-lg"
             )}
+            {...props}
           />
-
         ) : type === "select" ? (
           // SELECT INPUT
           <select
@@ -102,81 +136,91 @@ export const InputField: React.FC<InputFieldProps> = ({
             name={name}
             value={value ?? ""}
             onChange={handleSelectChange}
-            {...(props as any)}
+            onBlur={handleBlur}
+            disabled={disabled}
             className={baseClasses}
+            {...props}
           >
-            <option value="">Pilih Semua...</option>
+            <option value="">{placeholder ?? "Pilih..."}</option>
             {options.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
             ))}
           </select>
-
         ) : type === "number" ? (
           // NUMBER INPUT
           <input
             id={id}
             name={name}
-            {...props}
             type="number"
             min={0}
             inputMode="numeric"
-            pattern="[0-9]*" 
-            value={value}
+            pattern="[0-9]*"
+            placeholder={placeholder}
+            value={value ?? ""}
             onChange={handleNumberChange}
+            onBlur={handleBlur}
             autoComplete={autoComplete}
+            disabled={disabled}
             className={baseClasses}
+            {...props}
           />
-
         ) : type === "email" ? (
           <input
             id={id}
             name={name}
-            {...props}
             type="email"
+            placeholder={placeholder}
             inputMode="email"
             autoComplete={autoComplete ?? "email"}
-            value={value}
-            onChange={onChange}
+            value={value ?? ""}
+            onChange={onChange as React.ChangeEventHandler<HTMLInputElement>}
+            onBlur={handleBlur}
+            disabled={disabled}
             className={baseClasses}
+            {...props}
           />
-
         ) : type === "password" ? (
           // PASSWORD INPUT + TOGGLE
           <>
             <input
               id={id}
               name={name}
-              {...props}
               type={showPassword ? "text" : "password"}
-              value={value}
-              onChange={onChange}
+              placeholder={placeholder}
+              value={value ?? ""}
+              onChange={onChange as React.ChangeEventHandler<HTMLInputElement>}
+              onBlur={handleBlur}
               autoComplete={autoComplete ?? "current-password"}
+              disabled={disabled}
               className={baseClasses}
+              {...props}
             />
 
             <button
               type="button"
-              className="absolute right-3 text-neutral-600 hover:text-neutral-900 transition"
+              className="absolute right-3 top-3 text-neutral-600 hover:text-neutral-900 transition"
               onClick={() => setShowPassword((p) => !p)}
               tabIndex={-1}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </>
-
         ) : (
-          // INPUT DEFAULT
+          // INPUT DEFAULT (text)
           <input
             id={id}
             name={name}
-            {...props}
             type={type}
-            value={value}
-            onChange={onChange}
+            placeholder={placeholder}
+            value={value ?? ""}
+            onChange={onChange as React.ChangeEventHandler<HTMLInputElement>}
+            onBlur={handleBlur}
             autoComplete={autoComplete}
+            disabled={disabled}
             className={baseClasses}
+            {...props}
           />
         )}
 
@@ -185,29 +229,8 @@ export const InputField: React.FC<InputFieldProps> = ({
           <p className="text-xs text-red-500">Field ini wajib diisi</p>
         )}
       </div>
-
-      {/* Contoh Penggunaan */}
-      {/* Input default */}
-      {/* <InputField placeholder="Cari produk..." icon={Search} /> */}
-
-      {/* Rounded full */}
-      {/* <InputField placeholder="Cari teman..." icon={User} variant="rounded" /> */}
-
-      {/* Number */}
-      {/* <InputField type="number" placeholder="Masukkan jumlah" label="Jumlah" /> */}
-
-      {/* Textarea */}
-      {/* <InputField type="textarea" label="Deskripsi Produk" placeholder="Tulis deskripsi..." /> */}
-
-      {/* Select / Dropdown */}
-      {/* <InputField
-        type="select"
-        label="Kategori Produk"
-        options={[
-          { value: "pakaian", label: "Pakaian & Ihram" },
-          { value: "aksesoris", label: "Aksesoris Ibadah" },
-        ]}
-      /> */}
     </div>
   );
 };
+
+export default InputField;

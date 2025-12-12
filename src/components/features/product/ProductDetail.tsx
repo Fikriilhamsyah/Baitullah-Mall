@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useProductById } from "@hooks/useProductById";
 import { ReviewsData } from "@/data/ReviewsData";
 import { usePostCart } from "@/hooks/useCartPost";
+import usePoin from "@/hooks/usePoin";
 
 // Types
 import { IPostCart } from "@/types/ICart";
@@ -28,6 +29,7 @@ import { useModal } from "@/context/ModalContext";
 
 // Utils
 import { formatPrice } from "@/utils/formatters";
+import { formatDecimal } from "@/utils/formatDecimal";
 
 // Icon
 import { ShoppingCart, Star, MessageCircleMore } from "lucide-react";
@@ -41,6 +43,7 @@ interface ProductDetailProps {
 const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }) => {
   const router = useRouter();
   const { product, loading, error } = useProductById(id);
+  const { poin, loading: poinLoading, error: poinError, refetch } = usePoin();
   const user = useAuth((state) => state.user);
   const { postCart, loading: postCartLoading } = usePostCart();
   const openModal = useModal((s) => s.openModal);
@@ -62,6 +65,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
 
   /* GROUP VARIANTS
      - Jika product.varian === null -> buat satu "pseudo-varian" dari product agar UI tetap bekerja
+     - Sekarang menyertakan `berat` pada setiap ukuran supaya bisa dikirim ke cart/checkout
   */
   const groupVariants = () => {
     if (!product || !product.varian) {
@@ -74,6 +78,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
             tambahan_harga: number;
             varian_id: number | null;
             stok: number;
+            berat: number | null;
           }>;
         }
       > = {
@@ -85,6 +90,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
               tambahan_harga: 0,
               varian_id: null,
               stok: product?.stok ?? 0,
+              berat: null,
             },
           ],
         },
@@ -105,6 +111,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
           tambahan_harga: number;
           varian_id: number;
           stok: number;
+          berat: number | null;
         }>;
       }
     > = {};
@@ -124,6 +131,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
         tambahan_harga: v.tambahan_harga ?? 0,
         varian_id: v.id ?? null,
         stok: v.stok ?? 0,
+        berat: v.berat ?? null, // <-- tambahkan berat di sini
       });
     });
 
@@ -242,11 +250,22 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
       kodeVarian = (product as any).kode_produk ?? String(product.id ?? product.nama_produk ?? "unknown");
     }
 
+    // hitung berat per item (ambil dari selectedVarian.berat -> jika null fallback 0)
+    const beratPerItem =
+      (selectedVarian && typeof selectedVarian.berat === "number")
+        ? selectedVarian.berat
+        : Array.isArray(product?.varian) && product.varian.length === 1
+        ? (product.varian[0]?.berat ?? 0)
+        : 0;
+
     const payload: IPostCart = {
       user_id: currentUser.id,
       kode_varian: String(kodeVarian),
       qty: Math.max(1, Math.min(quantity, stokVarian)),
       harga: unitPrice,
+      // tambahan: sertakan berat per item
+      // @ts-ignore - IPostCart mungkin tidak mendefinisikan berat; jika perlu tambahkan ke type IPostCart
+      berat: beratPerItem,
     };
 
     try {
@@ -260,6 +279,23 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
       setOpenB(false);
     }
   };
+
+  const myPoinEntry = React.useMemo(() => {
+    if (!Array.isArray(poin) || !user) return null;
+    return poin.find((p) => Number(p.id_users) === Number(user.id)) ?? null;
+  }, [poin, user]);
+
+  const myPoinNumber = React.useMemo(() => {
+    if (!myPoinEntry) return 0;
+    const n = Number(myPoinEntry.total_score_sum);
+    return Number.isNaN(n) ? 0 : n;
+  }, [myPoinEntry]);
+
+  // ---------- POINTS CHECK ----------
+  const isPoin = String(product?.jenis?.nama_jenis ?? "").toLowerCase() === "poin";
+  const needsPoints = isPoin;
+  const hasEnoughPoints = !needsPoints ? true : myPoinNumber >= totalPrice;
+  // -----------------------------------
 
   // ---------- NEW: prepare checkout payload and navigate ----------
   const goToCheckout = () => {
@@ -283,6 +319,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
       return;
     }
 
+    // if this purchase requires points, ensure user has enough
+    if (needsPoints && !hasEnoughPoints) {
+      showToast("Poin Anda tidak cukup untuk membeli produk ini.", "error");
+      return;
+    }
+
     // compute kode_varian similar to handlePostCart
     let kodeVarian: string = "...";
     if (selectedVarian && selectedVarian.varian_id != null && Array.isArray(product.varian)) {
@@ -294,6 +336,26 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
       kodeVarian = (product as any).kode_produk ?? String(product.id ?? product.nama_produk ?? "unknown");
     }
 
+    // --- NEW: choose gambar (variant gambar if present, otherwise product.gambar_utama)
+    let gambarRel: string | null = null;
+    if (selectedVarian && selectedVarian.varian_id != null && Array.isArray(product.varian)) {
+      const found = product.varian.find((v: any) => Number(v.id) === Number(selectedVarian.varian_id));
+      if (found?.gambar) gambarRel = found.gambar;
+    }
+    if (!gambarRel) {
+      gambarRel = product.gambar_utama ?? null;
+    }
+    const gambar = gambarRel ? `${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${gambarRel}` : null;
+    // --- END gambar logic
+
+    // berat per item dan total berat
+    const beratPerItem =
+      (selectedVarian && typeof selectedVarian.berat === "number")
+        ? selectedVarian.berat
+        : Array.isArray(product?.varian) && product.varian.length === 1
+        ? (product.varian[0]?.berat ?? 0)
+        : 0;
+
     const item = {
       product_id: product.id,
       nama_produk: product.nama_produk,
@@ -303,9 +365,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
       qty: Math.max(1, Math.min(quantity, stokVarian)),
       unit_price: unitPrice,
       subtotal: unitPrice * Math.max(1, Math.min(quantity, stokVarian)),
-      gambar: product.gambar_utama ?? null,
+      gambar, // full url or null
       stok_varian: stokVarian,
       jenis: product.jenis?.nama_jenis ?? "uang",
+      berat_per_item: beratPerItem,
+      total_berat: beratPerItem * Math.max(1, Math.min(quantity, stokVarian)),
     };
 
     // persist to sessionStorage so checkout page can read it
@@ -342,8 +406,8 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
           const minPrice = Math.min(...variantPrices);
           const maxPrice = Math.max(...variantPrices);
 
-          const isPoin = product.jenis?.nama_jenis === "poin";
-          const format = (val: number) => (isPoin ? String(val) : formatPrice(val));
+          const isPoinLocal = String(product.jenis?.nama_jenis ?? "").toLowerCase() === "poin";
+          const format = (val: number) => (isPoinLocal ? String(val) : formatPrice(val));
 
           return (
             <div>
@@ -351,7 +415,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
               <p className="text-md font-extrabold text-[#299A4D]">
                 {format(minPrice)} - {format(maxPrice)}{" "}
                 <span className="text-base text-gray-500 font-normal">
-                  {isPoin ? "Poin" : "IDR"}
+                  {isPoinLocal ? "Poin" : "IDR"}
                 </span>
               </p>
             </div>
@@ -483,9 +547,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                 <div>
                   <p className="text-sm text-gray-500 mb-1">Harga Total</p>
                   <p className="text-2xl font-extrabold text-[#299A4D]">
-                    {product.jenis.nama_jenis === "poin" ? totalPrice : formatPrice(totalPrice)}{" "}
-                    <span className="text-base text-gray-500 font-normal">{product.jenis.nama_jenis === "poin" ? "Poin" : "IDR"}</span>
+                    {isPoin ? formatDecimal(totalPrice) : formatPrice(totalPrice)}{" "}
+                    <span className="text-base text-gray-500 font-normal">{isPoin ? "Poin" : "IDR"}</span>
                   </p>
+
+                  {isPoin && (
+                    <div className="mt-2 text-sm text-gray-600">
+                      <div>Poin Anda: <span className="font-medium">{formatDecimal(myPoinNumber)}</span></div>
+                      {!hasEnoughPoints && (
+                        <div className="mt-1 text-sm text-red-500">Poin tidak cukup untuk membeli item ini.</div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* JUMLAH */}
@@ -512,7 +585,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                         min={1}
                         max={stokVarian}
                         value={quantity}
-                        onChange={(e) => {
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           const raw = e.target.value;
                           const val = Number(raw);
 
@@ -549,7 +622,13 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
 
                 {isLoggedIn ? (
                   <div className="space-y-2">
-                    <Button label="Beli Sekarang" fullWidth color="primary" disabled={stokVarian <= 0} onClick={goToCheckout} />
+                    <Button
+                      label="Beli Sekarang"
+                      fullWidth
+                      color="primary"
+                      disabled={stokVarian <= 0 || (isPoin && !hasEnoughPoints)}
+                      onClick={goToCheckout}
+                    />
                     <Button
                       label="Tambahkan ke Keranjang"
                       iconRight={ShoppingCart}
@@ -635,11 +714,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                   onClick={() => setOpenA(true)}
                 />
                 <Button
-                  label="Beli Sekarang"
+                  label={isPoin ? `Beli Sekarang (${formatDecimal(totalPrice)} Poin)` : "Beli Sekarang"}
                   color="primary"
                   fullWidth
                   onClick={() => setOpenB(true)}
-                  disabled={stokVarian <= 0}
+                  disabled={stokVarian <= 0 || (isPoin && !hasEnoughPoints)}
                 />
               </div>
             ) : (
@@ -661,15 +740,22 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
         </div>
       </div>
 
+      {/* cart */}
       <BottomSheet open={openA} onClose={() => setOpenA(false)}>
         <div className="flex flex-col gap-4">
           {/* HARGA */}
           <div>
             <p className="text-xs text-gray-500">Harga Total</p>
             <p className="text-md font-extrabold text-[#299A4D]">
-              {product.jenis.nama_jenis === "poin" ? totalPrice : formatPrice(totalPrice)}{" "}
-              <span className="text-base text-gray-500 font-normal">{product.jenis.nama_jenis === "poin" ? "Poin" : "IDR"}</span>
+              {isPoin ? formatDecimal(totalPrice) : formatPrice(totalPrice)}{" "}
+              <span className="text-base text-gray-500 font-normal">{isPoin ? "Poin" : "IDR"}</span>
             </p>
+            {isPoin && (
+              <>
+                <div className="text-sm text-gray-600">Poin Anda: <span className="font-medium">{formatDecimal(myPoinNumber)}</span></div>
+                {!hasEnoughPoints && <div className="text-sm text-red-500">Poin tidak cukup.</div>}
+              </>
+            )}
           </div>
 
           {/* VARIAN WARNA (BottomSheet) */}
@@ -746,25 +832,17 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
             <label className="block text-sm font-medium text-gray-700">Jumlah Pembelian</label>
 
             <div className="flex items-center gap-2">
-              <button
-                onClick={() =>
-                  setQuantity((prev) => {
-                    if (prev <= 1) return 1;
-                    return prev - 1;
-                  })
-                }
-                className="w-10 h-10 rounded-full border border-neutral-300 hover:bg-neutral-200 flex items-center justify-center transition-all"
-              >
+              <button onClick={() => setQuantity((prev) => Math.max(1, prev - 1))} className="w-10 h-10 rounded-full border border-neutral-300 hover:bg-neutral-200 flex items-center justify-center transition-all">
                 –
               </button>
 
               <div className="flex-1">
                 <InputField
                   type="number"
-                  value={quantity}
                   min={1}
                   max={stokVarian}
-                  onChange={(e) => {
+                  value={quantity}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const raw = e.target.value;
                     const val = Number(raw);
 
@@ -802,15 +880,23 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
         </div>
       </BottomSheet>
 
+      {/* checkout */}
       <BottomSheet open={openB} onClose={() => setOpenB(false)}>
         <div className="flex flex-col gap-4">
           {/* HARGA */}
           <div>
             <p className="text-xs text-gray-500">Harga Total</p>
             <p className="text-md font-extrabold text-[#299A4D]">
-              {product.jenis.nama_jenis === "poin" ? totalPrice : formatPrice(totalPrice)}{" "}
-              <span className="text-base text-gray-500 font-normal">{product.jenis.nama_jenis === "poin" ? "Poin" : "IDR"}</span>
+              {isPoin ? formatDecimal(totalPrice) : formatPrice(totalPrice)}{" "}
+              <span className="text-base text-gray-500 font-normal">{isPoin ? "Poin" : "IDR"}</span>
             </p>
+
+            {isPoin && (
+              <>
+                <div className="text-sm text-gray-600">Poin Anda: <span className="font-medium">{formatDecimal(myPoinNumber)}</span></div>
+                {!hasEnoughPoints && <div className="text-sm text-red-500">Poin tidak cukup.</div>}
+              </>
+            )}
           </div>
 
           {/* VARIAN WARNA */}
@@ -897,7 +983,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                   min={1}
                   max={stokVarian}
                   value={quantity}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const raw = e.target.value;
                     const val = Number(raw);
 
@@ -931,7 +1017,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
             </p>
           </div>
 
-          <Button label="Beli Sekarang" color="primary" onClick={() => { setOpenB(false); goToCheckout(); }} disabled={stokVarian <= 0} />
+          <Button
+            label={isPoin ? `Beli Sekarang (${formatDecimal(totalPrice)} Poin)` : "Beli Sekarang"}
+            color="primary"
+            onClick={() => { setOpenB(false); goToCheckout(); }}
+            disabled={stokVarian <= 0 || (isPoin && !hasEnoughPoints)}
+          />
         </div>
       </BottomSheet>
     </div>
