@@ -384,7 +384,6 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
       showToast("Gagal mempersiapkan checkout.", "error");
     }
   };
-  // ---------- END new ----------
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
