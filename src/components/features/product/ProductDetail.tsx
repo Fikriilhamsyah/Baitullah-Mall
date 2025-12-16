@@ -345,7 +345,7 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
     if (!gambarRel) {
       gambarRel = product.gambar_utama ?? null;
     }
-    const gambar = gambarRel ? `${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${gambarRel}` : null;
+    const gambar = gambarRel ? `${process.env.NEXT_PUBLIC_PATH}/storage/${gambarRel}` : null;
     // --- END gambar logic
 
     // berat per item dan total berat

@@ -13,6 +13,7 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  console.table(product)
   const router = useRouter();
 
   const variantColors =
@@ -112,13 +113,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     >
       {/* Gambar Thumbnail */}
       <img
-        src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${product.gambar_utama}`}
+        src={`${process.env.NEXT_PUBLIC_PATH}/storage/${product.gambar_utama}`}
         alt={product.nama_produk}
         className="w-full h-auto aspect-[4/5] object-cover"
-        onError={(e) =>
-          (e.currentTarget.src =
-            "https://placehold.co/600x400/eeeeee/aaaaaa?text=No+Image")
-        }
+        // onError={(e) =>
+        //   (e.currentTarget.src =
+        //     "https://placehold.co/600x400/eeeeee/aaaaaa?text=No+Image")
+        // }
       />
 
       <div className="p-3 space-y-2">

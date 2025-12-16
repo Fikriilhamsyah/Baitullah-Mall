@@ -73,7 +73,7 @@ export function CategoryCarousel() {
             >
               <div className="mb-2 flex items-center justify-center">
                 <img
-                  src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${cat.gambar_icon}`}
+                  src={`${process.env.NEXT_PUBLIC_PATH}/storage/${cat.gambar_icon}`}
                   alt={cat.nama_kategori}
                   width={46}
                   height={46}

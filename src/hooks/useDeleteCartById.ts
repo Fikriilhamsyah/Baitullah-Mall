@@ -7,29 +7,45 @@ export interface IDeleteCartResponse {
   error?: boolean;
 }
 
+let isDeletingCart = false;
+
 export const useDeleteCartById = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const deleteCart = async (id: number): Promise<IDeleteCartResponse | null> => {
+    if (isDeletingCart) {
+      throw new Error("Penghapusan sedang diproses");
+    }
+
+    isDeletingCart = true;
+
     try {
       setLoading(true);
       setError(null);
 
       const res = await api.deleteCartByIdCart(id);
+      const payload = (res?.data ?? res) as IDeleteCartResponse;
 
-      const payload = (res && (res.data ?? res)) as IDeleteCartResponse;
+      // trigger cart refetch
+      window.dispatchEvent(new CustomEvent("cart:updated"));
 
       return payload;
     } catch (err: any) {
-      let message = "Terjadi kesalahan saat hapus data";
-      if (err?.response?.data?.message) message = err.response.data.message;
-      else if (err instanceof Error) message = err.message;
+      const status = err?.response?.status;
+
+      const message =
+        status === 429
+          ? "Terlalu banyak permintaan, silakan tunggu"
+          : err?.response?.data?.message ??
+            err?.message ??
+            "Terjadi kesalahan saat menghapus data";
 
       setError(message);
       console.error("useDeleteCartById error:", err);
       return null;
     } finally {
+      isDeletingCart = false;
       setLoading(false);
     }
   };

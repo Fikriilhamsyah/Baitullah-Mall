@@ -12,21 +12,39 @@ const inFlightRequests = new Map<string, Promise<AxiosResponse<any>>>();
 export const apiFetch = async (
   config: FetchOpts
 ): Promise<AxiosResponse<any>> => {
-  const { url = "", method = "get", retries = 2, retryDelay = 500, dedupeKey } = config;
+  const {
+    url = "",
+    method = "get",
+    retries = 2,
+    retryDelay = 500,
+    dedupeKey,
+  } = config;
 
-  const key = dedupeKey ?? `${method}:${url}:${JSON.stringify(config.params ?? {})}`;
+  /**
+   * 🔒 FIX PENTING
+   * POST / PUT harus memasukkan BODY (data) ke dedupe key
+   * supaya payment tidak dianggap request yang sama secara salah
+   */
+  const key =
+    dedupeKey ??
+    `${method}:${url}:${JSON.stringify(config.params ?? {})}:${JSON.stringify(
+      config.data ?? {}
+    )}`;
 
   // dedupe: jika sudah ada request sama yang sedang berjalan, return promise yang sama
   if (inFlightRequests.has(key)) {
     return inFlightRequests.get(key)!;
   }
 
-  const attempt = async (attemptIndex: number, signal?: AbortSignal): Promise<AxiosResponse<any>> => {
+  const attempt = async (
+    attemptIndex: number,
+    signal?: AbortSignal
+  ): Promise<AxiosResponse<any>> => {
     try {
       const axiosConfig: AxiosRequestConfig = {
         ...config,
         method,
-        signal, // modern axios supports AbortSignal
+        signal,
       };
 
       const res = await axios(axiosConfig);
@@ -34,12 +52,17 @@ export const apiFetch = async (
     } catch (err: any) {
       const status = err?.response?.status;
 
-      // jika 429 atau network error, dan masih ada retries -> tunggu exponential backoff lalu retry
+      /**
+       * ❌ JANGAN retry payment jika 429
+       * Retry payment creation = anti-pattern
+       */
       const shouldRetry =
-        attemptIndex < retries && (status === 429 || !err?.response || err?.code === "ECONNABORTED");
+        attemptIndex < retries &&
+        status !== 429 &&
+        (!err?.response || err?.code === "ECONNABORTED");
 
       if (shouldRetry) {
-        const delay = retryDelay * Math.pow(2, attemptIndex); // exponential backoff
+        const delay = retryDelay * Math.pow(2, attemptIndex);
         await new Promise((r) => setTimeout(r, delay));
         return attempt(attemptIndex + 1, signal);
       }
@@ -48,18 +71,15 @@ export const apiFetch = async (
     }
   };
 
-  // create AbortController for this request
   const controller = new AbortController();
-  const promise = attempt(0, controller.signal)
-    .finally(() => {
-      // cleanup inFlightRequests when settled
-      if (inFlightRequests.get(key)) inFlightRequests.delete(key);
-    });
 
-  // store in-flight
+  const promise = attempt(0, controller.signal).finally(() => {
+    inFlightRequests.delete(key);
+  });
+
   inFlightRequests.set(key, promise);
 
-  // attach cancel function to promise (optional)
+  // optional cancel support
   // @ts-ignore
   promise.cancel = () => controller.abort();
 

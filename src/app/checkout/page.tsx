@@ -9,7 +9,7 @@ import { InputField } from "@/components/ui/InputField";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useToast } from "@/components/ui/Toast";
 import { useModal } from "@/context/ModalContext";
-import AddressList from "@/components/features/Address/AddressList";
+import AddressList from "@/components/features/address/AddressList";
 
 // Utils
 import { formatPrice } from "@/utils/formatters";
@@ -18,10 +18,11 @@ import { formatDecimal } from "@/utils/formatDecimal";
 // Hooks
 import { useAddress } from "@/hooks/useAddress";
 import { useRajaOngkirCalculate } from "@/hooks/useRajaOngkirCalculate";
+import { useXenditPost } from "@/hooks/useXenditPost";
 
 // Context
 import { useAuth } from "@/context/AuthContext";
-import AddressForm from "@/components/features/Address/AddressForm";
+import AddressForm from "@/components/features/address/AddressForm";
 
 interface CheckoutItem {
   product_id: number;
@@ -59,10 +60,12 @@ export default function CheckoutPage() {
 
   const { address, loading: loadingAddress, error: errorAddress } = useAddress();
   const { postCalculateOngkir, data: calculatedOngkirData, loading: loadingOngkir, error: errorOngkir } = useRajaOngkirCalculate();
+  const { postXendit, loading: loadingXendit } = useXenditPost();
+
+  const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
 
   const [items, setItems] = useState<CheckoutItem[] | null>(null);
 
-  console.table(address);
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState("");
   const user = useAuth((s) => s.user);
@@ -230,7 +233,8 @@ export default function CheckoutPage() {
 
   // Call calculate ongkir whenever selectedAddress changes (and items exist)
   useEffect(() => {
-    const shouldCalculate = !isAllPoin && selectedAddress && items && items.length > 0;
+    const shouldCalculate = selectedAddress && items && items.length > 0;
+    console.log("[checkout] shouldCalculate ongkir?", shouldCalculate);
     if (!shouldCalculate) {
       setShippingOptions(null);
       setSelectedShipping(null);
@@ -530,65 +534,49 @@ export default function CheckoutPage() {
   }, [selectedShipping]);
 
   const placeOrder = async () => {
-    // placeholder: Anda harus mengganti ini dengan API order nyata
     if (!user) {
-      showToast("Harap login untuk melanjutkan pembayaran.", "error");
-      router.push("/");
+      showToast("Harap login", "error");
       return;
     }
 
-    if (!selectedAddress) {
-      showToast("Silakan pilih alamat pengiriman terlebih dahulu.", "warning");
-      return;
-    }
-
-    // if not all poin (money), require shipping selection
-    if (!isAllPoin && (!selectedShipping || shippingCost === 0)) {
-      showToast("Silakan pilih jasa pengiriman terlebih dahulu.", "warning");
+    if (!selectedAddress || !selectedShipping) {
+      showToast("Lengkapi alamat & pengiriman", "warning");
       return;
     }
 
     try {
-      // disable UI while "placing"
       setLoading(true);
 
-      // build order payload
-      const orderPayload = {
+      const orderId = `ORD-${Date.now()}`;
+
+      // 1️⃣ SIMPAN ORDER KE BACKEND (WAJIB IDEALNYA)
+      // await api.createOrder({ ... })
+
+      // 2️⃣ BUAT INVOICE SESUAI METODE
+      const xenditPayload = {
+        external_id: orderId,
+        amount: subtotalMoney + shippingCost,
+        payer_email: user.email,
+        description: `Pembayaran Order ${orderId}`,
         user_id: user.id,
-        shipping_address: selectedAddress,
-        shipping_method: selectedShipping ? {
-          carrier: selectedShipping.code,
-          service: selectedShipping.service,
-          name: selectedShipping.name,
-          cost: shippingCost,
-          etd: selectedShipping.etd,
-        } : null,
-        items: items?.map((it) => ({
-          product_id: it.product_id,
-          kode_varian: it.kode_varian,
-          qty: it.qty,
-          harga: it.unit_price,
-        })) ?? [],
-        notes,
-        subtotal: subtotalMoney,
-        shipping_cost: shippingCost,
-        total: (subtotalMoney || 0) + (shippingCost || 0),
       };
 
-      // for now, just log and show toast
-      console.log("Order payload (PLACEHOLDER):", orderPayload);
-      // TODO: call your order API here (e.g. api.createOrder(orderPayload))
+      const res = await postXendit(xenditPayload);
 
-      // clear sessionStorage after place
-      sessionStorage.removeItem("checkout_items");
-      sessionStorage.removeItem("checkout_items_at");
+      window.location.href = res?.data?.invoice_url;
 
-      showToast("Pesanan berhasil diproses (placeholder). Lihat console untuk payload.", "success");
-      // redirect to order success / orders page if exists
-      router.push("/orders" /* or "/order-success" */);
+      const url = res?.data?.invoice_url;
+
+      if (!url) {
+        throw new Error("Invoice URL tidak tersedia");
+      }
+
+      // ✅ SIMPAN URL
+      setInvoiceUrl(url);
+
+      showToast("Invoice berhasil dibuat", "success");
     } catch (err: any) {
-      console.error("Place order failed:", err);
-      showToast(err?.message ?? "Gagal memproses pesanan.", "error");
+      showToast(err.message || "Gagal memproses pembayaran", "error");
     } finally {
       setLoading(false);
     }
@@ -641,7 +629,12 @@ export default function CheckoutPage() {
   // disable "Buat Pesanan" when:
   // - no address selected OR
   // - not all poin and no shipping selected (or shippingCost === 0)
-  const disableCreateOrder = !selectedAddress || (!isAllPoin && (!selectedShipping || (Number(shippingCost) || 0) === 0));
+  const disableCreateOrder =
+    !selectedAddress ||
+    !selectedShipping ||
+    shippingCost === 0 ||
+    loading ||
+    loadingXendit;
 
   return (
     <div className="pt-[80px] md:pt-[89px] lg:pt-[92px]">
@@ -654,7 +647,7 @@ export default function CheckoutPage() {
                   {items.map((it, idx) => (
                       <div key={idx} className="bg-white rounded-xl p-4 flex gap-4 items-center shadow">
                           <div className="w-20 h-20 rounded overflow-hidden flex-shrink-0 bg-gray-50">
-                              {it.gambar ? <img src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${it.gambar}`} alt={it.nama_produk} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No image</div>}
+                              {it.gambar ? <img src={`${it.gambar}`} alt={it.nama_produk} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No image</div>}
                           </div>
 
                           <div className="flex-1">
@@ -683,125 +676,121 @@ export default function CheckoutPage() {
 
                   {/* Address */}
                   <div className="bg-white rounded-xl p-4 shadow space-y-4">
-                      <div className="flex items-center justify-between">
-                          <div className="text-sm md:text-md lg:text-lg font-semibold">Alamat</div>
-                          <button
-                              className="text-sm md:text-md lg:text-lg font-semibold text-primary-500 cursor-pointer"
-                              onClick={() => {
-                                  if (address.length === 0) {
-                                    openModal({
-                                      title: "Alamat",
-                                      size: "md",
-                                      mobileMode: "full",
-                                      content: (<AddressForm />),
-                                    });
-                                  } else {
-                                    openModal({
-                                      title: "Alamat",
-                                      size: "md",
-                                      mobileMode: "full",
-                                      content: (<AddressList />),
-                                    });
-                                  }
-                              }}
-                          >
-                              {address.length === 0 ? "Tambah Alamat" : "Pilih Alamat"}
-                          </button>
-                      </div>
-                      <div className="space-y-1">
-                          {selectedAddress ? (
-                            <>
-                              <div className="text-sm text-black">{selectedAddress.nama_lengkap} • {selectedAddress.nomor_telepon}</div>
-                              <div className="text-sm text-gray-600">{`${selectedAddress.detail_alamat}, ${selectedAddress.kelurahan ? `Des. ${selectedAddress.kelurahan}, ` : ""}${selectedAddress.kecamatan ? `Kec. ${selectedAddress.kecamatan}, ` : ""}${selectedAddress.kabupaten ? `Kab. ${selectedAddress.kabupaten}, ` : ""}${selectedAddress.provinsi ?? ""}`}</div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="text-sm text-black">Belum ada alamat</div>
-                              <div className="text-sm text-gray-600">Silakan tambah atau pilih alamat.</div>
-                            </>
-                          )}
-                      </div>
-
-                      {/* Ongkir */}
-                      <div className="mt-2">
-                        <div className="text-sm font-medium mb-2">Pilih Jasa Pengiriman</div>
-
-                        {isAllPoin ? (
-                          <div className="text-sm text-gray-600">Pembayaran poin — pengiriman tidak dihitung.</div>
+                    <div className="flex items-center justify-between">
+                        <div className="text-sm md:text-md lg:text-lg font-semibold">Alamat</div>
+                        <button
+                            className="text-sm md:text-md lg:text-lg font-semibold text-primary-500 cursor-pointer"
+                            onClick={() => {
+                                if (address.length === 0) {
+                                  openModal({
+                                    title: "Alamat",
+                                    size: "md",
+                                    mobileMode: "full",
+                                    content: (<AddressForm />),
+                                  });
+                                } else {
+                                  openModal({
+                                    title: "Alamat",
+                                    size: "md",
+                                    mobileMode: "full",
+                                    content: (<AddressList />),
+                                  });
+                                }
+                            }}
+                        >
+                            {address.length === 0 ? "Tambah Alamat" : "Pilih Alamat"}
+                        </button>
+                    </div>
+                    <div className="space-y-1">
+                        {selectedAddress ? (
+                          <>
+                            <div className="text-sm text-black">{selectedAddress.nama_lengkap} • {selectedAddress.nomor_telepon}</div>
+                            <div className="text-sm text-gray-600">{`${selectedAddress.detail_alamat}, ${selectedAddress.kelurahan ? `Des. ${selectedAddress.kelurahan}, ` : ""}${selectedAddress.kecamatan ? `Kec. ${selectedAddress.kecamatan}, ` : ""}${selectedAddress.kabupaten ? `Kab. ${selectedAddress.kabupaten}, ` : ""}${selectedAddress.provinsi ?? ""}`}</div>
+                          </>
                         ) : (
                           <>
-                            {loadingOngkir ? (
-                              <div className="text-sm text-gray-600">Menghitung ongkir...</div>
-                            ) : errorOngkir ? (
-                              <div className="text-sm text-red-500">Gagal menghitung ongkir: {errorOngkir}</div>
-                            ) : !shippingOptions || shippingOptions.length === 0 ? (
-                              <div className="text-sm text-gray-600">Pilih alamat untuk melihat opsi pengiriman.</div>
-                            ) : groupedOptions.length === 0 ? (
-                              <div className="text-sm text-gray-600">Tidak ada layanan aktif berdasarkan status di database (dummy data saat ini).</div>
-                            ) : (
-                              <div className="space-y-3">
-                                {groupedOptions.map((grp, gi) => {
-                                  const isOpen = !!openGroups[grp.group];
-                                  return (
-                                    <div key={gi} className="border border-neutral-200 rounded overflow-hidden">
-                                      <button
-                                        type="button"
-                                        onClick={() => toggleGroup(grp.group)}
-                                        className="w-full flex items-center justify-between px-3 py-2 bg-gray-100 hover:bg-gray-200"
-                                        aria-expanded={isOpen}
-                                        aria-controls={`group-${gi}`}
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          <div className="text-sm font-semibold text-gray-800">{grp.group}</div>
-                                          <div className="text-xs text-gray-500">({grp.items.length} layanan)</div>
-                                        </div>
-                                        <div className="text-sm text-gray-600">{isOpen ? "▾" : "▸"}</div>
-                                      </button>
-
-                                      <div
-                                        id={`group-${gi}`}
-                                        aria-hidden={!isOpen}
-                                        className={`${isOpen ? "block" : "hidden"} p-3 bg-white`}
-                                      >
-                                        <div className="space-y-2">
-                                          {grp.items.map((opt: any, i: number) => (
-                                            <label key={i} className="flex items-center justify-between gap-3 p-2 border border-neutral-200 rounded bg-white">
-                                              <div className="flex-1">
-                                                <div className="font-medium text-sm">{opt.name} • {opt.service}</div>
-                                                <div className="text-xs text-gray-500">{opt.description} {opt.etd ? `• ETA: ${opt.etd}` : ""}</div>
-                                              </div>
-                                              <div className="flex items-center gap-3">
-                                                <div className="font-semibold">{formatPrice(opt.cost)}</div>
-                                                <input
-                                                  type="radio"
-                                                  name="shippingOption"
-                                                  checked={selectedShipping?.service === opt.service && selectedShipping?.code === opt.code}
-                                                  onChange={() => {
-                                                    // when user explicitly chooses, set selection
-                                                    setSelectedShipping(opt);
-                                                    setShippingCost(opt.cost);
-                                                  }}
-                                                />
-                                              </div>
-                                            </label>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
+                            <div className="text-sm text-black">Belum ada alamat</div>
+                            <div className="text-sm text-gray-600">Silakan tambah atau pilih alamat.</div>
                           </>
                         )}
+                    </div>
 
-                        <div className="flex justify-between items-center mt-4">
-                          <div className="text-base font-semibold">Ongkos Kirim</div>
-                          <div className="text-lg font-extrabold text-[#299A4D]">
-                            {isAllPoin ? "-" : (shippingCost ? formatPrice(shippingCost) : "-")}
+                    {/* Ongkir */}
+                    <div className="mt-2">
+                      <div className="text-sm font-medium mb-2">Pilih Jasa Pengiriman</div>
+
+                      <>
+                        {loadingOngkir ? (
+                          <div className="text-sm text-gray-600">Menghitung ongkir...</div>
+                        ) : errorOngkir ? (
+                          <div className="text-sm text-red-500">Gagal menghitung ongkir: {errorOngkir}</div>
+                        ) : !shippingOptions || shippingOptions.length === 0 ? (
+                          <div className="text-sm text-gray-600">Pilih alamat untuk melihat opsi pengiriman.</div>
+                        ) : groupedOptions.length === 0 ? (
+                          <div className="text-sm text-gray-600">Tidak ada layanan aktif berdasarkan status di database (dummy data saat ini).</div>
+                        ) : (
+                          <div className="space-y-3">
+                            {groupedOptions.map((grp, gi) => {
+                              const isOpen = !!openGroups[grp.group];
+                              return (
+                                <div key={gi} className="border border-neutral-200 rounded overflow-hidden">
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleGroup(grp.group)}
+                                    className="w-full flex items-center justify-between px-3 py-2 bg-gray-100 hover:bg-gray-200"
+                                    aria-expanded={isOpen}
+                                    aria-controls={`group-${gi}`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <div className="text-sm font-semibold text-gray-800">{grp.group}</div>
+                                      <div className="text-xs text-gray-500">({grp.items.length} layanan)</div>
+                                    </div>
+                                    <div className="text-sm text-gray-600">{isOpen ? "▾" : "▸"}</div>
+                                  </button>
+
+                                  <div
+                                    id={`group-${gi}`}
+                                    aria-hidden={!isOpen}
+                                    className={`${isOpen ? "block" : "hidden"} p-3 bg-white`}
+                                  >
+                                    <div className="space-y-2">
+                                      {grp.items.map((opt: any, i: number) => (
+                                        <label key={i} className="flex items-center justify-between gap-3 p-2 border border-neutral-200 rounded bg-white">
+                                          <div className="flex-1">
+                                            <div className="font-medium text-sm">{opt.name} • {opt.service}</div>
+                                            <div className="text-xs text-gray-500">{opt.description} {opt.etd ? `• ETA: ${opt.etd}` : ""}</div>
+                                          </div>
+                                          <div className="flex items-center gap-3">
+                                            <div className="font-semibold">{formatPrice(opt.cost)}</div>
+                                            <input
+                                              type="radio"
+                                              name="shippingOption"
+                                              checked={selectedShipping?.service === opt.service && selectedShipping?.code === opt.code}
+                                              onChange={() => {
+                                                // when user explicitly chooses, set selection
+                                                setSelectedShipping(opt);
+                                                setShippingCost(opt.cost);
+                                              }}
+                                            />
+                                          </div>
+                                        </label>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
+                        )}
+                      </>
+
+                      <div className="flex justify-between items-center mt-4">
+                        <div className="text-base font-semibold">Ongkos Kirim</div>
+                        <div className="text-lg font-extrabold text-[#299A4D]">
+                          {shippingCost ? formatPrice(shippingCost) : "-"}
                         </div>
                       </div>
+                    </div>
                   </div>
 
                   {/* Note */}
@@ -826,7 +815,7 @@ export default function CheckoutPage() {
                           <div className="flex justify-between items-center mt-2">
                               <div className="text-sm text-gray-700">Ongkir</div>
                               <div className="font-semibold">
-                                {isAllPoin ? "-" : (shippingCost ? formatPrice(shippingCost) : "-")}
+                                {shippingCost ? formatPrice(shippingCost) : "-"}
                               </div>
                           </div>
 
@@ -838,15 +827,24 @@ export default function CheckoutPage() {
                           </div>
 
                           <div className="mt-4">
-                              <Button
-                                label="Buat Pesanan"
-                                color="primary"
-                                fullWidth
-                                onClick={placeOrder}
-                                disabled={disableCreateOrder || loading}
-                                // optionally a title to explain why disabled
-                                title={disableCreateOrder ? (!selectedAddress ? "Pilih alamat terlebih dahulu" : (!isAllPoin && (!selectedShipping || (Number(shippingCost) || 0) === 0) ? "Pilih jasa pengiriman terlebih dahulu" : "")) : ""}
-                              />
+                              {!invoiceUrl ? (
+                                <Button
+                                  label="Buat Pesanan"
+                                  color="primary"
+                                  fullWidth
+                                  onClick={placeOrder}
+                                  disabled={disableCreateOrder || loading}
+                                />
+                              ) : (
+                                <Button
+                                  label="Lanjutkan Pembayaran"
+                                  color="primary"
+                                  fullWidth
+                                  onClick={() => {
+                                    window.location.href = invoiceUrl;
+                                  }}
+                                />
+                              )}
                           </div>
 
                           <div className="mt-2">
@@ -868,13 +866,22 @@ export default function CheckoutPage() {
                         {isAllPoin ? `${formatDecimal(totalPoints)} Poin` : formatPrice((subtotalMoney || 0) + (shippingCost || 0))}
                       </div>
                   </div>
-                  <Button
-                    label="Buat Pesanan"
-                    color="primary"
-                    onClick={placeOrder}
-                    disabled={disableCreateOrder || loading}
-                    title={disableCreateOrder ? (!selectedAddress ? "Pilih alamat terlebih dahulu" : (!isAllPoin && (!selectedShipping || (Number(shippingCost) || 0) === 0) ? "Pilih jasa pengiriman terlebih dahulu" : "")) : ""}
-                  />
+                  {!invoiceUrl ? (
+                    <Button
+                      label="Buat Pesanan"
+                      color="primary"
+                      onClick={placeOrder}
+                      disabled={disableCreateOrder || loading}
+                    />
+                  ) : (
+                    <Button
+                      label="Lanjutkan Pembayaran"
+                      color="primary"
+                      onClick={() => {
+                        window.location.href = invoiceUrl;
+                      }}
+                    />
+                  )}
               </div>
           </div>
       </div>

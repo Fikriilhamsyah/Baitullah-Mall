@@ -17,6 +17,9 @@ import { useModal } from "@/context/ModalContext";
 import { useAuth } from "@/context/AuthContext";
 import { useCartByIdUser } from "@/hooks/useCartByIdUser";
 
+// Hooks
+import usePoin from "@/hooks/usePoin";
+
 // Icons
 import { navIcons } from "@utils/helpers";
 import {
@@ -32,6 +35,7 @@ import {
   Search,
   ChevronDown,
 } from "lucide-react";
+import { formatPointsToRupiah } from "@/types/IUser";
 
 // 🧠 Dummy meta keywords (bisa ganti dari API)
 const metaKeywords = [
@@ -78,6 +82,7 @@ const Header: React.FC = () => {
   const pathname = usePathname();
 
   const { cartByIdUser, loading: cartByIdUserLoading, error: cartByIdUserError } = useCartByIdUser();
+  const { poin, loading: poinLoading, error: poinError, refetch } = usePoin();
   const cartCount = cartByIdUser.length;
 
   const searchParams = useSearchParams();
@@ -206,6 +211,17 @@ const Header: React.FC = () => {
     if (cartCount >= 10) return "-right-4";
     return "-right-3";
   })();
+
+  const myPoinEntry = React.useMemo(() => {
+    if (!Array.isArray(poin) || !user) return null;
+    return poin.find((p) => Number(p.id_users) === Number(user.id)) ?? null;
+  }, [poin, user]);
+
+  const myPoinNumber = React.useMemo(() => {
+    if (!myPoinEntry) return 0;
+    const n = Number(myPoinEntry.total_score_sum);
+    return Number.isNaN(n) ? 0 : n;
+  }, [myPoinEntry]);
 
   const renderSecondaryNav = () => (
     <nav
@@ -368,15 +384,46 @@ const Header: React.FC = () => {
             }
             className="flex items-center gap-2"
           >
-            <div className="flex flex-col text-sm">
-              <button className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
-                <UserRound className="w-4 h-4" />
-                Profil
-              </button>
-              <button className="flex items-center gap-2 px-3 py-2 text-primary-500 hover:bg-red-50 text-left cursor-pointer" onClick={() => handleLogout()} >
-                <LogOut className="w-4 h-4" />
-                Keluar
-              </button>
+            <div>
+              <div className="px-3 py-2">
+                <div className="border-b border-neutral-200 pb-2">
+                  <div className="flex items-center gap-1">
+                    {user.profile_photo_path ? (
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_API_BAITULLAH}/storage/${user.profile_photo_path}`}
+                        alt="Profile"
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex justify-center items-center w-6 h-6 rounded-full bg-gray-200">
+                        <UserRound className="w-4 h-4 text-neutral-600 hover:text-neutral-900" />
+                      </div>
+                    )}
+                    <p className="text-xs text-neutral-600">{user.name}</p>
+                  </div>
+                  {poinLoading ? (
+                    <p className="text-sm text-gray-500 text-center mt-1">Memuat poin...</p>
+                  ) : poinError ? (
+                    <p className="text-sm text-red-500 text-center mt-1">Gagal memuat poin</p>
+                  ) : myPoinEntry ? (
+                    <p className="text-base font-bold text-green-600 text-center mt-1">
+                      {formatPointsToRupiah(myPoinNumber)} Poin
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center mt-1">0 Poin</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col text-sm">
+                <button className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
+                  <UserRound className="w-4 h-4" />
+                  Profil
+                </button>
+                <button className="flex items-center gap-2 px-3 py-2 text-primary-500 hover:bg-red-50 text-left cursor-pointer" onClick={() => handleLogout()} >
+                  <LogOut className="w-4 h-4" />
+                  Keluar
+                </button>
+              </div>
             </div>
           </Dropdown>
         ) : (

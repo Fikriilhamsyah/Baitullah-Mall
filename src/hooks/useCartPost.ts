@@ -4,15 +4,22 @@ import { ApiResponse } from "@/types/ApiResponse";
 import { IPostCart } from "@/types/ICart";
 import { useAuth } from "@/context/AuthContext";
 
+let isPostingCart = false;
+
 export const usePostCart = () => {
   const [data, setData] = useState<IPostCart[] | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const auth = useAuth.getState(); // use getState for latest
   const logoutFn = useAuth.getState().logout;
 
   const postCart = async (payload: IPostCart) => {
+    if (isPostingCart) {
+      throw new Error("Keranjang sedang diperbarui");
+    }
+
+    isPostingCart = true;
+
     try {
       setLoading(true);
       setError(null);
@@ -22,33 +29,28 @@ export const usePostCart = () => {
 
       setData(Array.isArray(result.data) ? result.data : null);
 
-      if (typeof window !== "undefined") {
-        try {
-          window.dispatchEvent(new CustomEvent("cart:updated", { detail: { userId: payload.user_id } }));
-        } catch (e) {
-          // ignore
-        }
-      }
+      window.dispatchEvent(
+        new CustomEvent("cart:updated", { detail: { userId: payload.user_id } })
+      );
 
       return result;
     } catch (err: any) {
       const status = err?.response?.status;
-      if (status === 401 || status === 403) {
-        try {
-          logoutFn?.();
-        } catch (e) {
-          // ignore
-        }
-        const msg = "Sesi Anda berakhir. Silakan masuk kembali.";
-        setError(msg);
-        throw new Error(msg);
+
+      if ((status === 401 || status === 403) && logoutFn) {
+        logoutFn();
+        throw new Error("Sesi Anda berakhir");
       }
 
-      let message = "Terjadi kesalahan saat menambahkan ke keranjang";
-      if (err instanceof Error) message = err.message;
+      const message =
+        status === 429
+          ? "Terlalu banyak permintaan"
+          : err?.message ?? "Gagal menambahkan ke keranjang";
+
       setError(message);
-      throw err;
+      throw new Error(message);
     } finally {
+      isPostingCart = false;
       setLoading(false);
     }
   };

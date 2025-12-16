@@ -30,6 +30,8 @@ const ProductList: React.FC<ProductListProps> = ({
   const { products, loading, error } = useProducts();
   const [currentPage, setCurrentPage] = useState(1);
 
+  console.table(products)
+
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
 

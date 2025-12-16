@@ -2,16 +2,17 @@ import axios from "axios";
 
 const axiosClientBaitullahMall = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BAITULLAH_MALL, // otomatis ambil dari .env
-  timeout: 10000,
+  timeout: 15000,
 });
 
-// Kalau butuh token, bisa tambahkan interceptor
-// axiosClient.interceptors.request.use((config) => {
-//   const token = localStorage.getItem("token");
-//   if (token) {
-//     config.headers.Authorization = `Bearer ${token}`;
-//   }
-//   return config;
-// });
+axiosClientBaitullahMall.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === "ECONNABORTED") {
+      error.message = "Koneksi lambat, request timeout";
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default axiosClientBaitullahMall;

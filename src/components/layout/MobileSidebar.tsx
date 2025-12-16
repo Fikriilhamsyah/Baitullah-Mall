@@ -184,7 +184,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
                 <div className="flex flex-col items-center p-4 border-b border-gray-200">
                   {user.profile_photo_path ? (
                     <img
-                      src={`${process.env.NEXT_PUBLIC_API_BAITULLAH}/storage/${user.profile_photo_path}`}
+                      src={`${process.env.NEXT_PUBLIC_PATH}/storage/${user.profile_photo_path}`}
                       className="w-20 h-20 rounded-full object-cover"
                       alt="photo profile"
                     />

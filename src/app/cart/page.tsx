@@ -473,7 +473,7 @@ export default function CartPage() {
       const unit_price = Number(ci?.harga) || Number(found?.price) || 0;
       const subtotal = unit_price * qty;
       const gambarRel = variant?.gambar ?? productObj?.gambar_utama ?? null;
-      const gambar = gambarRel ? `${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${gambarRel}` : null;
+      const gambar = gambarRel ? `${process.env.NEXT_PUBLIC_PATH}/storage/${gambarRel}` : null;
 
       const beratPerItem = Number(found?.variantBerat ?? 0) || 0;
       const totalBerat = beratPerItem * qty;
@@ -584,8 +584,8 @@ export default function CartPage() {
                           <div className="flex items-start gap-3 w-full md:w-auto">
                             <input type="checkbox" checked={selected.includes(cartItem.id)} onChange={() => toggleSelect(cartItem.id)} className="h-4 w-4 mt-1" aria-label={`Pilih item ${cartItem.kode_varian}`} />
                             <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 rounded-lg overflow-hidden border border-neutral-200">
-                              {variant?.gambar ? <img src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${variant.gambar}`} alt={product?.nama_produk ?? cartItem.kode_varian} className="w-full h-full object-cover" />
-                              : product?.gambar_utama ? <img src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${product.gambar_utama}`} alt={product?.nama_produk} className="w-full h-full object-cover" />
+                              {variant?.gambar ? <img src={`${process.env.NEXT_PUBLIC_PATH}/storage/${variant.gambar}`} alt={product?.nama_produk ?? cartItem.kode_varian} className="w-full h-full object-cover" />
+                              : product?.gambar_utama ? <img src={`${process.env.NEXT_PUBLIC_PATH}/storage/${product.gambar_utama}`} alt={product?.nama_produk} className="w-full h-full object-cover" />
                               : <div className="w-full h-full flex items-center justify-center text-xs bg-gray-100 text-gray-500">No Image</div>}
                             </div>
                           </div>

@@ -16,7 +16,9 @@ export const useProductById = (id: number | string | null) => {
       return;
     }
 
-    const getProduct = async () => {
+    let mounted = true;
+
+    const getProduct = async (attempt = 1) => {
       try {
         setLoading(true);
         setError(null);
@@ -24,19 +26,27 @@ export const useProductById = (id: number | string | null) => {
         const response = await api.getProductById(numericId);
         const result = response.data as ApiResponse<IProduct>;
 
-        setProduct(result.data ?? null);
-      } catch (err) {
-        let errorMessage = "Produk tidak ditemukan";
-        if (err instanceof Error) errorMessage = err.message;
+        if (mounted) setProduct(result.data ?? null);
+      } catch (err: any) {
+        if (!err?.response && attempt < 2) {
+          return getProduct(attempt + 1);
+        }
 
-        setError(errorMessage);
-        console.error("API Error:", err);
+        const msg =
+          err?.message?.includes("timeout")
+            ? "Koneksi terlalu lambat"
+            : err?.message ?? "Produk tidak ditemukan";
+
+        if (mounted) setError(msg);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
     getProduct();
+    return () => {
+      mounted = false;
+    };
   }, [numericId]);
 
   return { product, loading, error };
