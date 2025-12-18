@@ -68,7 +68,7 @@ const navLinksMobile = [
   {
     title: "Akun",
     items: [
-      { href: "/account", label: "Profil", icon: UserRound },
+      { href: "/profile", label: "Profil", icon: UserRound },
       { href: "/logout", label: "Keluar", icon: LogOut },
     ],
   },
@@ -320,10 +320,10 @@ const Header: React.FC = () => {
                 }
               >
                 <div className="flex flex-col text-sm">
-                  <button className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
+                  <Link href="/profile" className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
                     <UserRound className="w-4 h-4" />
                     Profil
-                  </button>
+                  </Link>
                   <button className="flex items-center gap-2 px-3 py-2 text-primary-500 hover:bg-red-50 text-left cursor-pointer" onClick={() => handleLogout()} >
                     <LogOut className="w-4 h-4" />
                     Keluar
@@ -415,10 +415,10 @@ const Header: React.FC = () => {
                 </div>
               </div>
               <div className="flex flex-col text-sm">
-                <button className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
+                <Link href="/profile" className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
                   <UserRound className="w-4 h-4" />
                   Profil
-                </button>
+                </Link>
                 <button className="flex items-center gap-2 px-3 py-2 text-primary-500 hover:bg-red-50 text-left cursor-pointer" onClick={() => handleLogout()} >
                   <LogOut className="w-4 h-4" />
                   Keluar
@@ -643,10 +643,10 @@ const Header: React.FC = () => {
                 }
               >
                 <div className="flex flex-col text-sm">
-                  <button className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
+                  <Link href="/profile" className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
                     <UserRound className="w-4 h-4" />
                     Profil
-                  </button>
+                  </Link>
                   <button className="flex items-center gap-2 px-3 py-2 text-primary-500 hover:bg-red-50 text-left cursor-pointer" onClick={() => handleLogout()} >
                     <LogOut className="w-4 h-4" />
                     Keluar
@@ -662,7 +662,11 @@ const Header: React.FC = () => {
 
   return (
     <header className="w-full">
-      <div className="fixed top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 transition-all duration-300">
+      <div
+        className={`fixed top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 transition-shadow duration-300 ${
+          pathname === "/profile" && !isScrolled ? "shadow-2xl" : ""
+        }`}
+      >
         {pathname === "/checkout" ? renderSecondaryNav() : renderDefaultNav()}
       </div>
 

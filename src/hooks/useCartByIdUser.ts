@@ -65,13 +65,19 @@ export const useCartByIdUser = () => {
             break;
           } catch (err: any) {
             attempts += 1;
-            const status = err?.response?.status;
 
-            // 🟡 EXPECTED: Rate limit
-            if (status === 429 && attempts <= MAX_RETRIES) {
-              const retryAfter = err?.response?.headers?.["retry-after"];
+            const status = err?.response?.status;
+            const isTimeout =
+              err?.code === "ECONNABORTED" ||
+              err?.message?.toLowerCase().includes("timeout");
+
+            const shouldRetry =
+              (status === 429 || isTimeout) && attempts <= MAX_RETRIES;
+
+            if (shouldRetry) {
               let delay = BASE_BACKOFF_MS * Math.pow(2, attempts - 1);
 
+              const retryAfter = err?.response?.headers?.["retry-after"];
               if (retryAfter) {
                 const parsed = Number(retryAfter);
                 if (!Number.isNaN(parsed) && parsed > 0) {
@@ -83,13 +89,19 @@ export const useCartByIdUser = () => {
               continue;
             }
 
-            // 🔴 REAL error
-            let msg = "Terjadi kesalahan saat mengambil keranjang";
-            if (err instanceof Error) msg = err.message;
+            let msg = "Gagal memuat keranjang";
+
+            if (isTimeout) {
+              msg = "Koneksi terlalu lambat, silakan coba lagi";
+            } else if (err?.response?.data?.message) {
+              msg = err.response.data.message;
+            } else if (err instanceof Error) {
+              msg = err.message;
+            }
 
             setError(msg);
 
-            if (status !== 429) {
+            if (!isTimeout && status !== 429) {
               console.error("useCartByIdUser error:", err);
             }
 

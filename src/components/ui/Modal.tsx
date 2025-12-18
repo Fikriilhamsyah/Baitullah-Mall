@@ -41,7 +41,7 @@ export default function Modal() {
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
+        <div className="container md:mx-auto md:px-6 pb-8">
           {/* overlay */}
           <motion.div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1000]"
@@ -77,7 +77,7 @@ export default function Modal() {
               {content}
             </div>
           </motion.div>
-        </>
+        </div>
       )}
     </AnimatePresence>
   );

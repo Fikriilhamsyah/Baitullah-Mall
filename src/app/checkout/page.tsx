@@ -40,17 +40,6 @@ interface CheckoutItem {
   total_berat?: number;
 }
 
-/**
- * CheckoutPage
- * - otomatis menghitung ongkir ketika ada alamat & items
- * - menampilkan opsi jasa kirim, memungkinkan user memilih
- * - memperhitungkan biaya kirim ke total akhir
- *
- * Catatan:
- * - Status courier (active/nonactive) nanti seharusnya berasal dari database.
- * - Karena saat ini belum ada data, kita gunakan DUMMY_COURIER_STATUS (contoh) untuk simulasi.
- * - Format dummy: { code: "active" | "nonactive" }
- */
 export default function CheckoutPage() {
   const router = useRouter();
 

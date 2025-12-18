@@ -7,7 +7,7 @@ import axiosClientBaiq from "./axiosClientBaiq";
 import { ApiResponse } from "@/types/ApiResponse";
 import { IProduct, IJenis } from "../types/IProduct";
 import { ICategory } from "../types/ICategory";
-import { ILogin, IResetPassword, ILoginResponse } from "@/types/IUser";
+import { ILogin, IResetPassword, ILoginResponse, IPhoto, IRegister } from "@/types/IUser";
 import { ICollection } from "@/types/ICollection";
 import { ICartByIdUser, IPostCart } from "@/types/ICart";
 import { IAddress, ILocation, IPostAddress, IPostCalculateOngkir } from "@/types/IAddress";
@@ -20,6 +20,13 @@ export const api = {
 
   postResetPassword: (payload: IResetPassword) =>
     axiosClientBaitullah.post(`api/reset-password`, payload),
+
+  // User
+  postRegister: (payload: IRegister) =>
+    axiosClientBaitullah.post(`api/register`, payload),
+
+  postPhotoProfile: (payload: IPhoto) =>
+    axiosClientBaitullah.post<IPhoto>(`api/user/photo-profile`, payload),
 
   // Product
   getProducts: () =>

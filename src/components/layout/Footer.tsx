@@ -47,7 +47,7 @@ export default function Footer() {
   const renderDefaultFoot = () => (
     <div>
       {/* Brand Section */}
-      <div className="container mx-auto px-4 md:px-6 mb-5">
+      <div className="container mx-auto px-4 md:px-6 pt-0 lg:pt-10 mb-5">
         <div className="hidden md:flex flex-col items-start">
           <div className="flex items-center gap-2 mb-3">
             {/* <Image

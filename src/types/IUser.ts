@@ -32,6 +32,18 @@ export interface IResetPassword {
   phone: number | string;
 }
 
+export interface IRegister {
+  email: string;
+  phone: string;
+  name: string;
+  password: string;
+  is_ustadz: false;
+}
+
+export interface IPhoto {
+  file: File;
+}
+
 export const formatPointsToRupiah = (points: number): string => {
   return `${points.toLocaleString("id-ID")}`;
 };

@@ -59,7 +59,7 @@ export default function ClientProvider({ children }: { children: ReactNode }) {
     if (!ready && !hydrated) return;
 
     // hanya redirect jika user null dan route protected
-    const protectedRoutes = ["/checkout", "/checkout/", "/cart", "/cart/"];
+    const protectedRoutes = ["/checkout", "/checkout/", "/cart", "/cart/", "/profile", "/profile/", "/profile/account", "/profile/orders", "/profile/address", "/profile/voucher", "/profile/setting"];
     if (!user && protectedRoutes.includes(pathname)) {
       // gunakan replace supaya history tidak terisi
       router.replace("/");
@@ -76,7 +76,7 @@ export default function ClientProvider({ children }: { children: ReactNode }) {
 
         <main className="flex-grow">
           {children}
-          <div className="container md:mx-auto md:px-6 pb-8">
+          <div>
             <Modal />
           </div>
         </main>

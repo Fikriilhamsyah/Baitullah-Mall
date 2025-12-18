@@ -59,7 +59,6 @@ const AddressForm: React.FC = () => {
   // store selected ids as string (InputField returns string values)
   // these hold the id values (string), used by RajaOngkir hooks and sent as *_id in payload
   const [province, setProvince] = useState<string>("");
-  console.log(province)
   const [city, setCity] = useState<string>("");
   const [district, setDistrict] = useState<string>("");
   const [subdistrict, setSubdistrict] = useState<string>("");
