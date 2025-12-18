@@ -1,73 +1,136 @@
-import React, { useMemo, useState } from 'react'
+"use client";
+
+import React, {
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+} from "react";
 
 // Icons
-import { BanknoteArrowUp, BanknoteX, ClipboardClock, Package, PackageX } from 'lucide-react';
+import {
+  ClipboardClock,
+  BanknoteArrowUp,
+  Package,
+  Truck,
+  CheckCircle,
+  RotateCcw,
+} from "lucide-react";
 
 // Components
 import Pagination from "@/components/ui/Pagination";
 
 // Types
-import { DUMMY_ORDERS, Order } from "@/types/IOrder";
+import { DUMMY_ORDERS, Order, OrderStatus } from "@/types/IOrder";
 
-const ORDER_STATUS = [
-  { key: 'pending', label: 'Pending', icon: ClipboardClock },
-  { key: 'success', label: 'Success', icon: Package },
-  { key: 'paid', label: 'Paid', icon: BanknoteArrowUp },
-  { key: 'expired', label: 'Expired', icon: PackageX },
-  { key: 'cancelled', label: 'Cancelled', icon: BanknoteX },
-];
+// Constants
+import { ORDER_STATUS_MAP } from "@/constants/orderStatus";
 
 const ITEMS_PER_PAGE = 8;
 
 const Orders = () => {
-  const [activeTab, setActiveTab] = useState("success");
+  const [activeTab, setActiveTab] = useState<OrderStatus>("6");
   const [page, setPage] = useState(1);
 
-  // 🔍 Filter by status
+  const statusKeys = Object.keys(
+    ORDER_STATUS_MAP
+  ) as OrderStatus[];
+
   const filteredOrders = useMemo(() => {
-    return DUMMY_ORDERS.filter((o) => o.status === activeTab);
+    return DUMMY_ORDERS.filter(
+      (order) => order.status === activeTab
+    );
   }, [activeTab]);
 
-  // 📄 Pagination
-  const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(
+    filteredOrders.length / ITEMS_PER_PAGE
+  );
 
   const paginatedOrders = useMemo(() => {
     const start = (page - 1) * ITEMS_PER_PAGE;
-    return filteredOrders.slice(start, start + ITEMS_PER_PAGE);
+    return filteredOrders.slice(
+      start,
+      start + ITEMS_PER_PAGE
+    );
   }, [filteredOrders, page]);
 
-  // Reset page when tab changes
-  const handleTabChange = (key: Order["status"]) => {
-    setActiveTab(key);
+  const handleTabChange = (status: OrderStatus) => {
+    setActiveTab(status);
     setPage(1);
   };
+
+  const tabsContainerRef = useRef<HTMLDivElement | null>(
+    null
+  );
+
+  const tabRefs = useRef<
+    Record<OrderStatus, HTMLButtonElement | null>
+  >({} as Record<OrderStatus, HTMLButtonElement | null>);
+
+  useEffect(() => {
+    const container = tabsContainerRef.current;
+    const tab = tabRefs.current[activeTab];
+
+    if (!container || !tab) return;
+
+    const containerWidth = container.offsetWidth;
+    const tabWidth = tab.offsetWidth;
+
+    const tabLeft =
+      tab.offsetLeft - container.offsetLeft;
+
+    const scrollTo =
+      tabLeft -
+      containerWidth / 2 +
+      tabWidth / 2;
+
+    container.scrollTo({
+      left: scrollTo,
+      behavior: "smooth",
+    });
+  }, [activeTab]);
 
   return (
     <div className="grid grid-cols-12 gap-0 lg:gap-6">
       {/* Tabs */}
       <div className="col-span-12">
-        <div className="flex overflow-x-auto border-b border-neutral-200">
-          {ORDER_STATUS.map((status) => (
-            <button
-              key={status.key}
-              onClick={() => setActiveTab(status.key)}
-              className={`flex-shrink-0 items-center px-4 py-2 text-sm font-medium transition cursor-pointer ${
-                activeTab === status.key
-                  ? "border-b-4 border-primary-500 text-primary-500"
-                  : "hover:bg-gray-100 text-gray-500"
-              }`}
-            >
-              <status.icon className="mr-2 h-5 w-5 inline-block" />
-              {status.label}
-            </button>
-          ))}
+        <div
+          ref={tabsContainerRef}
+          className="flex overflow-x-auto no-scrollbar border-b border-neutral-200 scroll-smooth"
+        >
+          {statusKeys.map((key) => {
+            const Icon =
+              ORDER_STATUS_MAP[key].icon;
+
+            return (
+              <button
+                key={key}
+                ref={(el) => {
+                  tabRefs.current[key] = el;
+                }}
+                onClick={() =>
+                  handleTabChange(key)
+                }
+                className={`flex-shrink-0 flex items-center px-4 py-3 text-sm font-medium whitespace-nowrap transition ${
+                  activeTab === key
+                    ? "border-b-4 border-primary-500 text-primary-500"
+                    : "text-gray-500 hover:bg-gray-100"
+                }`}
+              >
+                <Icon className="mr-2 h-5 w-5" />
+                {ORDER_STATUS_MAP[key].label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Content */}
       <div className="col-span-12 space-y-3">
         {paginatedOrders.length === 0 ? (
-          <p className="text-sm text-gray-500">Tidak ada pesanan</p>
+          <p className="text-sm text-gray-500">
+            Tidak ada pesanan
+          </p>
         ) : (
           paginatedOrders.map((order) => (
             <div
@@ -75,15 +138,26 @@ const Orders = () => {
               className="flex justify-between items-center p-4 border rounded-lg bg-white"
             >
               <div>
-                <p className="text-sm font-semibold">{order.order_number}</p>
-                <p className="text-xs text-gray-500">{order.date}</p>
+                <p className="text-sm font-semibold">
+                  {order.order_number}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {order.date}
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold text-primary-500">
-                  Rp {order.total.toLocaleString("id-ID")}
+                  Rp{" "}
+                  {order.total.toLocaleString(
+                    "id-ID"
+                  )}
                 </p>
-                <p className="text-xs capitalize text-gray-500">
-                  {order.status}
+                <p className="text-xs text-gray-500">
+                  {
+                    ORDER_STATUS_MAP[
+                      order.status
+                    ].label
+                  }
                 </p>
               </div>
             </div>
@@ -102,7 +176,7 @@ const Orders = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default Orders
+export default Orders;
