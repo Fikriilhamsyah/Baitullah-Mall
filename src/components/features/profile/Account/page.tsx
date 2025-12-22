@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 
 // Components
 import { Button } from '@/components/ui/Button'
@@ -16,10 +16,27 @@ interface AccountProps {
 }
 
 const Account: React.FC<AccountProps> = ({ user }) => {
-  const [userName, setUserName] = useState("");
+  const initialUserName = user?.name ?? "";
+
+  const [userName, setUserName] = useState(initialUserName);
   const [isNotification, setIsNotification] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {}
+  // update state when user loaded async
+  useEffect(() => {
+    setUserName(initialUserName);
+  }, [initialUserName]);
+
+  const isDirty = useMemo(() => {
+    return userName.trim() !== initialUserName.trim();
+  }, [userName, initialUserName]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!isDirty) return;
+
+    // TODO: API update profile
+    console.log("submit username:", userName);
+  };
 
   return (
     <div className="grid grid-cols-12 gap-6">
@@ -57,7 +74,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
                   placeholder="Masukkan username"
                   label="Username"
                   autoComplete="userName"
-                  value={user?.name || userName}
+                  value={userName}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUserName(e.target.value)}
                 />
               </div>
@@ -68,7 +85,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
                   placeholder="Masukkan email"
                   label="Email"
                   autoComplete="email"
-                  type="email"
+                  type="password"
                   disabled
                   value={user?.email || ""}
                   // onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
@@ -81,7 +98,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
                   placeholder="Masukkan nomor telepon"
                   label="Nomor Telepon"
                   autoComplete="phoneNumber"
-                  type="number"
+                  type="password"
                   disabled
                   value={user?.phone || ""}
                   // onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
@@ -103,7 +120,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
                 <Button
                   type="submit"
                   label="Simpan Perubahan"
-                  color="primary"
+                  color={!isDirty ? "secondary" : "primary"}
                   fullWidth
                   // disabled={postingAddress || loginLoading}
                 />

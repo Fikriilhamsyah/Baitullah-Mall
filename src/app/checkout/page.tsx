@@ -10,6 +10,8 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useToast } from "@/components/ui/Toast";
 import { useModal } from "@/context/ModalContext";
 import AddressList from "@/components/features/address/AddressList";
+import AddressForm from "@/components/features/address/AddressForm";
+import RadioGroup from "@/components/ui/RadioGroup";
 
 // Utils
 import { formatPrice } from "@/utils/formatters";
@@ -18,14 +20,14 @@ import { formatDecimal } from "@/utils/formatDecimal";
 // Hooks
 import { useAddress } from "@/hooks/useAddress";
 import { useRajaOngkirCalculate } from "@/hooks/useRajaOngkirCalculate";
-import { useXenditPost } from "@/hooks/useXenditPost";
+import { useCheckout } from "@/hooks/useCheckout";
 
 // Context
 import { useAuth } from "@/context/AuthContext";
-import AddressForm from "@/components/features/address/AddressForm";
 
 interface CheckoutItem {
   product_id: number;
+  cart_id: number;
   nama_produk: string;
   kode_varian: string;
   warna: string | null;
@@ -40,6 +42,19 @@ interface CheckoutItem {
   total_berat?: number;
 }
 
+interface CheckoutItemPayload {
+  keranjang_id?: number;
+  jumlah: number;
+}
+
+interface CheckoutPayload {
+  user_id: number;
+  metode_pembayaran: string;
+  alamat: string;
+  ongkir: number;
+  items: CheckoutItemPayload[];
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
 
@@ -49,11 +64,11 @@ export default function CheckoutPage() {
 
   const { address, loading: loadingAddress, error: errorAddress } = useAddress();
   const { postCalculateOngkir, data: calculatedOngkirData, loading: loadingOngkir, error: errorOngkir } = useRajaOngkirCalculate();
-  const { postXendit, loading: loadingXendit } = useXenditPost();
-
-  const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
+  const { postCheckout, loading: loadingXendit } = useCheckout();
 
   const [items, setItems] = useState<CheckoutItem[] | null>(null);
+
+  console.log("[checkout] items:", items);
 
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState("");
@@ -66,6 +81,11 @@ export default function CheckoutPage() {
   const [shippingOptions, setShippingOptions] = useState<any[] | null>(null);
   const [selectedShipping, setSelectedShipping] = useState<any | null>(null);
   const [shippingCost, setShippingCost] = useState<number>(0);
+
+  console.log("shippingCost:", shippingCost);
+
+  // Payment Method
+  const [paymentMethod, setPaymentMethod] = useState<"VA" | "Direct Transfer">("VA");
 
   useEffect(() => {
     // read from sessionStorage
@@ -132,6 +152,7 @@ export default function CheckoutPage() {
   const isAllPoin = items ? items.every((it) => String(it.jenis ?? "").toLowerCase() === "poin") : false;
   const totalPoints = items ? items.reduce((s, it) => s + (Number(it.subtotal) || 0), 0) : 0;
   const subtotalMoney = items ? items.reduce((s, it) => s + ((Number(it.unit_price) || 0) * (Number(it.qty) || 0)), 0) : 0;
+  const finalTotalMoney = isAllPoin ? shippingCost : (subtotalMoney || 0) + (shippingCost || 0);
 
   // compute total weight (gram) — asumsi: item.total_berat adalah berat per unit (gram)
   const computeTotalWeight = (): number => {
@@ -528,6 +549,11 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!items || items.length === 0) {
+      showToast("Item checkout tidak ditemukan", "error");
+      return;
+    }
+
     if (!selectedAddress || !selectedShipping) {
       showToast("Lengkapi alamat & pengiriman", "warning");
       return;
@@ -536,34 +562,25 @@ export default function CheckoutPage() {
     try {
       setLoading(true);
 
-      const orderId = `ORD-${Date.now()}`;
-
-      // 1️⃣ SIMPAN ORDER KE BACKEND (WAJIB IDEALNYA)
-      // await api.createOrder({ ... })
-
-      // 2️⃣ BUAT INVOICE SESUAI METODE
-      const xenditPayload = {
-        external_id: orderId,
-        amount: subtotalMoney + shippingCost,
-        payer_email: user.email,
-        description: `Pembayaran Order ${orderId}`,
+      const payload: CheckoutPayload = {
         user_id: user.id,
+        metode_pembayaran: paymentMethod,
+        alamat: `${selectedAddress.detail_alamat}, ${
+          selectedAddress.kelurahan ? `Des. ${selectedAddress.kelurahan}, ` : ""
+        }${
+          selectedAddress.kecamatan ? `Kec. ${selectedAddress.kecamatan}, ` : ""
+        }${
+          selectedAddress.kabupaten ? `Kab. ${selectedAddress.kabupaten}, ` : ""
+        }${selectedAddress.provinsi ?? ""} • ${selectedAddress.nomor_telepon}`,
+        ongkir: shippingCost,
+        items: items.map((it) => ({
+          keranjang_id: it.cart_id,
+          jumlah: it.qty,
+        })),
       };
 
-      const res = await postXendit(xenditPayload);
-
-      window.location.href = res?.data?.invoice_url;
-
-      const url = res?.data?.invoice_url;
-
-      if (!url) {
-        throw new Error("Invoice URL tidak tersedia");
-      }
-
-      // ✅ SIMPAN URL
-      setInvoiceUrl(url);
-
-      showToast("Invoice berhasil dibuat", "success");
+      await postCheckout(payload);
+      showToast("Pesanan berhasil dibuat", "success");
     } catch (err: any) {
       showToast(err.message || "Gagal memproses pembayaran", "error");
     } finally {
@@ -630,7 +647,7 @@ export default function CheckoutPage() {
       <div className="container mx-auto px-4 md:px-6 py-12">
           <h1 className="text-2xl font-bold mb-4">Pembayaran</h1>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid lg:grid-cols-3 gap-6">
               <div className="md:col-span-2 space-y-4">
                   {/* Items */}
                   {items.map((it, idx) => (
@@ -782,6 +799,22 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
+                  {/* Payment Method */}
+                  <div className="bg-white rounded-xl p-4 shadow">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-base font-semibold">Metode Pembayaran</h3>
+                    </div>
+                    <RadioGroup
+                      name="paymentMethod"
+                      options={[
+                          { label: "Virtual Account", value: "VA" },
+                          { label: "Direct Transfer", value: "Direct Transfer" },
+                      ]}
+                      selected={paymentMethod}
+                      onChange={(val) => setPaymentMethod(val as "VA" | "Direct Transfer")}
+                    />
+                  </div>
+
                   {/* Note */}
                   <div className="bg-white rounded-xl p-4 shadow">
                       <label className="block text-sm font-medium text-gray-700 mb-2">Catatan untuk penjual (opsional)</label>
@@ -796,7 +829,7 @@ export default function CheckoutPage() {
                           <div className="flex justify-between items-center mt-2">
                               <div className="text-sm text-gray-700">Subtotal</div>
                               <div className="font-semibold">
-                                {isAllPoin ? `${formatDecimal(totalPoints)} Poin` : formatPrice(subtotalMoney)}
+                                {isAllPoin ? formatPrice(shippingCost) : formatPrice(finalTotalMoney)}
                               </div>
                           </div>
 
@@ -816,24 +849,13 @@ export default function CheckoutPage() {
                           </div>
 
                           <div className="mt-4">
-                              {!invoiceUrl ? (
-                                <Button
-                                  label="Buat Pesanan"
-                                  color="primary"
-                                  fullWidth
-                                  onClick={placeOrder}
-                                  disabled={disableCreateOrder || loading}
-                                />
-                              ) : (
-                                <Button
-                                  label="Lanjutkan Pembayaran"
-                                  color="primary"
-                                  fullWidth
-                                  onClick={() => {
-                                    window.location.href = invoiceUrl;
-                                  }}
-                                />
-                              )}
+                              <Button
+                                label="Buat Pesanan"
+                                color="primary"
+                                fullWidth
+                                onClick={placeOrder}
+                                disabled={disableCreateOrder || loading}
+                              />
                           </div>
 
                           <div className="mt-2">
@@ -855,22 +877,12 @@ export default function CheckoutPage() {
                         {isAllPoin ? `${formatDecimal(totalPoints)} Poin` : formatPrice((subtotalMoney || 0) + (shippingCost || 0))}
                       </div>
                   </div>
-                  {!invoiceUrl ? (
-                    <Button
-                      label="Buat Pesanan"
-                      color="primary"
-                      onClick={placeOrder}
-                      disabled={disableCreateOrder || loading}
-                    />
-                  ) : (
-                    <Button
-                      label="Lanjutkan Pembayaran"
-                      color="primary"
-                      onClick={() => {
-                        window.location.href = invoiceUrl;
-                      }}
-                    />
-                  )}
+                  <Button
+                    label="Buat Pesanan"
+                    color="primary"
+                    onClick={placeOrder}
+                    disabled={disableCreateOrder || loading}
+                  />
               </div>
           </div>
       </div>

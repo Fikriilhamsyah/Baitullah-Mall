@@ -621,25 +621,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
 
                 {isLoggedIn ? (
                   <div className="space-y-2">
-                    <Button
+                    {/* <Button
                       label="Beli Sekarang"
                       fullWidth
                       color="primary"
                       disabled={stokVarian <= 0 || (isPoin && !hasEnoughPoints)}
                       onClick={goToCheckout}
-                    />
+                    /> */}
                     <Button
                       label="Tambahkan ke Keranjang"
                       iconRight={ShoppingCart}
                       fullWidth
-                      color="custom"
-                      customColor={{
-                        bg: "bg-white",
-                        text: "text-primary-500",
-                        border: "text-primary-500",
-                        hoverBg: "bg-primary-500",
-                        hoverText: "text-white",
-                      }}
+                      color="primary"
                       onClick={() => {
                         if (stokVarian <= 0) return;
                         handlePostCart();
@@ -702,23 +695,18 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                 />
                 <Button
                   iconRight={ShoppingCart}
-                  color="custom"
-                  customColor={{
-                    bg: "bg-white",
-                    text: "text-primary-500",
-                    border: "text-primary-500",
-                    hoverBg: "bg-primary-500",
-                    hoverText: "text-white",
-                  }}
+                  label="Tambahkan ke Keranjang"
+                  fullWidth
+                  color="primary"
                   onClick={() => setOpenA(true)}
                 />
-                <Button
+                {/* <Button
                   label={isPoin ? `Beli Sekarang (${formatDecimal(totalPrice)} Poin)` : "Beli Sekarang"}
                   color="primary"
                   fullWidth
                   onClick={() => setOpenB(true)}
                   disabled={stokVarian <= 0 || (isPoin && !hasEnoughPoints)}
-                />
+                /> */}
               </div>
             ) : (
               <Button
@@ -1016,12 +1004,12 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
             </p>
           </div>
 
-          <Button
+          {/* <Button
             label={isPoin ? `Beli Sekarang (${formatDecimal(totalPrice)} Poin)` : "Beli Sekarang"}
             color="primary"
             onClick={() => { setOpenB(false); goToCheckout(); }}
             disabled={stokVarian <= 0 || (isPoin && !hasEnoughPoints)}
-          />
+          /> */}
         </div>
       </BottomSheet>
     </div>

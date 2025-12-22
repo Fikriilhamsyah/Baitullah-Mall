@@ -79,6 +79,13 @@ const OrdersPage = () => {
           Kembali ke Profil
         </Link>
 
+        {/* HEADER */}
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-neutral-900">
+            Pesanan Saya
+          </h2>
+        </div>
+
         {/* Tabs */}
         <div className="bg-white border-b border-neutral-200">
           <div className="flex overflow-x-auto no-scrollbar scroll-smooth">

@@ -2,21 +2,20 @@ import { useState } from "react";
 import { api } from "@/services/api";
 import { ApiResponse } from "@/types/ApiResponse";
 import { useAuth } from "@/context/AuthContext";
-import { IPostXendit, IXenditInvoice } from "@/types/IXendit";
+import { IPostCheckout, ICheckoutInvoice } from "@/types/ICheckout";
 
 let isCreatingInvoice = false;
 
-export const useXenditPost = () => {
-  const [data, setData] = useState<IXenditInvoice | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+export const useCheckout = () => {
+  const [data, setData] = useState<ICheckoutInvoice | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const logoutFn = useAuth.getState().logout;
 
-  const postXendit = async (
-    payload: IPostXendit,
-    attempt = 1
-  ): Promise<ApiResponse<IXenditInvoice>> => {
+  const postCheckout = async <T>(
+    payload: IPostCheckout<T>
+  ): Promise<ApiResponse<ICheckoutInvoice>> => {
     if (isCreatingInvoice) {
       throw new Error("Invoice sedang diproses, silakan tunggu");
     }
@@ -27,12 +26,9 @@ export const useXenditPost = () => {
       setLoading(true);
       setError(null);
 
-      console.log("[XENDIT] payload:", payload);
+      const response = await api.postCheckout(payload);
 
-      const response = await api.postXendit(payload);
-      const result = response.data as ApiResponse<IXenditInvoice>;
-
-      console.log("[XENDIT] response:", result);
+      const result = response.data; // ApiResponse<ICheckoutInvoice>
 
       setData(result.data);
 
@@ -68,5 +64,5 @@ export const useXenditPost = () => {
     }
   };
 
-  return { postXendit, data, loading, error };
+  return { postCheckout, data, loading, error };
 };

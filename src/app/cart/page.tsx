@@ -50,7 +50,7 @@ export default function CartPage() {
   const { cart, loading: cartLoading, error: cartError } = useCart();
   const { cartByIdUser, loading: cartByIdUserLoading, error: cartByIdUserError, refetch } = useCartByIdUser();
   const { products, loading: productsLoading, error: productsError } = useProducts();
-  const { poin, loading: poinLoading, error: poinError } = usePoin();
+  const { poin, loading: poinLoading, error: poinError, refetch: refetchPoin } = usePoin();
   const { deleteCart } = useDeleteCartById();
   const { postCart } = usePostCart();
 
@@ -108,6 +108,12 @@ export default function CartPage() {
   }, [cartByIdUser]);
 
   useEffect(() => { quantitiesRef.current = { ...quantities }; }, [quantities]);
+
+  useEffect(() => {
+    if (user?.id) {
+      refetchPoin();
+    }
+  }, [user?.id, refetchPoin]);
 
   // helper: schedule flush for cartId after COALESCE_MS
   const scheduleFlush = (cartId: number) => {
@@ -441,10 +447,10 @@ export default function CartPage() {
   };
 
   const myPoinEntry = React.useMemo(() => {
-      if (!Array.isArray(poin) || !user) return null;
-      return poin.find((p) => Number(p.id_users) === Number(user.id)) ?? null;
-    }, [poin, user]);
-  
+    if (!Array.isArray(poin) || !user) return null;
+    return poin.find((p) => Number(p.id_users) === Number(user.id)) ?? null;
+  }, [poin, user]);
+
   const myPoinNumber = React.useMemo(() => {
     if (!myPoinEntry) return 0;
     const n = Number(myPoinEntry.total_score_sum);
@@ -459,9 +465,16 @@ export default function CartPage() {
       return;
     }
 
-    if (selectedIsPoin && myPoinNumber < totalSelectedPoin) {
-      showToast("Poin Anda tidak cukup untuk melakukan checkout item ini.", "error");
-      return;
+    if (selectedIsPoin) {
+      if (myPoinNumber === null) {
+        showToast("Memuat poin, mohon tunggu sebentar.", "info");
+        return;
+      }
+
+      if (myPoinNumber < totalSelectedPoin) {
+        showToast("Poin Anda tidak cukup untuk melakukan checkout item ini.", "error");
+        return;
+      }
     }
 
     const items = selected.map((id) => {
@@ -506,7 +519,11 @@ export default function CartPage() {
     }
   };
 
-  const hasEnoughPointsForSelected = selectedIsPoin ? (myPoinNumber >= totalSelectedPoin) : true;
+  const hasEnoughPointsForSelected = useMemo(() => {
+    if (!selectedIsPoin) return true;
+    if (myPoinNumber === null) return true; // ⬅️ BELUM DIEVALUASI
+    return myPoinNumber >= totalSelectedPoin;
+  }, [selectedIsPoin, myPoinNumber, totalSelectedPoin]);
   const canCheckout = selectedIsSingleJenis && selected.length > 0 && hasEnoughPointsForSelected && !poinLoading;
 
   if (loading) return <LoadingSpinner />;
@@ -580,8 +597,8 @@ export default function CartPage() {
                   return (
                     <article key={cartItem.id} className="bg-white p-3 md:p-4 rounded-xl shadow-sm flex flex-col gap-2 md:gap-3" aria-labelledby={`cart-item-${cartItem.id}`}>
                       <div className="flex items-start justify-between">
-                        <div className="flex gap-1 md:gap-3">
-                          <div className="flex items-start gap-3 w-full md:w-auto">
+                        <div className="flex gap-2 md:gap-3">
+                          <div className="flex items-start gap-3 md:w-auto">
                             <input type="checkbox" checked={selected.includes(cartItem.id)} onChange={() => toggleSelect(cartItem.id)} className="h-4 w-4 mt-1" aria-label={`Pilih item ${cartItem.kode_varian}`} />
                             <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 rounded-lg overflow-hidden border border-neutral-200">
                               {variant?.gambar ? <img src={`${process.env.NEXT_PUBLIC_PATH}/storage/${variant.gambar}`} alt={product?.nama_produk ?? cartItem.kode_varian} className="w-full h-full object-cover" />
@@ -645,7 +662,17 @@ export default function CartPage() {
 
                   {selectedIsPoin && (
                     <div className={`text-sm ${myPoinNumber < totalSelectedPoin ? "text-red-600" : "text-gray-600"}`}>
-                      Poin Anda: <span className="font-medium">{formatDecimal(myPoinNumber)}</span>
+                      {selectedIsPoin && (
+                        <div className="text-sm text-gray-600">
+                          Poin Anda:{" "}
+                          <span className="font-medium">
+                            {myPoinNumber === null
+                              ? "Memuat..."
+                              : formatDecimal(myPoinNumber)}
+                          </span>
+                        </div>
+                      )}
+
                       {myPoinNumber < totalSelectedPoin && <div className="mt-1 text-sm text-red-600">Poin tidak cukup untuk checkout item yang dipilih.</div>}
                     </div>
                   )}
@@ -657,7 +684,18 @@ export default function CartPage() {
                       color="primary"
                       onClick={() => {
                         if (!selectedIsSingleJenis || selected.length === 0) return;
-                        if (selectedIsPoin && myPoinNumber < totalSelectedPoin) { showToast("Poin Anda tidak cukup untuk melakukan checkout item ini.", "error"); return; }
+                        if (selectedIsPoin) {
+                          if (myPoinNumber === null) {
+                            showToast("Memuat poin, mohon tunggu sebentar.", "info");
+                            return;
+                          }
+
+                          if (myPoinNumber < totalSelectedPoin) {
+                            showToast("Poin Anda tidak cukup untuk melakukan checkout item ini.", "error");
+                            return;
+                          }
+                        }
+
                         goToCheckout();
                       }}
                       disabled={!canCheckout}
@@ -686,7 +724,18 @@ export default function CartPage() {
                 color="primary"
                 onClick={() => {
                   if (!selectedIsSingleJenis || selected.length === 0) return;
-                  if (selectedIsPoin && myPoinNumber < totalSelectedPoin) { showToast("Poin Anda tidak cukup untuk melakukan checkout item ini.", "error"); return; }
+                  if (selectedIsPoin) {
+                    if (myPoinNumber === null) {
+                      showToast("Memuat poin, mohon tunggu sebentar.", "info");
+                      return;
+                    }
+
+                    if (myPoinNumber < totalSelectedPoin) {
+                      showToast("Poin Anda tidak cukup untuk melakukan checkout item ini.", "error");
+                      return;
+                    }
+                  }
+
                   goToCheckout();
                 }}
                 disabled={!canCheckout}

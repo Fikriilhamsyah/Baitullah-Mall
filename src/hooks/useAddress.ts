@@ -7,14 +7,17 @@ import { IAddress } from "@/types/IAddress";
 
 const CACHE_KEY = "address:v1";
 const MAX_RETRIES = 3;
+const EVENT_DEBOUNCE = 300;
 
 export const useAddress = () => {
   const [address, setAddress] = useState<IAddress[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const ongoingRef = useRef(false);
+  const lastEventRef = useRef(0);
 
+  // global memory cache
   if (!(globalThis as any)._useAddressCache) {
     (globalThis as any)._useAddressCache = new Map();
   }
@@ -29,16 +32,15 @@ export const useAddress = () => {
       const result = resp.data as ApiResponse<IAddress[]>;
       return Array.isArray(result.data) ? result.data : [];
     } catch (err: any) {
-      if (attempt >= MAX_RETRIES || err?.response?.status === 429) {
-        throw err;
-      }
-      await wait(400 * attempt);
+      if (attempt >= MAX_RETRIES) throw err;
+      await wait(300 * attempt);
       return fetchWithRetry(attempt + 1);
     }
   };
 
   const fetchAddress = useCallback(async () => {
     if (ongoingRef.current) return;
+
     ongoingRef.current = true;
     setLoading(true);
     setError(null);
@@ -51,21 +53,18 @@ export const useAddress = () => {
       const data = await fetchWithRetry();
       setAddress(data);
       memoryCache.set(CACHE_KEY, data);
-      return data;
     } catch (err: any) {
       if (memoryCache.has(CACHE_KEY)) {
         setAddress(memoryCache.get(CACHE_KEY)!);
-        setError("Koneksi lambat, menampilkan alamat tersimpan");
-        return null;
+        setError("Koneksi lambat, menampilkan data terakhir");
+      } else {
+        setError(
+          err?.response?.data?.message ??
+            err?.message ??
+            "Gagal memuat alamat"
+        );
+        setAddress([]);
       }
-
-      setError(
-        err?.message?.includes("timeout")
-          ? "Koneksi terlalu lambat"
-          : err?.response?.data?.message ?? "Gagal memuat alamat"
-      );
-      setAddress([]);
-      return null;
     } finally {
       ongoingRef.current = false;
       setLoading(false);
@@ -80,7 +79,11 @@ export const useAddress = () => {
     void fetchAddress();
 
     const handler = () => {
-      setTimeout(() => void fetchAddress(), 50);
+      const now = Date.now();
+      if (now - lastEventRef.current < EVENT_DEBOUNCE) return;
+
+      lastEventRef.current = now;
+      void fetchAddress();
     };
 
     window.addEventListener("address:updated", handler);

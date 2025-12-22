@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { useModal } from "@/context/ModalContext";
-import { PAYMENT_METHODS } from "@/types/IXendit";
+import { PAYMENT_METHODS } from "@/types/ICheckout";
 import { useXenditPost } from "@/hooks/useXenditPost";
 import PaymentConfirmModal from "./PaymentConfirmModal";
 import { useAuth } from "@/context/AuthContext";

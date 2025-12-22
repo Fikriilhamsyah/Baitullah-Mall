@@ -213,15 +213,21 @@ const Header: React.FC = () => {
   })();
 
   const myPoinEntry = React.useMemo(() => {
-    if (!Array.isArray(poin) || !user) return null;
-    return poin.find((p) => Number(p.id_users) === Number(user.id)) ?? null;
+    if (!user || poin.length === 0) return null;
+    return poin.find(
+      (p) => Number(p.id_users) === Number(user.id)
+    ) ?? null;
   }, [poin, user]);
 
   const myPoinNumber = React.useMemo(() => {
-    if (!myPoinEntry) return 0;
-    const n = Number(myPoinEntry.total_score_sum);
-    return Number.isNaN(n) ? 0 : n;
-  }, [myPoinEntry]);
+    if (!hydrated || !user) return 0;
+
+    const entry = poin.find(
+      (p) => Number(p.id_users) === Number(user.id)
+    );
+
+    return entry ? Number(entry.total_score_sum) || 0 : 0;
+  }, [hydrated, poin, user]);
 
   const renderSecondaryNav = () => (
     <nav
@@ -402,15 +408,15 @@ const Header: React.FC = () => {
                     <p className="text-xs text-neutral-600">{user.name}</p>
                   </div>
                   {poinLoading ? (
-                    <p className="text-sm text-gray-500 text-center mt-1">Memuat poin...</p>
+                      <p className="text-sm text-gray-500 text-center mt-1">Memuat poin...</p>
                   ) : poinError ? (
-                    <p className="text-sm text-red-500 text-center mt-1">Gagal memuat poin</p>
+                      <p className="text-sm text-red-500 text-center mt-1">Gagal memuat poin</p>
                   ) : myPoinEntry ? (
-                    <p className="text-base font-bold text-green-600 text-center mt-1">
+                  <p className="text-base font-bold text-green-600 text-center mt-1">
                       {formatPointsToRupiah(myPoinNumber)} Poin
-                    </p>
+                  </p>
                   ) : (
-                    <p className="text-sm text-gray-500 text-center mt-1">0 Poin</p>
+                      <p className="text-sm text-gray-500 text-center mt-1">0 Poin</p>
                   )}
                 </div>
               </div>

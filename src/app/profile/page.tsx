@@ -32,13 +32,14 @@ const TABS = [
 ];
 
 export default function ProfilePage() {
+  const hydrated = useAuth((s) => s.hydrated);
+  if (!hydrated) return null;
+
   const [activeTab, setActiveTab] = useState("account");
   const router = useRouter();
 
   const { poin, loading: poinLoading, error: poinError, refetch } = usePoin();
   const user = useAuth((state) => state.user);
-
-  console.table(user);
 
   const { showToast } = useToast();
 
@@ -60,15 +61,21 @@ export default function ProfilePage() {
   };
 
   const myPoinEntry = React.useMemo(() => {
-    if (!Array.isArray(poin) || !user) return null;
-    return poin.find((p) => Number(p.id_users) === Number(user.id)) ?? null;
-  }, [poin, user]);
+    if (!user || poin.length === 0) return null;
+    return poin.find(
+        (p) => Number(p.id_users) === Number(user.id)
+    ) ?? null;
+    }, [poin, user]);
 
   const myPoinNumber = React.useMemo(() => {
-    if (!myPoinEntry) return 0;
-    const n = Number(myPoinEntry.total_score_sum);
-    return Number.isNaN(n) ? 0 : n;
-  }, [myPoinEntry]);
+    if (!hydrated || !user) return 0;
+
+    const entry = poin.find(
+        (p) => Number(p.id_users) === Number(user.id)
+    );
+
+    return entry ? Number(entry.total_score_sum) || 0 : 0;
+    }, [hydrated, poin, user]);
 
   const handleLogout = () => {
     useAuth.getState().logout();
