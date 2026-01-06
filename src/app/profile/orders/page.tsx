@@ -73,7 +73,7 @@ const OrdersPage = () => {
       <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4">
         {/* Back */}
         <Link
-          href="/profile?tab=orders"
+          href="/profile"
           className="flex items-center text-sm font-medium text-neutral-600 hover:text-neutral-800"
         >
           <ChevronLeft className="h-5 w-5 mr-1" />

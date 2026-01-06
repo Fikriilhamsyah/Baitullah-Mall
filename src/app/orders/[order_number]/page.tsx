@@ -38,7 +38,15 @@ const OrderDetailPage = () => {
         {/* Back */}
         <Link
           href="/profile?tab=orders"
-          className="flex items-center text-sm font-medium text-neutral-600 hover:text-neutral-800"
+          className="hidden lg:flex items-center text-sm font-medium text-neutral-600 hover:text-neutral-800"
+        >
+          <ChevronLeft className="h-5 w-5 mr-1" />
+          Kembali ke Pesanan
+        </Link>
+
+        <Link
+          href="/profile/orders"
+          className="flex lg:hidden items-center text-sm font-medium text-neutral-600 hover:text-neutral-800"
         >
           <ChevronLeft className="h-5 w-5 mr-1" />
           Kembali ke Pesanan
