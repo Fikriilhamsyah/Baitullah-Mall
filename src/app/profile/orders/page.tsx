@@ -5,13 +5,14 @@ import Link from "next/link";
 
 // Icons
 import {
-  ClipboardClock,
-  BanknoteArrowUp,
+  // ClipboardClock,
+  // BanknoteArrowUp,
   Package,
   Truck,
   CheckCircle,
   RotateCcw,
   ChevronLeft,
+  Info,
 } from "lucide-react";
 
 // Components
@@ -72,7 +73,7 @@ const OrdersPage = () => {
       <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4">
         {/* Back */}
         <Link
-          href="/profile"
+          href="/profile?tab=orders"
           className="flex items-center text-sm font-medium text-neutral-600 hover:text-neutral-800"
         >
           <ChevronLeft className="h-5 w-5 mr-1" />
@@ -120,26 +121,44 @@ const OrdersPage = () => {
             <p className="text-sm text-gray-500">Tidak ada pesanan</p>
           ) : (
             paginatedOrders.map((order) => (
-              <div
-                key={order.id}
-                className="flex justify-between items-center p-4 border rounded-lg bg-white"
-              >
-                <div>
-                  <p className="text-sm font-semibold">
-                    {order.order_number}
-                  </p>
-                  <p className="text-xs text-gray-500">{order.date}</p>
-                </div>
+              <Link href={`/orders/${order.order_number}`} key={order.id}>
+                <div className="flex gap-4 p-4 border rounded-xl bg-white hover:shadow-md transition cursor-pointer mb-3">
+                  {/* Thumbnail */}
+                  <img
+                    src={order.items[0].thumbnail}
+                    alt={order.items[0].name}
+                    className="w-16 h-16 rounded-lg object-cover border"
+                  />
 
-                <div className="text-right">
-                  <p className="text-sm font-bold text-primary-500">
-                    Rp {order.total.toLocaleString("id-ID")}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {ORDER_STATUS_MAP[order.status].label}
-                  </p>
+                  {/* Info */}
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-neutral-900">
+                      {order.order_number}
+                    </p>
+
+                    <p className="text-xs text-neutral-500">
+                      {order.items[0].name}
+                      {order.items.length > 1 &&
+                        ` +${order.items.length - 1} item lainnya`}
+                    </p>
+
+                    <p className="text-xs text-neutral-400 mt-1">
+                      {order.date} • {order.payment_method}
+                    </p>
+                  </div>
+
+                  {/* Price & Status */}
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-primary-500">
+                      Rp {order.total.toLocaleString("id-ID")}
+                    </p>
+
+                    <span className="inline-block mt-1 text-xs px-2 py-1 rounded-full bg-neutral-100 text-neutral-600">
+                      {ORDER_STATUS_MAP[order.status].label}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              </Link>
             ))
           )}
         </div>
@@ -151,6 +170,17 @@ const OrdersPage = () => {
             totalPages={totalPages}
             onPageChange={setPage}
           />
+        )}
+
+        {/* Info */}
+        {paginatedOrders .length > 0 && (
+          <div className="flex items-start gap-3 rounded-lg bg-neutral-50 border border-neutral-200 p-4">
+            <Info className="h-5 w-5 text-primary-500 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-neutral-600 leading-relaxed">
+              Ketuk salah satu pesanan untuk melihat detail lengkap, status pengiriman,
+              serta informasi pembayaran dan alamat tujuan.
+            </p>
+          </div>
         )}
       </div>
     </div>

@@ -289,7 +289,7 @@ export default function ProductListPage() {
         />
       </div>
 
-      <section className="md:container md:mx-auto md:px-6 pb-8 md:pt-[14pt] lg:pt-[161px]">
+      <section className="container mx-auto px-6 pb-8 md:pt-[14pt] lg:pt-[161px]">
         <div id="produk" className="w-full">
           {/* Header */}
           <div className="flex justify-between items-center container mx-auto px-4 md:px-0 py-4 md:py-0 md:pb-6">
@@ -325,13 +325,20 @@ export default function ProductListPage() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={showScrollDown ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
-                  className="pointer-events-auto absolute top-2 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 
-                            bg-white border border-primary-500 text-primary-500 rounded-full 
-                            py-1 px-3 text-[11px] shadow-md cursor-pointer"
+                  className="
+                    pointer-events-auto
+                    absolute top-2 inset-x-0 z-50
+                    mx-auto w-fit
+                    flex items-center gap-1
+                    bg-white border border-primary-500 text-primary-500
+                    rounded-full py-1 px-3 text-[11px]
+                    shadow-md cursor-pointer
+                  "
                 >
                   <ChevronDown className="w-4 h-4" />
                   Gulir ke bawah
                 </motion.button>
+
 
                 <motion.button
                   onClick={scrollToTop}
@@ -442,7 +449,7 @@ export default function ProductListPage() {
               {paginatedProducts.length > 0 ? (
                 <motion.div
                   layout
-                  className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 md:gap-4 w-full"
+                  className="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:grid-cols-4 md:gap-4 w-full"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}

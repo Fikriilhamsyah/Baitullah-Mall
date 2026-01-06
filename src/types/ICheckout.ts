@@ -18,27 +18,3 @@ export interface ICheckoutInvoice<TOrder = unknown, TDetails = unknown> {
   order: TOrder;
   details: TDetails;
 }
-
-export type IXenditPaymentMethod = {
-  code: "VA" | "EWALLET" | "QRIS";
-  label: string;
-  description: string;
-};
-
-export const PAYMENT_METHODS: IXenditPaymentMethod[] = [
-  {
-    code: "VA",
-    label: "Transfer Bank",
-    description: "BCA, BNI, Mandiri, dll",
-  },
-  {
-    code: "EWALLET",
-    label: "E-Wallet",
-    description: "OVO, DANA, ShopeePay",
-  },
-  {
-    code: "QRIS",
-    label: "QRIS",
-    description: "Scan dengan aplikasi bank / e-wallet",
-  },
-];

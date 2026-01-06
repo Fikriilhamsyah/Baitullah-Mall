@@ -12,6 +12,7 @@ import { ICollection } from "@/types/ICollection";
 import { ICartByIdUser, IPostCart } from "@/types/ICart";
 import { IAddress, ILocation, IPostAddress, IPostCalculateOngkir } from "@/types/IAddress";
 import { ICheckoutInvoice, IPostCheckout } from "@/types/ICheckout";
+import { IPayment } from "@/types/IPayment";
 
 export const api = {
   // Auth
@@ -84,9 +85,13 @@ export const api = {
   postCalculateOngkir: (payload: IPostCalculateOngkir) =>
     axiosClientBaitullahMall.post<ApiResponse<IPostCalculateOngkir[]>>("api/rajaongkir/calculate", payload),
 
-  // Xendit
+  // Checkout
   postCheckout: <T>(payload: IPostCheckout<T>) =>
-    axiosClientBaitullahMall.post<ApiResponse<ICheckoutInvoice>>("api/checkout", payload),
+    axiosClientBaitullahMall.post<ApiResponse<any>>("api/checkout", payload),
+
+  // Payment
+  postPayment: (payload: IPayment) =>
+    axiosClientBaitullahMall.post<ApiResponse<any>>("api/payment/pay", payload),
 };
 
 // export const mockApi = {

@@ -52,7 +52,7 @@ export default function HomePage() {
       <SliderSection slides={SlidesData} autoPlay />
 
       {/* Promo Banner */}
-      <PromoBanner />
+      {/* <PromoBanner /> */}
 
       {/* Category Slider */}
       <section className="hidden lg:block container mx-auto px-4 sm:px-6 py-4 md:py-6">
@@ -60,6 +60,39 @@ export default function HomePage() {
           <h2 className="text-md md:text-2xl font-bold text-neutral-900 pb-2 md:pb-8">Kategori</h2>
         </div>
         <CategorySlider />
+      </section>
+
+      {/* Product List */}
+      <section className="container mx-auto px-6 pb-8">
+        <div id="produk" className="w-full">
+          <div className="container mx-auto px-4 md:px-0">
+            <h2 className="text-md md:text-2xl font-bold text-neutral-900 pb-2 md:pb-8">Produk Baitullah Mall</h2>
+          </div>
+          <ProductList
+            paymentType="uang"
+            showPagination={false}
+          />
+          <div className="flex justify-center items-center mt-4">
+            <Button label="Lihat Produk Lainnya" variant="normal" iconRight={ChevronRight} color="primary" shadow="lg" onClick={() => router.push("/productlist")} />
+          </div>
+        </div>
+      </section>
+
+      {/* Tukar Point */}
+      <section className="container mx-auto px-6 pb-8">
+        <div id="tukarpoin" className="w-full">
+          <div className="container mx-auto px-4 md:px-0">
+            <h2 className="text-md md:text-2xl font-bold text-neutral-900 pb-1 md:pb-2">Tukar Poin</h2>
+            <p className="text-sm md:text-lg font-normal text-neutral-600 pb-2 md:pb-8">Kumpulkan Poin, Tukar dengan Keberkahan.</p>
+          </div>
+          <ProductList
+            paymentType="poin"
+            showPagination={false}
+          />
+          <div className="flex justify-center items-center mt-4">
+            <Button label="Lihat Produk Lainnya" variant="normal" iconRight={ChevronRight} color="primary" shadow="lg" onClick={() => router.push("/productlist")} />
+          </div>
+        </div>
       </section>
 
       {/* Banner Paragraf */}
@@ -77,39 +110,6 @@ export default function HomePage() {
           </div>
         </div>
       </div>
-
-      {/* Product List */}
-      <section className="md:container md:mx-auto md:px-6 pb-8">
-        <div id="produk" className="w-full">
-          <div className="container mx-auto px-4 md:px-0">
-            <h2 className="text-md md:text-2xl font-bold text-neutral-900 pb-2 md:pb-8">Produk Baitullah Mall</h2>
-          </div>
-          <ProductList
-            paymentType="uang"
-            showPagination={false}
-          />
-          <div className="flex justify-center items-center mt-4">
-            <Button label="Lihat Produk Lainnya" variant="normal" iconRight={ChevronRight} color="primary" shadow="lg" onClick={() => router.push("/productlist")} />
-          </div>
-        </div>
-      </section>
-
-      {/* Tukar Point */}
-      <section className="md:container md:mx-auto md:px-6 pb-8">
-        <div id="tukarpoin" className="w-full">
-          <div className="container mx-auto px-4 md:px-0">
-            <h2 className="text-md md:text-2xl font-bold text-neutral-900 pb-1 md:pb-2">Tukar Poin</h2>
-            <p className="text-sm md:text-lg font-normal text-neutral-600 pb-2 md:pb-8">Kumpulkan Poin, Tukar dengan Keberkahan.</p>
-          </div>
-          <ProductList
-            paymentType="poin"
-            showPagination={false}
-          />
-          <div className="flex justify-center items-center mt-4">
-            <Button label="Lihat Produk Lainnya" variant="normal" iconRight={ChevronRight} color="primary" shadow="lg" onClick={() => router.push("/productlist")} />
-          </div>
-        </div>
-      </section>
     </>
   );
 }

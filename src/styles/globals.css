@@ -1,11 +1,12 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
 
-@theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -73,22 +74,23 @@
   --color-neutral-900: #212121;
 }
 
-/* @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-} */
-body.bs-locked {
-  overflow: hidden;
-}
-
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-open-sauce-sans), sans-serif;
   overflow-x: hidden;
 }
+
+body.bs-locked {
+  overflow: hidden;
+}
+
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+} */
 
 /* Custom Scrollbar */
 .no-scrollbar::-webkit-scrollbar {
@@ -268,4 +270,16 @@ body {
 
 .animate-fadeIn {
   animation: fadeIn .15s ease-out;
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Safari backdrop blur fix */
+@supports (-webkit-backdrop-filter: blur(1px)) {
+  .safari-backdrop {
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
 }

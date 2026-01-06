@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Components
 import { Button } from "@/components/ui/Button";
@@ -35,8 +35,11 @@ export default function ProfilePage() {
   const hydrated = useAuth((s) => s.hydrated);
   if (!hydrated) return null;
 
-  const [activeTab, setActiveTab] = useState("account");
+  const searchParams = useSearchParams();
   const router = useRouter();
+
+  const initialTab = searchParams.get("tab") || "account";
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   const { poin, loading: poinLoading, error: poinError, refetch } = usePoin();
   const user = useAuth((state) => state.user);
@@ -81,7 +84,12 @@ export default function ProfilePage() {
     useAuth.getState().logout();
     showToast("Berhasil logout", "success");
     router.push("/");
-};
+  };
+
+  const changeTab = (tab: string) => {
+    setActiveTab(tab);
+    router.replace(`?tab=${tab}`, { scroll: false });
+  };
 
   return (
     <div>
@@ -92,42 +100,48 @@ export default function ProfilePage() {
             </div>
             <div className="absolute inset-x-0 top-full -translate-y-1/2 lg:top-auto lg:translate-x-0 lg:-translate-y-[36px]">
                 <div className="container mx-auto px-4 md:px-6">
-                    <div className="flex justify-center items-center w-30 h-30 bg-white rounded-full mx-auto lg:mx-0">
+                    <div className="flex justify-center lg:justify-start items-center w-30 h-30 rounded-full mx-auto lg:mx-0">
                         <div className="w-28 h-28 bg-neutral-200 rounded-full">
                             {user !== null ? (
-                                <div className="flex flex-col gap-2">
-                                    {user.profile_photo_path ? (
+                                <div className="flex flex-col items-center gap-3">
+                                    {/* Avatar wrapper */}
+                                    <div className="flex items-center justify-center w-32 h-32 bg-white rounded-full shadow-sm">
+                                        {user.profile_photo_path ? (
                                         <img
                                             src={`${process.env.NEXT_PUBLIC_API_BAITULLAH}/storage/${user.profile_photo_path}`}
                                             className="w-28 h-28 rounded-full object-cover"
                                             alt="photo profile"
                                         />
-                                    ) : (
+                                        ) : (
                                         <div className="w-28 h-28 rounded-full bg-gray-200 flex items-center justify-center">
                                             <span className="text-3xl text-gray-400">
-                                                {user.name.charAt(0).toUpperCase()}
+                                            {user.name.charAt(0).toUpperCase()}
                                             </span>
                                         </div>
-                                    )}
-                                    <button className="flex items-center justify-center gap-2 cursor-pointer text-neutral-600 hover:text-black transition">
+                                        )}
+                                    </div>
+
+                                    {/* Action */}
+                                    <button className="flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 transition">
                                         <Camera className="h-5 w-5" />
-                                        <span className="text-sm">Ubah Foto</span>
+                                        <span>Ubah Foto</span>
                                     </button>
-                                </div>
+                                    </div>
+
                             ) : (<></>)}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div className="container mx-auto px-4 md:px-6 py-10 mt-14 md:mt-10">
+        <div className="container mx-auto px-4 md:px-6 py-10">
             {user !== null ? (
-                <h1 className="block lg:hidden text-md lg:text-2xl font-bold text-center md:text-start mb-6">{user.name}</h1>
+                <h1 className="block lg:hidden text-md lg:text-2xl font-bold text-center md:text-start mb-6 mt-20 md:mt-18 lg:mt-16">{user.name}</h1>
             ) : (<></>)}
             <div className="grid grid-cols-12 gap-0 lg:gap-6">
                 {/* Sidebar / Nav Tabs */}
                 {/* Desktop */}
-                <aside className="col-span-12 lg:col-span-3">
+                <aside className="col-span-12 lg:col-span-3 mt-0 md:mt-18 lg:mt-16">
                     <div className="lg:sticky lg:top-[160px]">
                         {user !== null ? (
                             <h1 className="hidden lg:block text-md lg:text-2xl font-bold text-center md:text-start mb-6">{user.name}</h1>
@@ -157,10 +171,10 @@ export default function ProfilePage() {
                                     key={tab.key}
                                     onClick={() => {
                                         if (tab.key === "logout") {
-                                            handleLogout()
+                                            handleLogout();
                                             return;
                                         }
-                                        setActiveTab(tab.key);
+                                        changeTab(tab.key);
                                     }}
                                     className={`flex items-center w-full text-left px-4 py-2 rounded-full text-sm font-medium transition cursor-pointer ${
                                         activeTab === tab.key

@@ -79,7 +79,7 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body
-        className={`${openSauceSans.className} flex flex-col min-h-screen bg-gray-50`}
+        className={`${openSauceSans.className} flex flex-col min-h-screen bg-white`}
       >
         <Toast>
           <ClientProvider>

@@ -64,7 +64,7 @@ const ProductList: React.FC<ProductListProps> = ({
       {paginatedProducts.length > 0 ? (
         <motion.div
           layout
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 md:gap-4 w-full"
+          className="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:grid-cols-4 md:gap-4 w-full"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}

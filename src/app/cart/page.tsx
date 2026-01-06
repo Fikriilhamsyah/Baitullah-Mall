@@ -680,7 +680,7 @@ export default function CartPage() {
                   {!selectedIsSingleJenis && selected.length > 0 && (<div className="text-sm text-red-600">Pilihan harus berasal dari jenis yang sama (Uang atau Poin) untuk melanjutkan ke checkout.</div>)}
                   <div className="flex flex-col gap-2">
                     <Button
-                      label="Lanjutkan ke Checkout"
+                      label="Buat Pesanan"
                       color="primary"
                       onClick={() => {
                         if (!selectedIsSingleJenis || selected.length === 0) return;
@@ -720,7 +720,7 @@ export default function CartPage() {
             </div>
             <div className="flex items-center gap-2">
               <Button
-                label="Checkout"
+                label="Buat Pesanan"
                 color="primary"
                 onClick={() => {
                   if (!selectedIsSingleJenis || selected.length === 0) return;

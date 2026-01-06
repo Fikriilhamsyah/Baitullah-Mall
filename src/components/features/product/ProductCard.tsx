@@ -109,20 +109,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <div
       onClick={handleClick}
-      className="bg-white overflow-hidden cursor-pointer md:transform md:transition-all md:duration-300 md:hover:shadow-md md:hover:-translate-y-1"
+      className="bg-white overflow-hidden cursor-pointer md:transform md:transition-all md:duration-300 md:hover:-translate-y-1"
     >
       {/* Gambar Thumbnail */}
-      <img
-        src={`${process.env.NEXT_PUBLIC_PATH}/storage/${product.gambar_utama}`}
-        alt={product.nama_produk}
-        className="w-full h-auto aspect-[4/5] object-cover"
-        // onError={(e) =>
-        //   (e.currentTarget.src =
-        //     "https://placehold.co/600x400/eeeeee/aaaaaa?text=No+Image")
-        // }
-      />
+      <div className="relative">
+        {isPoin && (
+          <div className="absolute py-1 px-4 bg-white/80 backdrop-blur-sm rounded-md top-2 right-2">
+            <span className="text-xs font-bold text-gray-800">
+              Tukar Poin
+            </span>
+          </div>
+        )}
+        <img
+          src={`${process.env.NEXT_PUBLIC_PATH}/storage/${product.gambar_utama}`}
+          alt={product.nama_produk}
+          className="w-full h-auto aspect-[4/5] object-cover"
+          // onError={(e) =>
+          //   (e.currentTarget.src =
+          //     "https://placehold.co/600x400/eeeeee/aaaaaa?text=No+Image")
+          // }
+        />
+      </div>
 
-      <div className="p-3 space-y-2">
+      <div className="py-3 px-1 space-y-2">
         {/* Varian Warna */}
         {variantColors.length > 0 && <ProductColorCircles colors={groupedVariants.map(v => v.kode_warna)} />}
 
@@ -135,7 +144,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <ProductVariantInfo gender={variantGender} sizes={sizeDisplay ? [sizeDisplay] : []} />
 
         {/* Nama Produk */}
-        <h3 className="text-sm font-semibold text-gray-900">{product.nama_produk}</h3>
+        <h3 className="text-xs md:text-sm font-semibold text-gray-900">{product.nama_produk}</h3>
 
         {/* Harga */}
         <p className="text-xl font-extrabold text-gray-800">

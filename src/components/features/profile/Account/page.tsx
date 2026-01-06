@@ -40,7 +40,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
 
   return (
     <div className="grid grid-cols-12 gap-6">
-      <div className="col-span-12 lg:col-span-7">
+      <div className="col-span-12 lg:col-span-12">
         <div className="lg:sticky lg:top-[160px]">
           <div className="bg-white rounded-xl border border-neutral-300 p-6">
             <div className="flex items-center gap-1 mb-4">
@@ -129,7 +129,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
           </div>
         </div>
       </div>
-      <div className="col-span-12 lg:col-span-5">
+      <div className="col-span-12 lg:col-span-12">
         <div className="lg:sticky lg:top-[160px]">
           <div className="bg-white rounded-xl border border-neutral-300 p-6">
             <div className="flex items-center gap-1 mb-4">

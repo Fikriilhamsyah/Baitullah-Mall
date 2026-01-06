@@ -184,7 +184,7 @@ const SignUp = () => {
             />
         </form>
         <button
-          className="text-sm text-primary-600 text-center cursor-pointer"
+          className="text-sm text-primary-600 text-center cursor-pointer pb-4 md:pb-0"
           onClick={handleToSignIn}
         >
           Sudah Punya Akun?

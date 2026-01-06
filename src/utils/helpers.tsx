@@ -7,7 +7,7 @@ import {
   BookOpen,
   Package,
   Menu,
-  Handbag,
+  ShoppingBag,
   UserRound,
   House,
   Box,
@@ -17,7 +17,7 @@ import {
 // Icon Navbar
 export const navIcons = {
   menu: <Menu className="block h-6 w-6" />,
-  cart: <Handbag className="h-6 w-6" />,
+  cart: <ShoppingBag className="h-6 w-6" />,
   account: <UserRound className="h-6 w-6" />,
 };
 

@@ -2,43 +2,34 @@ import { useState } from "react";
 import { api } from "@/services/api";
 import { ApiResponse } from "@/types/ApiResponse";
 import { useAuth } from "@/context/AuthContext";
-import { IPostCheckout, ICheckoutInvoice } from "@/types/ICheckout";
+import { IPayment } from "@/types/IPayment";
 
-let isCreatingInvoice = false;
+let isProcessingPayment = false;
 
-export const useCheckout = () => {
-  const [data, setData] = useState<any | null>(null);
+export const usePayment = () => {
+  const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const logoutFn = useAuth.getState().logout;
 
-  const postCheckout = async <T>(
-    payload: IPostCheckout<T>
+  const postPayment = async (
+    payload: IPayment
   ): Promise<ApiResponse<any>> => {
-    if (isCreatingInvoice) {
-      throw new Error("Invoice sedang diproses, silakan tunggu");
+    if (isProcessingPayment) {
+      throw new Error("Pembayaran sedang diproses, silakan tunggu");
     }
 
-    isCreatingInvoice = true;
+    isProcessingPayment = true;
 
     try {
       setLoading(true);
       setError(null);
 
-      const response = await api.postCheckout(payload);
-
-      const result = response.data; // ApiResponse<any>
+      const response = await api.postPayment(payload);
+      const result = response.data;
 
       setData(result.data);
-
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(
-          new CustomEvent("cart:updated", {
-            detail: { userId: payload.user_id },
-          })
-        );
-      }
 
       return result;
     } catch (err: any) {
@@ -54,15 +45,20 @@ export const useCheckout = () => {
           ? "Terlalu banyak permintaan. Silakan tunggu beberapa saat."
           : err?.response?.data?.message ??
             err?.message ??
-            "Gagal membuat invoice pembayaran";
+            "Gagal memproses pembayaran";
 
       setError(message);
       throw new Error(message);
     } finally {
-      isCreatingInvoice = false;
+      isProcessingPayment = false;
       setLoading(false);
     }
   };
 
-  return { postCheckout, data, loading, error };
+  return {
+    postPayment,
+    data,
+    loading,
+    error,
+  };
 };

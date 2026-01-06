@@ -81,47 +81,16 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      scrollYRef.current = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollYRef.current}px`;
-      document.body.style.left = "0";
-      document.body.style.right = "0";
-      document.body.style.width = "100%";
-      document.body.style.overflowY = "hidden";
+      document.body.style.overflow = "hidden";
     } else {
-      const top = document.body.style.top;
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.width = "";
-      document.body.style.overflowY = "";
-      if (top) {
-        const y = parseInt(top.replace("px", "")) * -1;
-        window.scrollTo({ top: y });
-      } else if (scrollYRef.current !== null) {
-        window.scrollTo({ top: scrollYRef.current });
-      }
-      scrollYRef.current = null;
+      document.body.style.overflow = "";
     }
 
     return () => {
-      const top = document.body.style.top;
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.left = "";
-      document.body.style.right = "";
-      document.body.style.width = "";
-      document.body.style.overflowY = "";
-      if (top) {
-        const y = parseInt(top.replace("px", "")) * -1;
-        window.scrollTo({ top: y });
-      } else if (scrollYRef.current !== null) {
-        window.scrollTo({ top: scrollYRef.current });
-      }
-      scrollYRef.current = null;
+      document.body.style.overflow = "";
     };
   }, [isOpen]);
+
 
   const myPoinEntry = React.useMemo(() => {
     if (!user || poin.length === 0) return null;

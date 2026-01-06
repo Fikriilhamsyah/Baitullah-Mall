@@ -11,6 +11,7 @@ export default function Footer() {
     (pathname.startsWith("/productdetail") || pathname.startsWith("/product/") || pathname === "/product");
   const isCart = pathname === "/cart";
   const isCheckout = pathname === "/checkout";
+  const isCheckoutPage = pathname.startsWith("/checkout");
 
   const pbClass = isProductDetail
     ? "pb-[7.5rem] lg:pb-0"
@@ -21,7 +22,7 @@ export default function Footer() {
     : "pb-0";
 
   const renderSecondaryFoot = () => (
-    <div>
+    <div className="pt-0 lg:pt-10">
       <div className="w-full h-20 md:h-30 bg-neutral-200"></div>
       <div className="container mx-auto px-4 md:px-6 md:px-6 py-4 md:py-6 mb-5 flex flex-col lg:flex-row justify-between items-center">
         <p className="text-xs md:text-sm text-center md:text-start text-gray-500 font-normal">© 2025 PT. Bangkit Membangun Negeri. Hak cipta dilindungi undang-undang</p>
@@ -201,7 +202,7 @@ export default function Footer() {
           </div>
 
           <div className="flex justify-center md:justify-end">
-            <ul className="flex flex-col md:flex-row md:items-start items-center md:gap-4 space-y-2 text-sm text-black/90 text-center md:text-start">
+            <ul className="flex flex-col md:flex-row md:items-start items-center md:gap-4 space-y-2 md:space-y-0 text-sm text-black/90 text-center md:text-start">
               <li><a href="/faq" className="text-center md:text-start">Privacy Policy</a></li>
               <li><a href="/panduan" className="text-center md:text-start">Terms and Condition</a></li>
               <li><a href="/kebijakan-privasi" className="text-center md:text-start">Cookie Policy</a></li>
@@ -214,7 +215,7 @@ export default function Footer() {
 
   return (
     <footer className={`bg-gradient-to-b from-[#FFFFFF] to-[#FAFAFA] text-black ${pbClass}`}>
-      {pathname === "/checkout" ? renderSecondaryFoot() : renderDefaultFoot()}
+      {isCheckoutPage ? renderSecondaryFoot() : isCart ? renderSecondaryFoot() : renderDefaultFoot()}
     </footer>
   );
 }

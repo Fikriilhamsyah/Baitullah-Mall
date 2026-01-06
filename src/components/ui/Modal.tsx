@@ -2,14 +2,12 @@
 import { useModal } from "@/context/ModalContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect } from "react";
-
-// Icons
-import { X } from 'lucide-react';
+import { X } from "lucide-react";
 
 export default function Modal() {
-  const { isOpen, content, title, size, mobileMode, closeModal } = useModal();
+  const { isOpen, content, title, size, closeModal } = useModal();
 
-  // ESC Close
+  // ESC close
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeModal();
@@ -18,66 +16,67 @@ export default function Modal() {
     return () => window.removeEventListener("keydown", handler);
   }, [closeModal]);
 
-  // Disable body scroll
+  // Lock body scroll
   useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "auto";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
+    document.body.classList.toggle("bs-locked", isOpen);
+    return () => document.body.classList.remove("bs-locked");
   }, [isOpen]);
 
   const widthClass = {
-    sm: "max-w-[380px]",
-    md: "max-w-[520px]",
-    lg: "max-w-[720px]",
+    sm: "md:max-w-[380px]",
+    md: "md:max-w-[520px]",
+    lg: "md:max-w-[720px]",
   }[size || "md"];
-
-  // mobile modes
-  const mobileClass =
-    mobileMode === "full"
-      ? "w-screen h-screen rounded-none"
-      : "mx-4 mt-10 rounded-xl";
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="container md:mx-auto md:px-6 pb-8">
-          {/* overlay */}
+        <>
+          {/* Overlay */}
           <motion.div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1000]"
+            className="fixed inset-0 z-[1000] bg-black/40 backdrop-blur-sm"
             onClick={closeModal}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           />
 
-          {/* modal */}
-          <motion.div
-            className={`
-              fixed z-[1001] left-1/2 top-1/2
-              -translate-x-1/2 -translate-y-1/2
-              bg-white shadow-xl flex flex-col
-              w-screen md:w-full h-screen md:h-auto rounded-none md:rounded-xl
-              max-h-[calc(100vh-40px)] mx-0 mt-0 md:mx-4 md:mt-10
-              ${widthClass}
-            `}
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.85 }}
-            transition={{ type: "spring", damping: 18, stiffness: 220 }}
-          >
-            {/* scrollable content */}
-            <div className="overflow-y-auto flex-1 p-6 max-h-[100vh] md:max-h-[70vh] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          {/* Modal */}
+          <div className="fixed inset-0 z-[1001] flex items-end md:items-center justify-center">
+            <motion.div
+              className={`
+                w-screen h-screen md:h-auto
+                bg-white shadow-xl flex flex-col
+                rounded-none md:rounded-xl
+                max-h-screen md:max-h-[calc(100vh-80px)]
+                ${widthClass}
+              `}
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ type: "spring", damping: 20, stiffness: 220 }}
+            >
               {/* Header */}
-              <div className="flex justify-between items-center">
-                <div className='w-6' />
-                <h1 className="text-xl font-bold">{title}</h1>
-                <X className="w-6 h-6 cursor-pointer" onClick={closeModal} />
+              <div className="flex items-center justify-between px-6 py-4 border-b rounded-t-none md:rounded-t-xl sticky top-0 bg-white z-10">
+                <div className="w-6" />
+                <h1 className="text-lg font-semibold text-center">
+                  {title}
+                </h1>
+                <X
+                  className="w-6 h-6 cursor-pointer text-neutral-600 hover:text-neutral-900"
+                  onClick={closeModal}
+                />
               </div>
-              {content}
-            </div>
-          </motion.div>
-        </div>
+
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6 no-scrollbar">
+                <div className="pt-20 md:pt-0 h-full">
+                  {content}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </>
       )}
     </AnimatePresence>
   );

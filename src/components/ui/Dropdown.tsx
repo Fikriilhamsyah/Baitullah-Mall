@@ -104,7 +104,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   }, [closeDelay]);
 
   return (
-    <div ref={wrapperRef} className={`relative inline-block ${className || ""}`}>
+    <div ref={wrapperRef} className={`relative inline-flex items-center ${className || ""}`}>
       {/* trigger area */}
       <div
         ref={triggerRef}
@@ -119,7 +119,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         ref={menuRef}
         className={`${
           open ? "block" : "hidden"
-        } absolute right-0 mt-2 w-44 bg-white rounded-md shadow-md border border-neutral-100 animate-fadeIn origin-top z-50`}
+        } absolute right-0 top-full translate-y-2 w-44 bg-white rounded-md shadow-md border border-neutral-100 animate-fadeIn origin-top z-50`}
       >
         {children}
       </div>

@@ -53,7 +53,7 @@ const metaKeywords = [
 const navLinks = [
   { id: 1, href: "/", label: "Beranda" },
   { id: 2, href: "/productlist", label: "Produk" },
-  { id: 6, href: "/about", label: "Promo" },
+  // { id: 6, href: "/about", label: "Promo" },
 ];
 
 const navLinksMobile = [
@@ -62,7 +62,7 @@ const navLinksMobile = [
     items: [
       { href: "/", label: "Beranda", icon: Home },
       { href: "/productlist", label: "Produk", icon: Package },
-      { href: "/promo", label: "Promo", icon: Tag },
+      // { href: "/promo", label: "Promo", icon: Tag },
     ],
   },
   {
@@ -666,14 +666,16 @@ const Header: React.FC = () => {
     </nav>
   );
 
+  const isCheckoutPage = pathname.startsWith("/checkout");
+
   return (
     <header className="w-full">
       <div
-        className={`fixed top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-gray-200 transition-shadow duration-300 ${
+        className={`fixed top-0 z-40 w-full bg-white/80 backdrop-blur-md safari-backdrop will-change-transform transform-gpu border-b border-gray-200 transition-shadow duration-300 ${
           pathname === "/profile" && !isScrolled ? "shadow-2xl" : ""
         }`}
       >
-        {pathname === "/checkout" ? renderSecondaryNav() : renderDefaultNav()}
+        {isCheckoutPage ? renderSecondaryNav() : renderDefaultNav()}
       </div>
 
       {/* 📱 Sidebar Mobile */}

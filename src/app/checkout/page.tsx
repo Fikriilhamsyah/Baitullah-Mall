@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { create } from "zustand";
 
 // Components
 import { Button } from "@/components/ui/Button";
@@ -21,6 +22,7 @@ import { formatDecimal } from "@/utils/formatDecimal";
 import { useAddress } from "@/hooks/useAddress";
 import { useRajaOngkirCalculate } from "@/hooks/useRajaOngkirCalculate";
 import { useCheckout } from "@/hooks/useCheckout";
+import { useCheckoutFlow } from "@/hooks/useCheckoutFlow";
 
 // Context
 import { useAuth } from "@/context/AuthContext";
@@ -55,6 +57,12 @@ interface CheckoutPayload {
   items: CheckoutItemPayload[];
 }
 
+type LockedShipping = {
+  code: string;
+  service: string;
+  cost: number;
+};
+
 export default function CheckoutPage() {
   const router = useRouter();
 
@@ -62,13 +70,15 @@ export default function CheckoutPage() {
   const openModal = useModal((s) => s.openModal);
   const closeModal = useModal((s) => s.closeModal);
 
+  const payload = useCheckoutFlow((s) => s.payload);
+  const clear = useCheckoutFlow((s) => s.clear);
+  const setCheckoutPayload = useCheckoutFlow((s) => s.setPayload);
+
   const { address, loading: loadingAddress, error: errorAddress } = useAddress();
   const { postCalculateOngkir, data: calculatedOngkirData, loading: loadingOngkir, error: errorOngkir } = useRajaOngkirCalculate();
   const { postCheckout, loading: loadingXendit } = useCheckout();
 
   const [items, setItems] = useState<CheckoutItem[] | null>(null);
-
-  console.log("[checkout] items:", items);
 
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState("");
@@ -81,8 +91,7 @@ export default function CheckoutPage() {
   const [shippingOptions, setShippingOptions] = useState<any[] | null>(null);
   const [selectedShipping, setSelectedShipping] = useState<any | null>(null);
   const [shippingCost, setShippingCost] = useState<number>(0);
-
-  console.log("shippingCost:", shippingCost);
+  const [lockedShipping, setLockedShipping] = useState<LockedShipping | null>(null);
 
   // Payment Method
   const [paymentMethod, setPaymentMethod] = useState<"VA" | "Direct Transfer">("VA");
@@ -107,7 +116,6 @@ export default function CheckoutPage() {
       setItems(parsed);
       setLoading(false);
     } catch (e) {
-      console.error("Failed to read checkout_items:", e);
       setItems(null);
       setLoading(false);
     }
@@ -244,11 +252,10 @@ export default function CheckoutPage() {
   // Call calculate ongkir whenever selectedAddress changes (and items exist)
   useEffect(() => {
     const shouldCalculate = selectedAddress && items && items.length > 0;
-    console.log("[checkout] shouldCalculate ongkir?", shouldCalculate);
     if (!shouldCalculate) {
       setShippingOptions(null);
-      setSelectedShipping(null);
-      setShippingCost(0);
+      // setSelectedShipping(null);
+      // setShippingCost(0);
       return;
     }
 
@@ -266,11 +273,7 @@ export default function CheckoutPage() {
       return;
     }
 
-    console.log("[checkout] kecamatanId:", kecamatanId);
-
     const weight = computeTotalWeight();
-
-    console.log("[checkout] weight (grams):", weight);
 
     // Helper: normalisasi satu respons menjadi array opsi (safely)
     const parseOptionsFromData = (raw: any): any[] => {
@@ -359,7 +362,7 @@ export default function CheckoutPage() {
       try {
         setShippingOptions(null);
         // do NOT auto-clear selectedShipping here -- preserve if possible
-        setShippingCost(0);
+        // setShippingCost(0);
 
         const aggregatedOptions: any[] = [];
 
@@ -387,7 +390,6 @@ export default function CheckoutPage() {
         // 1) Try a single combined request first (many RajaOngkir adapters accept semicolon list)
         const combinedCourierList = ALL_COURIERS.join(";");
         try {
-          console.log("[checkout] trying combined courier request:", combinedCourierList);
           const combinedRes = await withTimeout(postCalculateOngkir({
             ...basePayload,
             courier: combinedCourierList,
@@ -405,11 +407,11 @@ export default function CheckoutPage() {
             });
             aggregatedOptions.push(...normalizedForCourier);
           } else {
-            console.log("[checkout] combined call returned no entries, will try per-courier.");
+            // console.log("[checkout] combined call returned no entries, will try per-courier.");
           }
         } catch (errCombined) {
           // Combined call failed/timeouts -> fallback to per-courier parallel with concurrency
-          console.warn("[checkout] combined courier call failed, falling back to per-courier:", errCombined);
+          // console.warn("[checkout] combined courier call failed, falling back to per-courier:", errCombined);
         }
 
         // If combined didn't populate aggregatedOptions, run per-courier requests with concurrency
@@ -425,12 +427,12 @@ export default function CheckoutPage() {
             // map chunk -> promises with timeout
             const promises = chunk.map((courier) => {
               const payload = { ...basePayload, courier };
-              console.log(`[checkout] requesting ongkir for courier="${courier}" payload:`, payload);
+              // console.log(`[checkout] requesting ongkir for courier="${courier}" payload:`, payload);
               return withTimeout(postCalculateOngkir(payload), 8000, `Courier ${courier} timeout`)
                 .then((res) => ({ courier, res }))
                 .catch((err) => {
                   // annotate but don't throw to break all
-                  console.warn(`[checkout] courier ${courier} failed/timeout:`, err?.message ?? err);
+                  // console.warn(`[checkout] courier ${courier} failed/timeout:`, err?.message ?? err);
                   return { courier, res: null, err };
                 });
             });
@@ -460,7 +462,7 @@ export default function CheckoutPage() {
 
         // fallback: if nothing from per-courier calls, try previous calculatedOngkirData (hook state)
         if (aggregatedOptions.length === 0 && Array.isArray(calculatedOngkirData) && calculatedOngkirData.length > 0) {
-          console.log("[checkout] falling back to calculatedOngkirData");
+          // console.log("[checkout] falling back to calculatedOngkirData");
           const fallback = calculatedOngkirData.flatMap((e: any) => {
             const norm = normalizeOption(e, e?.courier ?? e?.code ?? undefined);
             if (!norm.code) norm.code = (e?.courier ?? e?.code ?? "").toLowerCase();
@@ -470,7 +472,7 @@ export default function CheckoutPage() {
           aggregatedOptions.push(...fallback);
         }
 
-        console.log("[checkout] aggregatedOptions (before dedupe/sort):", aggregatedOptions.length, aggregatedOptions);
+        // console.log("[checkout] aggregatedOptions (before dedupe/sort):", aggregatedOptions.length, aggregatedOptions);
 
         if (!aggregatedOptions || aggregatedOptions.length === 0) {
           setShippingOptions([]);
@@ -499,6 +501,19 @@ export default function CheckoutPage() {
         // set shipping options (flat list with group property)
         setShippingOptions(sorted);
 
+        if (lockedShipping) {
+          const preserved = sorted.find(
+            (s) =>
+              s.code === lockedShipping.code &&
+              s.service === lockedShipping.service
+          );
+
+          if (preserved) {
+            setSelectedShipping(preserved);
+            setShippingCost(lockedShipping.cost);
+          }
+        }
+
         // initialize collapse state: collapsed by default; expand first group (cheery UX)
         const groups = Array.from(new Set(sorted.map((s) => s.group ?? COURIER_GROUPS[(s.code ?? "").toLowerCase()] ?? "Other")));
         const initOpenState: Record<string, boolean> = {};
@@ -525,9 +540,9 @@ export default function CheckoutPage() {
           setShippingCost(0);
         }
 
-        console.log("[checkout] final shippingOptions count:", sorted.length, "selectedShipping:", selectedShipping);
+        // console.log("[checkout] final shippingOptions count:", sorted.length, "selectedShipping:", selectedShipping);
       } catch (err: any) {
-        console.error("Calculate ongkir failed (aggregated):", err);
+        // console.error("Calculate ongkir failed (aggregated):", err);
         const message = err?.message ?? "Gagal menghitung ongkir.";
         showToast(message, "error");
         setShippingOptions(null);
@@ -540,8 +555,16 @@ export default function CheckoutPage() {
 
   // whenever selectedShipping changes, update shippingCost
   useEffect(() => {
+    // 🔒 PRIORITAS LOCKED SHIPPING
+    if (lockedShipping) {
+      setShippingCost(lockedShipping.cost);
+      return;
+    }
+
+    // fallback (misalnya saat initial render)
     setShippingCost(selectedShipping?.cost ?? 0);
-  }, [selectedShipping]);
+  }, [selectedShipping, lockedShipping]);
+
 
   const placeOrder = async () => {
     if (!user) {
@@ -554,8 +577,25 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!selectedAddress || !selectedShipping) {
-      showToast("Lengkapi alamat & pengiriman", "warning");
+    const finalShipping = lockedShipping ?? (
+      selectedShipping
+        ? { cost: Number(selectedShipping.cost) || 0 }
+        : { cost: Number(shippingCost) || 0 }
+    );
+
+    // 🔴 VALIDASI YANG AKHIRNYA TERPANGGIL
+    if (!selectedAddress && finalShipping.cost <= 0) {
+      showToast("Lengkapi alamat dan pilih jasa pengiriman", "warning");
+      return;
+    }
+
+    if (!selectedAddress) {
+      showToast("Silakan pilih atau tambahkan alamat pengiriman", "warning");
+      return;
+    }
+
+    if (!finalShipping || finalShipping.cost <= 0) {
+      showToast("Silakan pilih jasa pengiriman terlebih dahulu", "warning");
       return;
     }
 
@@ -572,15 +612,60 @@ export default function CheckoutPage() {
         }${
           selectedAddress.kabupaten ? `Kab. ${selectedAddress.kabupaten}, ` : ""
         }${selectedAddress.provinsi ?? ""} • ${selectedAddress.nomor_telepon}`,
-        ongkir: shippingCost,
+        ongkir: finalShipping.cost,
         items: items.map((it) => ({
           keranjang_id: it.cart_id,
           jumlah: it.qty,
         })),
       };
 
-      await postCheckout(payload);
+      const res = await postCheckout(payload);
+      
+      const kodeOrder = res?.data?.order?.kode_order;
+
+      const finalShippingCost =
+        lockedShipping?.cost ??
+        selectedShipping?.cost ??
+        shippingCost ??
+        0;
+
+      const alamatFinal = `${selectedAddress.detail_alamat}, ${
+        selectedAddress.kelurahan ? `Des. ${selectedAddress.kelurahan}, ` : ""
+      }${
+        selectedAddress.kecamatan ? `Kec. ${selectedAddress.kecamatan}, ` : ""
+      }${
+        selectedAddress.kabupaten ? `Kab. ${selectedAddress.kabupaten}, ` : ""
+      }${selectedAddress.provinsi ?? ""} • ${selectedAddress.nomor_telepon}`;
+
+      const subtotal = isAllPoin ? 0 : subtotalMoney;
+      const total = isAllPoin
+        ? totalPoints
+        : subtotal + finalShippingCost;
+
+      const checkoutPayload = {
+        kode_order: kodeOrder,
+        items,
+        alamat: alamatFinal,
+        ongkir: finalShippingCost,
+        subtotal,
+        total,
+      };
+
+      // 1️⃣ SET STATE & STORAGE
+      setCheckoutPayload(checkoutPayload);
+      sessionStorage.setItem(
+        "checkout_payload",
+        JSON.stringify(checkoutPayload)
+      );
+
+      // 2️⃣ TUNDA NAVIGASI 1 TICK
+      setTimeout(() => {
+        router.push(`/checkout/payment?order=${kodeOrder}`);
+      }, 0);
+
+      // 3️⃣ TOAST BOLEH
       showToast("Pesanan berhasil dibuat", "success");
+
     } catch (err: any) {
       showToast(err.message || "Gagal memproses pembayaran", "error");
     } finally {
@@ -635,10 +720,15 @@ export default function CheckoutPage() {
   // disable "Buat Pesanan" when:
   // - no address selected OR
   // - not all poin and no shipping selected (or shippingCost === 0)
+  const effectiveShippingCost =
+    lockedShipping?.cost ??
+    selectedShipping?.cost ??
+    shippingCost ??
+    0;
+
   const disableCreateOrder =
     !selectedAddress ||
-    !selectedShipping ||
-    shippingCost === 0 ||
+    effectiveShippingCost <= 0 ||
     loading ||
     loadingXendit;
 
@@ -649,9 +739,31 @@ export default function CheckoutPage() {
 
           <div className="grid lg:grid-cols-3 gap-6">
               <div className="md:col-span-2 space-y-4">
+                  {/* Account */}
+                  <div className="bg-white rounded-xl p-4 shadow">
+                    <h3 className="font-semibold mb-4">Akun Pengguna</h3>
+                    <div>
+                      {user ? (
+                        <div className="text-sm text-neutral-600">
+                          {user.name} • {user.email} • {user.phone}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-red-600">
+                          Anda belum login. Silakan{" "}
+                          <Link href="/login" className="underline">
+                            login
+                          </Link>{" "}
+                          untuk melanjutkan.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Items */}
                   {items.map((it, idx) => (
-                      <div key={idx} className="bg-white rounded-xl p-4 flex gap-4 items-center shadow">
+                      <div key={idx} className="bg-white rounded-xl p-4 items-center shadow">
+                        <h3 className="font-semibold mb-4">Barang Dibeli</h3>
+                        <div className="flex gap-4">
                           <div className="w-20 h-20 rounded overflow-hidden flex-shrink-0 bg-gray-50">
                               {it.gambar ? <img src={`${it.gambar}`} alt={it.nama_produk} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">No image</div>}
                           </div>
@@ -677,6 +789,7 @@ export default function CheckoutPage() {
                                   Subtotal: {String(it.jenis ?? "").toLowerCase() === "poin" ? `${formatDecimal(Number(it.subtotal || 0))} Poin` : formatPrice(it.subtotal)}
                               </div>
                           </div>
+                        </div>
                       </div>
                   ))}
 
@@ -771,11 +884,20 @@ export default function CheckoutPage() {
                                             <input
                                               type="radio"
                                               name="shippingOption"
-                                              checked={selectedShipping?.service === opt.service && selectedShipping?.code === opt.code}
+                                              checked={
+                                                lockedShipping?.code === opt.code &&
+                                                lockedShipping?.service === opt.service
+                                              }
                                               onChange={() => {
-                                                // when user explicitly chooses, set selection
+                                                const locked = {
+                                                  code: String(opt.code),
+                                                  service: String(opt.service),
+                                                  cost: Number(opt.cost),
+                                                };
+
                                                 setSelectedShipping(opt);
-                                                setShippingCost(opt.cost);
+                                                setShippingCost(locked.cost);
+                                                setLockedShipping(locked);
                                               }}
                                             />
                                           </div>
@@ -800,7 +922,7 @@ export default function CheckoutPage() {
                   </div>
 
                   {/* Payment Method */}
-                  <div className="bg-white rounded-xl p-4 shadow">
+                  {/* <div className="bg-white rounded-xl p-4 shadow">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-base font-semibold">Metode Pembayaran</h3>
                     </div>
@@ -813,7 +935,7 @@ export default function CheckoutPage() {
                       selected={paymentMethod}
                       onChange={(val) => setPaymentMethod(val as "VA" | "Direct Transfer")}
                     />
-                  </div>
+                  </div> */}
 
                   {/* Note */}
                   <div className="bg-white rounded-xl p-4 shadow">
@@ -851,10 +973,10 @@ export default function CheckoutPage() {
                           <div className="mt-4">
                               <Button
                                 label="Buat Pesanan"
-                                color="primary"
+                                color={disableCreateOrder ? "secondary" : "primary"}
                                 fullWidth
                                 onClick={placeOrder}
-                                disabled={disableCreateOrder || loading}
+                                disabled={disableCreateOrder}
                               />
                           </div>
 
@@ -879,9 +1001,9 @@ export default function CheckoutPage() {
                   </div>
                   <Button
                     label="Buat Pesanan"
-                    color="primary"
+                    color={disableCreateOrder ? "secondary" : "primary"}
                     onClick={placeOrder}
-                    disabled={disableCreateOrder || loading}
+                    disabled={disableCreateOrder}
                   />
               </div>
           </div>

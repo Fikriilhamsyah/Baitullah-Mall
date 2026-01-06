@@ -104,7 +104,9 @@ export function ProductFilter({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 200, damping: 25 }}
-            className="fixed top-0 right-0 w-70 max-w-full h-full bg-white shadow-xl z-50 flex flex-col"
+            className="fixed top-0 right-0 w-[280px] max-w-full h-full bg-white shadow-xl z-50 flex flex-col"
+            role="dialog"
+            aria-modal="true"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 z-10">

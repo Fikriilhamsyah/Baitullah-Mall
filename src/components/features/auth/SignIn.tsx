@@ -160,7 +160,7 @@ const SignIn = () => {
 
       {/* Mobile SignUp */}
       <button
-        className='block lg:hidden text-sm text-primary-600 text-center cursor-pointer'
+        className='block lg:hidden text-sm text-primary-600 text-center cursor-pointer pb-4 md:pb-0'
         onClick={handleToSignUp}
       >
         Daftar Akun

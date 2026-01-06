@@ -15,7 +15,7 @@ import AddressForm from "../../address/AddressForm";
 import ConfirmDeleteModal from "../../address/ConfirmDeleteModal";
 
 // Icons
-import { Trash2 } from "lucide-react";
+import { Trash2, Info } from "lucide-react";
 
 const Address: React.FC = () => {
   const openModal = useModal((s) => s.openModal);
@@ -125,6 +125,16 @@ const Address: React.FC = () => {
             ))}
           </div>
         )}
+
+        {/* INFO */}
+        <div className="flex flex-col justify-center items-center gap-2 text-xs text-neutral-500 bg-neutral-50 border border-neutral-200 rounded-lg p-3 h-[290px]">
+          <Info className="h-10 w-10 mt-[2px] flex-shrink-0 text-neutral-400" />
+          <p className="text-sm">
+            Alamat ini akan digunakan sebagai alamat pengiriman utama saat proses
+            checkout. Pastikan data alamat sudah benar.
+          </p>
+        </div>
+
       </div>
     </div>
   );

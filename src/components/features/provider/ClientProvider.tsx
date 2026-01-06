@@ -64,6 +64,7 @@ export default function ClientProvider({ children }: { children: ReactNode }) {
 
     const protectedRoutes = [
       "/checkout",
+      "/checkout/payment",
       "/cart",
       "/profile",
       "/profile/account",

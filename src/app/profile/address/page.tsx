@@ -15,7 +15,7 @@ import AddressForm from '@/components/features/address/AddressForm';
 import ConfirmDeleteModal from '@/components/features/address/ConfirmDeleteModal';
 
 // Icons
-import { ChevronLeft, Trash2 } from "lucide-react";
+import { ChevronLeft, Trash2, Info } from "lucide-react";
 import Link from 'next/link';
 
 const address: React.FC = () => {
@@ -135,6 +135,15 @@ const address: React.FC = () => {
             ))}
           </div>
         )}
+
+        {/* INFO */}
+        <div className="flex items-start gap-2 text-xs text-neutral-500 bg-neutral-50 border border-neutral-200 rounded-lg p-3">
+          <Info className="h-4 w-4 mt-[2px] flex-shrink-0 text-neutral-400" />
+          <p>
+            Alamat ini akan digunakan sebagai alamat pengiriman utama saat proses
+            checkout. Pastikan data alamat sudah benar.
+          </p>
+        </div>
       </div>
     </div>
   )
