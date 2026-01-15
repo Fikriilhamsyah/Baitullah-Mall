@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Hooks
 import { useCart } from "@/hooks/useCart";
@@ -74,6 +74,9 @@ export default function CartPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
+
+  const searchParams = useSearchParams();
+  const jenisFromQuery = searchParams.get("jenis"); // "uang" | "poin" | null
 
   // server canonical qty (for rollback & compute)
   const serverQtyRef = useRef<Record<number, number>>({});
@@ -336,20 +339,25 @@ export default function CartPage() {
     return arr;
   }, [cartWithProduct]);
 
-  // ensure activeJenis defaults to first group if null
   useEffect(() => {
     if (activeJenis) return;
-    if (groups.length > 0) {
-      setActiveJenis(groups[0].id_jenis);
-      // select items of that jenis by default
-      const ids = groups[0].items.map((it: any) => it.cartItem.id);
-      setSelected(ids);
-    } else {
-      setActiveJenis(null);
-      setSelected([]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groups]);
+    if (groups.length === 0) return;
+
+    const validJenis = groups.find(
+      (g) => g.id_jenis === jenisFromQuery
+    );
+
+    const initialJenis = validJenis
+      ? validJenis.id_jenis
+      : groups[0].id_jenis;
+
+    setActiveJenis(initialJenis);
+    setSelected(
+      groups.find(g => g.id_jenis === initialJenis)?.items.map(
+        (it: any) => it.cartItem.id
+      ) ?? []
+    );
+  }, [groups, jenisFromQuery]);
 
   const displayedItems = useMemo(() => {
     if (activeJenis === null) return [];
@@ -535,7 +543,7 @@ export default function CartPage() {
         const active = g.id_jenis === activeJenis;
         return (
           <button key={g.id_jenis}
-            onClick={() => { setActiveJenis(g.id_jenis); const ids = g.items.map((it: any) => it.cartItem.id); setSelected(ids); }}
+            onClick={() => { setActiveJenis(g.id_jenis); const ids = g.items.map((it: any) => it.cartItem.id); setSelected(g.items.map((it: any) => it.cartItem.id)); router.replace(`?jenis=${g.id_jenis}`, { scroll: false }); }}
             className={`px-3 py-1 rounded-full text-sm font-medium border ${active ? "bg-primary-500 text-white border-primary-500" : "bg-white text-gray-700 border-gray-200 cursor-pointer"}`}
           >
             {g.nama_jenis} <span className={`ml-1 text-xs ${active ? "text-white" : "text-gray-500"}`}>({g.items.length})</span>

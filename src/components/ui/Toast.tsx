@@ -36,7 +36,7 @@ export const Toast = ({ children }: { children: ReactNode }) => {
       {children}
 
       {/* Container UI */}
-      <div className="fixed top-4 right-4 flex flex-col space-y-2 z-[10001]">
+      <div className="fixed top-4 left-4 md:left-auto right-4 flex flex-col space-y-2 z-[10001]">
         {toasts.map((toast) => (
           <div
             key={toast.id}

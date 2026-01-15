@@ -6,6 +6,9 @@ import React, {
   useRef,
   useEffect,
 } from "react";
+import Link from "next/link";
+
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Icons
 import {
@@ -22,27 +25,52 @@ import {
 import Pagination from "@/components/ui/Pagination";
 
 // Types
-import { DUMMY_ORDERS, Order, OrderStatus } from "@/types/IOrder";
+import { Order, OrderStatus } from "@/types/IOrder";
 
 // Constants
 import { ORDER_STATUS_MAP } from "@/constants/orderStatus";
-import Link from "next/link";
+
+// Hook
+import { useOrder } from "@/hooks/useOrder";
+import { useOrderByIdUser } from "@/hooks/useOrderByIdUser";
+import { useAuth } from "@/context/AuthContext";
 
 const ITEMS_PER_PAGE = 8;
 
 const Orders = () => {
-  const [activeTab, setActiveTab] = useState<OrderStatus>("6");
-  const [page, setPage] = useState(1);
+  const hydrated = useAuth((s) => s.hydrated);
+  if (!hydrated) return null;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const user = useAuth((state) => state.user);
+  const { orders, loading: loadingOrders, error: errorOrders } = useOrder();
+  const { ordersByIdUser, loading: loadingOrdersByIdUser, error: errorOrdersByIdUser } = useOrderByIdUser();
 
   const statusKeys = Object.keys(
     ORDER_STATUS_MAP
   ) as OrderStatus[];
+  
+  const initialStatus =
+    (searchParams.get("status") as OrderStatus) &&
+    statusKeys.includes(searchParams.get("status") as OrderStatus)
+      ? (searchParams.get("status") as OrderStatus)
+      : "done";
+
+  const [activeTab, setActiveTab] =
+    useState<OrderStatus>(initialStatus);
+  
+  const [page, setPage] = useState(1);
 
   const filteredOrders = useMemo(() => {
-    return DUMMY_ORDERS.filter(
-      (order) => order.status === activeTab
+    if (!user) return [];
+
+    return ordersByIdUser.filter(
+      (order) =>
+        order.user_id === user.id &&
+        order.status === activeTab
     );
-  }, [activeTab]);
+  }, [ordersByIdUser, activeTab, user]);
 
   const totalPages = Math.ceil(
     filteredOrders.length / ITEMS_PER_PAGE
@@ -59,6 +87,13 @@ const Orders = () => {
   const handleTabChange = (status: OrderStatus) => {
     setActiveTab(status);
     setPage(1);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("status", status);
+
+    router.replace(`?${params.toString()}`, {
+      scroll: false,
+    });
   };
 
   const tabsContainerRef = useRef<HTMLDivElement | null>(
@@ -91,6 +126,14 @@ const Orders = () => {
       behavior: "smooth",
     });
   }, [activeTab]);
+
+  useEffect(() => {
+    const status = searchParams.get("status") as OrderStatus;
+
+    if (status && statusKeys.includes(status)) {
+      setActiveTab(status);
+    }
+  }, [searchParams]);
 
   return (
     <div className="grid grid-cols-12 gap-0 lg:gap-6">
@@ -135,36 +178,40 @@ const Orders = () => {
           </p>
         ) : (
           paginatedOrders.map((order) => (
-            <Link href={`/orders/${order.order_number}`} key={order.id}>
+            <Link
+              href={`/orders/${order.kode_order}`}
+              key={order.id}
+            >
               <div className="flex gap-4 p-4 border rounded-xl bg-white hover:shadow-sm transition cursor-pointer mb-4">
-                {/* Thumbnail */}
+                
+                {/* Thumbnail (fallback aman) */}
                 <img
-                  src={order.items[0].thumbnail}
-                  alt={order.items[0].name}
+                  src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${order.details[0].gambar}`}
+                  alt={order.kode_order}
                   className="w-16 h-16 rounded-lg object-cover border"
                 />
 
                 {/* Info */}
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-neutral-900">
-                    {order.order_number}
+                    {order.kode_order}
                   </p>
 
                   <p className="text-xs text-neutral-500">
-                    {order.items[0].name}
-                    {order.items.length > 1 &&
-                      ` +${order.items.length - 1} item lainnya`}
+                    {order.details.length} item
                   </p>
 
                   <p className="text-xs text-neutral-400 mt-1">
-                    {order.date} • {order.payment_method}
+                    {new Date(order.created_at).toLocaleDateString("id-ID")} •{" "}
+                    {order.metode_pembayaran}
                   </p>
                 </div>
 
                 {/* Price & Status */}
                 <div className="text-right">
                   <p className="text-sm font-bold text-primary-500">
-                    Rp {order.total.toLocaleString("id-ID")}
+                    Rp{" "}
+                    {order.final_harga.toLocaleString("id-ID")}
                   </p>
 
                   <span className="inline-block mt-1 text-xs px-2 py-1 rounded-full bg-neutral-100 text-neutral-600">
@@ -189,17 +236,15 @@ const Orders = () => {
       )}
 
       {/* Info */}
-      {paginatedOrders .length > 0 && (
-        <div className="col-span-12">
-          <div className="flex flex-col justify-center items-center gap-3 rounded-lg bg-neutral-50 border border-neutral-200 p-4 h-[290px]">
-            <Info className="h-5 w-5 text-primary-500 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-neutral-600 leading-relaxed">
-              Ketuk salah satu pesanan untuk melihat detail lengkap, status pengiriman,
-              serta informasi pembayaran dan alamat tujuan.
-            </p>
-          </div>
+      <div className="col-span-12">
+        <div className="flex flex-col justify-center items-center gap-3 rounded-lg bg-neutral-50 border border-neutral-200 p-4 h-[290px]">
+          <Info className="h-5 w-5 text-primary-500 mt-0.5 flex-shrink-0" />
+          <p className="text-sm text-neutral-600 leading-relaxed">
+            Ketuk salah satu pesanan untuk melihat detail lengkap, status pengiriman,
+            serta informasi pembayaran dan alamat tujuan.
+          </p>
         </div>
-      )}
+      </div>
     </div>
   );
 };

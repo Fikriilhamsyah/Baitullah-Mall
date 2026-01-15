@@ -183,12 +183,21 @@ const SignUp = () => {
               disabled={loading}
             />
         </form>
+
         <button
-          className="text-sm text-primary-600 text-center cursor-pointer pb-4 md:pb-0"
+          className="text-sm text-primary-600 text-center cursor-pointer"
           onClick={handleToSignIn}
         >
           Sudah Punya Akun?
         </button>
+
+        {/* Tambahkan informasi login baitullah.co.id */}
+        <p className="text-xs text-center text-gray-600 mt-4 pb-4 md:pb-0">
+          Anda dapat login menggunakan akun yang sama dari{" "}
+          <a href="https://baitullah.co.id" target="_blank" className="text-primary-600">
+            baitullah.co.id
+          </a>
+        </p>
     </div>
   )
 }

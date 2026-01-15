@@ -14,9 +14,11 @@ import ConfirmDeleteModal from "./ConfirmDeleteModal";
 
 // Hooks
 import { useAddress } from "@/hooks/useAddress";
+import { useAddressDelete } from "@/hooks/useAddressDelete";
+import { useAddressEdit } from "@/hooks/useAddressEdit";
 
 // Icons
-import { Trash2 } from "lucide-react";
+import { SquarePen, Trash2 } from "lucide-react";
 
 const AddressList: React.FC = () => {
   const openModal = useModal((s) => s.openModal);
@@ -24,6 +26,7 @@ const AddressList: React.FC = () => {
   const { showToast } = useToast();
 
   const { address, loading, error, refetch } = useAddress();
+  const { deleteAddress, loading: loadingDeleteAddress, error: errorDeleteAddress } = useAddressDelete();
   const [selectedShipper, setSelectedShipper] = useState<string | number>("");
 
   // track deleting per address
@@ -48,42 +51,18 @@ const AddressList: React.FC = () => {
   };
 
   // DELETE ADDRESS (tanpa window.confirm)
-  const handleDeleteAddress = async (id: string | number) => {
-    try {
-      setDeleting(id, true);
-
-      const endpoint = `/api/addresses/${id}`;
-      const res = await fetch(endpoint, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+  const handleDelete = (addressId: number) => {
+    deleteAddress(addressId)
+      .then((response) => {
+        showToast("Alamat berhasil dihapus.", "success");
+        closeModal();
+        refetch();
+      })
+      .catch((err) => {
+        showToast(err?.message ?? "Gagal menghapus alamat.", "error");
+        closeModal();
+        refetch();
       });
-
-      if (!res.ok) {
-        let msg = `Gagal menghapus alamat (status ${res.status})`;
-        try {
-          const body = await res.json();
-          if (body?.message) msg = body.message;
-        } catch {}
-        showToast(msg, "error");
-        return;
-      }
-
-      showToast("Alamat berhasil dihapus.", "success");
-
-      if (String(selectedShipper) === String(id)) {
-        setSelectedShipper("");
-      }
-
-      await refetch();
-      closeModal();
-    } catch (err: any) {
-      console.error("Delete address failed:", err);
-      showToast(err?.message ?? "Gagal menghapus alamat.", "error");
-    } finally {
-      setDeleting(id, false);
-    }
   };
 
   const handleUseAddress = (e: React.FormEvent) => {
@@ -112,6 +91,9 @@ const AddressList: React.FC = () => {
     showToast("Alamat dipilih.", "success");
     closeModal();
   };
+
+  const MAX_ADDRESS = 10;
+  const isMaxAddressReached = address.length >= MAX_ADDRESS;
 
   return (
     <div className="flex flex-col justify-between items-center w-full h-full pt-5 pb-10 lg:pb-0">
@@ -146,31 +128,52 @@ const AddressList: React.FC = () => {
                       </div>
                     </div>
 
-                    <button
-                      type="button"
-                      className="cursor-pointer"
-                      onClick={(ev) => {
-                        ev.stopPropagation();
-                        openModal({
-                          title: "Hapus Alamat",
-                          size: "md",
-                          mobileMode: "full",
-                          content: (
-                            <ConfirmDeleteModal
-                              title="Hapus Alamat"
-                              description="Apakah kamu yakin ingin menghapus alamat ini? Alamat yang dihapus tidak dapat dikembalikan."
-                              loading={!!deletingMap[col.id]}
-                              onCancel={() => closeModal()}
-                              onConfirm={() => handleDeleteAddress(col.id)}
-                            />
-                          ),
-                        });
-                      }}
-                      disabled={!!deletingMap[col.id]}
-                      aria-label={`Hapus alamat ${col.nama_lengkap}`}
-                    >
-                      <Trash2 className="h-5 w-5 text-danger-500" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openModal({
+                            title: "Ubah Alamat",
+                            size: "md",
+                            mobileMode: "full",
+                            content: (
+                              <AddressForm
+                                mode="edit"
+                                initialData={col}
+                              />
+                            ),
+                          })
+                        }
+                      >
+                        <SquarePen className="h-5 w-5 text-neutral-500" />
+                      </button>
+
+                      <button
+                        type="button"
+                        className="cursor-pointer"
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          openModal({
+                            title: "Hapus Alamat",
+                            size: "md",
+                            mobileMode: "full",
+                            content: (
+                              <ConfirmDeleteModal
+                                title="Hapus Alamat"
+                                description="Apakah kamu yakin ingin menghapus alamat ini? Alamat yang dihapus tidak dapat dikembalikan."
+                                loading={!!deletingMap[col.id]}
+                                onCancel={() => closeModal()}
+                                onConfirm={() => handleDelete(col.id)}
+                              />
+                            ),
+                          });
+                        }}
+                        disabled={!!deletingMap[col.id]}
+                        aria-label={`Hapus alamat ${col.nama_lengkap}`}
+                      >
+                        <Trash2 className="h-5 w-5 text-danger-500" />
+                      </button>
+                    </div>
                   </div>
                 ),
               }))}
@@ -185,14 +188,23 @@ const AddressList: React.FC = () => {
               label="Tambah Alamat"
               color="secondary"
               fullWidth
-              onClick={() =>
+              // disabled={isMaxAddressReached}
+              onClick={() => {
+                if (isMaxAddressReached) {
+                  showToast(
+                    `Maksimal ${MAX_ADDRESS} alamat. Hapus alamat lama untuk menambahkan yang baru.`,
+                    "warning"
+                  );
+                  return;
+                }
+
                 openModal({
                   title: "Alamat",
                   size: "md",
                   mobileMode: "full",
                   content: <AddressForm />,
-                })
-              }
+                });
+              }}
             />
             <Button
               type="submit"

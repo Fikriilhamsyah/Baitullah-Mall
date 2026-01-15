@@ -7,6 +7,8 @@ import { useModal } from "@/context/ModalContext";
 
 // Hooks
 import { useAddress } from "@/hooks/useAddress";
+import { useAddressDelete } from "@/hooks/useAddressDelete";
+import { useAuth } from "@/context/AuthContext";
 
 // Components
 import { Button } from "@/components/ui/Button";
@@ -15,45 +17,45 @@ import AddressForm from '@/components/features/address/AddressForm';
 import ConfirmDeleteModal from '@/components/features/address/ConfirmDeleteModal';
 
 // Icons
-import { ChevronLeft, Trash2, Info } from "lucide-react";
+import { ChevronLeft, Trash2, Info, SquarePen } from "lucide-react";
 import Link from 'next/link';
 
 const address: React.FC = () => {
+  const hydrated = useAuth((s) => s.hydrated);
+  if (!hydrated) return null;
   const openModal = useModal((s) => s.openModal);
   const closeModal = useModal((s) => s.closeModal);
   const { showToast } = useToast();
 
+  const user = useAuth((state) => state.user);
+
   const { address, loading, error, refetch } = useAddress();
+  const { deleteAddress, loading: loadingDeleteAddress, error: errorDeleteAddress } = useAddressDelete();
 
   useEffect(() => {
     if (error) showToast(error, "error");
   }, [error, showToast]);
 
-  const handleDeleteAddress = async (id: string | number) => {
-    try {
-      const res = await fetch(`/api/addresses/${id}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+  const handleDelete = (addressId: number) => {
+    deleteAddress(addressId)
+      .then((response) => {
+        showToast("Alamat berhasil dihapus.", "success");
+        closeModal();
+        refetch();
+      })
+      .catch((err) => {
+        showToast(err?.message ?? "Gagal menghapus alamat.", "error");
+        closeModal();
+        refetch();
       });
-
-      if (!res.ok) {
-        let msg = "Gagal menghapus alamat.";
-        try {
-          const body = await res.json();
-          if (body?.message) msg = body.message;
-        } catch {}
-        showToast(msg, "error");
-        return;
-      }
-
-      showToast("Alamat berhasil dihapus.", "success");
-      await refetch();
-      closeModal();
-    } catch (err: any) {
-      console.error(err);
-      showToast(err?.message ?? "Gagal menghapus alamat.", "error");
-    }
   };
+
+  const userAddresses = address.filter(
+    (item: any) => item.user_id === user?.id
+  );
+
+  const MAX_ADDRESS = 10;
+  const isMaxAddressReached = userAddresses.length >= MAX_ADDRESS;
 
   return (
     <div className="pt-[80px] md:pt-[89px] lg:pt-[161px]">
@@ -76,27 +78,37 @@ const address: React.FC = () => {
           <Button
             label="Tambah Alamat"
             color="primary"
-            onClick={() =>
+            onClick={() => {
+              if (isMaxAddressReached) {
+                showToast(
+                  `Maksimal ${MAX_ADDRESS} alamat. Hapus alamat lama untuk menambahkan yang baru.`,
+                  "warning"
+                );
+                return;
+              }
+
               openModal({
-                title: "Tambah Alamat",
+                title: "Alamat",
                 size: "md",
                 mobileMode: "full",
                 content: <AddressForm />,
-              })
-            }
+              });
+            }}
           />
         </div>
 
         {/* CONTENT */}
         {loading ? (
           <div className="p-4 text-sm">Memuat alamat...</div>
-        ) : address.length === 0 ? (
+        ) : userAddresses.length === 0 ? (
           <div className="p-4 text-sm text-neutral-600">
             Belum ada alamat. Silakan tambahkan.
           </div>
         ) : (
           <div className="space-y-3">
-            {address.map((col: any) => (
+            {userAddresses
+              .filter((col: any) => col.user_id === user?.id)
+              .map((col: any) => (
               <div
                 key={col.id}
                 className="flex justify-between items-start border border-neutral-300 rounded-lg p-4"
@@ -110,27 +122,32 @@ const address: React.FC = () => {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    openModal({
-                      title: "Hapus Alamat",
-                      size: "md",
-                      content: (
-                        <ConfirmDeleteModal
-                          title="Hapus Alamat"
-                          description="Apakah kamu yakin ingin menghapus alamat ini?"
-                          onCancel={closeModal}
-                          onConfirm={() => handleDeleteAddress(col.id)}
-                        />
-                      ),
-                    })
-                  }
-                  className="cursor-pointer"
-                  aria-label="Hapus alamat"
-                >
-                  <Trash2 className="h-5 w-5 text-danger-500" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button>
+                    <SquarePen className="h-5 w-5 text-neutral-500" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openModal({
+                        title: "Hapus Alamat",
+                        size: "md",
+                        content: (
+                          <ConfirmDeleteModal
+                            title="Hapus Alamat"
+                            description="Apakah kamu yakin ingin menghapus alamat ini?"
+                            onCancel={closeModal}
+                            onConfirm={() => handleDelete(col.id)}
+                          />
+                        ),
+                      })
+                    }
+                    className="cursor-pointer"
+                    aria-label="Hapus alamat"
+                  >
+                    <Trash2 className="h-5 w-5 text-danger-500" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

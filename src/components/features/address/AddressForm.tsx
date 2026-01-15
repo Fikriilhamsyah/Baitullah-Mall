@@ -17,21 +17,25 @@ import { useRajaOngkirSubdistricts } from "@/hooks/useRajaOngkirSubdistricts";
 // Hooks
 import { useLogin } from "@/hooks/useLogin";
 import { useAddressPost } from "@/hooks/useAddressPost";
-import { IPostAddress } from "@/types/IAddress"; // adjust if your type differs
+import { useAddressEdit } from "@/hooks/useAddressEdit";
+
+// Type
+import { IPostAddress } from "@/types/IAddress";
 
 // Components
 import { InputField } from "@/components/ui/InputField";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 
-/**
- * AddressForm
- *
- * - Select inputs (province/city/district/subdistrict) use option.value = id (string)
- * - combinedAddress shows human-readable names (label/name)
- * - On submit we build payload with both id fields and name fields, and detail_alamat = street input
- */
-const AddressForm: React.FC = () => {
+interface AddressFormProps {
+  mode?: "create" | "edit";
+  initialData?: any;
+}
+
+const AddressForm: React.FC<AddressFormProps> = ({
+  mode = "create",
+  initialData,
+}) => {
   const router = useRouter(); // used to refresh after success
   const openModal = useModal((s) => s.openModal);
   const closeModal = useModal((s) => s.closeModal);
@@ -48,6 +52,7 @@ const AddressForm: React.FC = () => {
 
   // hook untuk post address
   const { postAddress, data: postedData, loading: postingAddress, error: postAddressError } = useAddressPost();
+  const { editAddress, loading: editingAddress } = useAddressEdit();
 
   // street/detail yang diinput user (jalan, gedung, no rumah)
   const [fullAddress, setFullAddress] = useState("");
@@ -88,6 +93,18 @@ const AddressForm: React.FC = () => {
   useEffect(() => {
     if (postAddressError) showToast(postAddressError, "error");
   }, [postAddressError, showToast]);
+
+  useEffect(() => {
+    if (mode === "edit" && initialData) {
+      setFullName(initialData.nama_lengkap ?? "");
+      setPhoneNumber(initialData.nomor_telepon ?? "");
+      setProvince(String(initialData.provinsi_id ?? ""));
+      setCity(String(initialData.kabupaten_id ?? ""));
+      setDistrict(String(initialData.kecamatan_id ?? ""));
+      setSubdistrict(String(initialData.kelurahan_id ?? ""));
+      setFullAddress(initialData.detail_alamat ?? "");
+    }
+  }, [mode, initialData]);
 
   /** Lookup labels (names) for selected ids so combinedAddress shows names */
   const provinceLabel = useMemo(() => {
@@ -139,78 +156,44 @@ const AddressForm: React.FC = () => {
     e.preventDefault();
 
     if (!user) {
-      showToast("Silakan masuk terlebih dahulu untuk menyimpan alamat.", "warning");
+      showToast("Silakan masuk terlebih dahulu.", "warning");
       return;
     }
 
     const err = validate();
     if (err) {
-      setErrorMessage(err);
       showToast(err, "warning");
       return;
     }
 
     const payload = {
       user_id: Number(user.id),
-
       nama_lengkap: fullName,
       nomor_telepon: phoneNumber,
-
-      // IDs (angka) — include if backend expects numeric ids
-      provinsi_id: province ? Number(province) : null,
-      kabupaten_id: city ? Number(city) : null,
-      kecamatan_id: district ? Number(district) : null,
-      kelurahan_id: subdistrict ? Number(subdistrict) : null,
-
-      // Names (string) — API example expects these
+      provinsi_id: Number(province),
+      kabupaten_id: Number(city),
+      kecamatan_id: Number(district),
+      kelurahan_id: Number(subdistrict),
       provinsi: province,
       kabupaten: city,
       kecamatan: district,
       kelurahan: subdistrict,
-
-      // street part only
       detail_alamat: combinedAddress,
-    } as unknown as IPostAddress;
+    } as IPostAddress;
 
     try {
-      const res = await postAddress(payload);
-      showToast(res?.message ?? "Alamat berhasil ditambahkan.", "success");
-
-      // reset local form
-      setFullName("");
-      setPhoneNumber("");
-      setProvince("");
-      setCity("");
-      setDistrict("");
-      setSubdistrict("");
-      setFullAddress("");
-      setErrorMessage(null);
-
-      // dispatch event untuk listener lain (checkout) — kirim object detail returned server jika ada
-      if (typeof window !== "undefined") {
-        try {
-          const detail = res?.data ?? { ...payload };
-          window.dispatchEvent(new CustomEvent("address:updated", { detail }));
-          // juga dispatch address:selected supaya checkout bisa langsung memilih alamat yang baru
-          window.dispatchEvent(new CustomEvent("address:selected", { detail }));
-        } catch (e) {
-          // ignore
-        }
+      if (mode === "edit" && initialData?.id) {
+        await editAddress(initialData.id, payload);
+        showToast("Alamat berhasil diperbarui.", "success");
+      } else {
+        await postAddress(payload);
+        showToast("Alamat berhasil ditambahkan.", "success");
       }
 
-      // refresh app data (server components/hooks)
-      try {
-        router.refresh();
-      } catch (e) {
-        try { window.location.reload(); } catch (_err) { /* ignore */ }
-      }
-
-      // close modal if used inside modal
-      try { closeModal(); } catch (e) { /* ignore */ }
+      window.dispatchEvent(new CustomEvent("address:refresh"));
+      closeModal();
     } catch (err: any) {
-      const serverMsg = err?.response?.data?.message ?? err?.message;
-      showToast(serverMsg ?? "Gagal menambahkan alamat. Silakan coba lagi.", "error");
-      console.error("postAddress error:", err);
+      showToast(err?.message ?? "Gagal menyimpan alamat.", "error");
     }
   };
 

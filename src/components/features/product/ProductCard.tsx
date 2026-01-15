@@ -121,7 +121,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         )}
         <img
-          src={`${process.env.NEXT_PUBLIC_PATH}/storage/${product.gambar_utama}`}
+          src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${product.gambar_utama}`}
           alt={product.nama_produk}
           className="w-full h-auto aspect-[4/5] object-cover"
           // onError={(e) =>

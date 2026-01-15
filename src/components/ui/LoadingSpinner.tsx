@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 
-const PageLoader = () => {
+const LoadingSpinner = () => {
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
       <div className="animate-spin-y">
@@ -19,4 +19,4 @@ const PageLoader = () => {
   );
 };
 
-export default PageLoader;
+export default LoadingSpinner;

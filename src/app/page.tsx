@@ -15,7 +15,6 @@ const SliderSection = dynamic(() => import("@/components/features/home/SliderSec
 });
 
 // Data
-import { SlidesData } from "@/data/SlidesData";
 import { CategorySlider } from "@/components/features/category/CategorySlider";
 
 // Icons
@@ -49,7 +48,7 @@ export default function HomePage() {
       </div>
 
       {/* Slider Section */}
-      <SliderSection slides={SlidesData} autoPlay />
+      <SliderSection autoPlay />
 
       {/* Promo Banner */}
       {/* <PromoBanner /> */}

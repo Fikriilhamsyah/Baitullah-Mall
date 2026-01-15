@@ -13,6 +13,8 @@ import { ICartByIdUser, IPostCart } from "@/types/ICart";
 import { IAddress, ILocation, IPostAddress, IPostCalculateOngkir } from "@/types/IAddress";
 import { ICheckoutInvoice, IPostCheckout } from "@/types/ICheckout";
 import { IPayment } from "@/types/IPayment";
+import { ISlide } from "@/types/ISlide";
+import { Order } from "@/types/IOrder";
 
 export const api = {
   // Auth
@@ -21,6 +23,10 @@ export const api = {
 
   postResetPassword: (payload: IResetPassword) =>
     axiosClientBaitullah.post(`api/reset-password`, payload),
+
+  // Banner
+  getBanner: () =>
+    axiosClientBaitullahMall.get<ApiResponse<ISlide[]>>("api/banner"),
 
   // User
   postRegister: (payload: IRegister) =>
@@ -82,6 +88,12 @@ export const api = {
   postAddress: (payload: IPostAddress) =>
     axiosClientBaitullahMall.post<ApiResponse<IPostAddress[]>>("api/alamat", payload),
 
+  postEditAddress: (addressId: number, payload: IPostAddress) =>
+    axiosClientBaitullahMall.post<ApiResponse<IPostAddress>>(`api/alamat/${addressId}`, payload),
+
+  postDeleteAddress: (addressId: number) =>
+    axiosClientBaitullahMall.post(`api/alamat/${addressId}/delete`),
+
   postCalculateOngkir: (payload: IPostCalculateOngkir) =>
     axiosClientBaitullahMall.post<ApiResponse<IPostCalculateOngkir[]>>("api/rajaongkir/calculate", payload),
 
@@ -92,6 +104,15 @@ export const api = {
   // Payment
   postPayment: (payload: IPayment) =>
     axiosClientBaitullahMall.post<ApiResponse<any>>("api/payment/pay", payload),
+
+  getOrder: () =>
+    axiosClientBaitullahMall.get<ApiResponse<any>>("api/orders"),
+
+  getOrderByIdUser: (userId: number) =>
+    axiosClientBaitullahMall.get<ApiResponse<Order[]>>(`api/orders/user/${userId}`),
+
+  getOrderByCode: (orderCode: string) =>
+    axiosClientBaitullahMall.get<ApiResponse<Order>>(`api/orders/kode/${orderCode}`),
 };
 
 // export const mockApi = {

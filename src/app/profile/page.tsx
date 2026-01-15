@@ -26,7 +26,7 @@ const TABS = [
   { key: "account", label: "Info Akun", path: "/profile/account", icon: UserRound },
   { key: "orders", label: "Daftar Pesanan", path: "/profile/orders", icon: Package },
   { key: "address", label: "Daftar Alamat", path: "/profile/address", icon: MapPin },
-  { key: "voucher", label: "Voucher", path: "/profile/voucher", icon: Tag },
+//   { key: "voucher", label: "Voucher", path: "/profile/voucher", icon: Tag },
   { key: "setting", label: "Pengaturan", path: "/profile/setting", icon: Settings },
   { key: "logout", label: "Keluar", path: "/profile/logout", icon: LogOut },
 ];
@@ -56,8 +56,8 @@ export default function ProfilePage() {
         return <Address />;
       case "voucher":
         return <Voucher />;
-      case "settings":
-        return <Setting />;
+      case "setting":
+        return <Setting user={user} />;
       default:
         return null;
     }

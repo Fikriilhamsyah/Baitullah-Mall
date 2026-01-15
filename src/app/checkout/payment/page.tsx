@@ -3,7 +3,7 @@ import React, { useEffect, useState, } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-// UI
+// Components
 import { Button } from "@/components/ui/Button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import RadioGroup from "@/components/ui/RadioGroup";
@@ -17,6 +17,7 @@ import { formatDecimal } from "@/utils/formatDecimal";
 import { usePayment } from "@/hooks/usePayment";
 import { useAuth } from "@/context/AuthContext";
 import { useCheckoutFlow } from "@/hooks/useCheckoutFlow";
+import { useOrderByCode } from "@/hooks/useOrderByCode";
 
 // Types
 import { IPayment } from "@/types/IPayment";
@@ -48,6 +49,12 @@ export default function PaymentPage() {
   const { postPayment, loading } = usePayment();
   const user = useAuth((s) => s.user);
 
+  const searchParams = useSearchParams();
+
+  const orderCode = searchParams.get("order") ?? undefined;
+
+  const { order, loading: loadingOrder, error } = useOrderByCode(orderCode);
+
   const [hydrated, setHydrated] = useState(false);
 
   const [pageLoading, setPageLoading] = useState(true);
@@ -59,13 +66,47 @@ export default function PaymentPage() {
   const clear = useCheckoutFlow((s) => s.clear);
 
   const [paying, setPaying] = useState(false);
-
-  const searchParams = useSearchParams();
-  const orderCode = searchParams.get("order");
+  const [loadingPage, setLoadingPage] = useState(false);
 
   const checkoutFlowPayload = useCheckoutFlow((s) => s.payload);
 
   const paymentLockRef = React.useRef(false);
+
+  useEffect(() => {
+    // 🔥 jika payload belum ada tapi order ADA → bangun payload
+    if (!payload && order) {
+      const generatedPayload: CheckoutPayload = {
+        kode_order: order.kode_order,
+        alamat: order.alamat,
+        ongkir: Number(order.ongkir),
+        subtotal: order.details.reduce(
+          (sum, it) => sum + Number(it.subtotal),
+          0
+        ),
+        total: Number(order.final_harga),
+        items: order.details.map((it) => ({
+          cart_id: it.id,
+          nama_produk: it.kode_varian,
+          qty: it.jumlah,
+          unit_price: Number(it.harga),
+          subtotal: Number(it.subtotal),
+          gambar: it.gambar
+            ? `${process.env.NEXT_PUBLIC_PATH}/storage/${it.gambar}`
+            : null,
+          jenis: "uang", // atau dari backend kalau ada
+        })),
+      };
+
+      setPayload(generatedPayload);
+      setPayloadState(generatedPayload);
+      sessionStorage.setItem(
+        "checkout_payload",
+        JSON.stringify(generatedPayload)
+      );
+
+      setPageLoading(false);
+    }
+  }, [order, payload]);
 
   // 🔹 Load payload dari zustand / sessionStorage
   useEffect(() => {
@@ -118,37 +159,55 @@ export default function PaymentPage() {
     setHydrated(true);
   }, []);
 
-  if (pageLoading) return <LoadingSpinner />;
-  if (!payload) return null;
+  if (loadingOrder || pageLoading) return <LoadingSpinner />;
+
+  if (!payload && !order) {
+    return (
+      <div className="pt-[80px] container mx-auto px-4">
+        <p className="text-sm text-gray-500">
+          Data checkout tidak ditemukan
+        </p>
+        <Button
+          label="Kembali"
+          onClick={() => router.replace("/profile/orders")}
+        />
+      </div>
+    );
+  }
+
+  console.log("pageLoading" , pageLoading);
 
   const isAllPoin =
-  payload.items.every(
-    (it: CheckoutItem) =>
-      String(it.jenis ?? "").toLowerCase() === "poin"
+    payload.items.every(
+      (it: CheckoutItem) =>
+        String(it.jenis ?? "").toLowerCase() === "poin"
   );
 
   // ===============================
   // 🔥 PAYMENT HANDLER (FIXED)
   // ===============================
-  const handlePayment = async () => {
-    if (paymentLockRef.current) return;
+  // ===============================
+// 🔥 PAYMENT HANDLER (FINAL)
+// ===============================
+const handlePayment = async () => {
+  if (paymentLockRef.current) return;
     paymentLockRef.current = true;
 
     if (!user) {
       showToast("Harap login", "error");
+      paymentLockRef.current = false;
       return;
     }
 
     if (!payload?.kode_order) {
       showToast("Kode order tidak valid", "error");
+      paymentLockRef.current = false;
       return;
     }
 
-    if (isAllPoin) {
-      showToast("Pesanan poin tidak memerlukan pembayaran", "info");
-      clear();
-      sessionStorage.removeItem("checkout_payload");
-      router.replace("/orders");
+    // ✅ JIKA PAYMENT SUDAH ADA → LANGSUNG REDIRECT
+    if (order?.xendit_payment_url) {
+      window.location.href = order.xendit_payment_url;
       return;
     }
 
@@ -156,34 +215,39 @@ export default function PaymentPage() {
     setPaying(true);
 
     const paymentPayload: IPayment = {
-      external_id: payload.kode_order, // ✅ WAJIB
-      amount: payload.total,
+      external_id: payload.kode_order,
+      amount: isAllPoin ? payload.ongkir : payload.total,
       payer_email: user.email,
       description: `Pembayaran Pesanan ${payload.kode_order}`,
     };
 
     try {
-      setPaying(false);
+      setPageLoading(true);
+
       const res = await postPayment(paymentPayload);
 
       showToast("Silakan lanjutkan pembayaran", "success");
-
-      console.table(res);
 
       const redirectUrl =
         res.data?.invoice_url ||
         res.data?.redirect_url ||
         res.data?.payment_url;
 
-      console.log("Redirecting to payment URL:", redirectUrl);
+      // ✅ PRIORITAS:
+      // 1. order.xendit_payment_url
+      // 2. redirectUrl (hasil create payment)
+      const finalRedirect =
+        order?.xendit_payment_url || redirectUrl;
 
-      if (redirectUrl) {
-        window.location.href = redirectUrl;
+      if (finalRedirect) {
+        window.location.href = finalRedirect;
         return;
       }
 
+      showToast("URL pembayaran tidak ditemukan", "error");
     } catch (err: any) {
       paymentLockRef.current = false;
+
       if (err?.response?.status === 429) {
         showToast(
           "Pembayaran sedang diproses. Silakan cek halaman pembayaran.",
@@ -193,6 +257,8 @@ export default function PaymentPage() {
       }
 
       showToast(err?.message || "Gagal memproses pembayaran", "error");
+    } finally {
+      setPaying(false);
     }
   };
 
@@ -320,7 +386,7 @@ export default function PaymentPage() {
                 fullWidth
                 className="mt-4"
                 onClick={handlePayment}
-                disabled={loading || paying}
+                // disabled={loading || paying}
               />
             </div>
           </aside>
@@ -343,7 +409,7 @@ export default function PaymentPage() {
                     label="Lanjutkan Bayar"
                     color="primary"
                     onClick={handlePayment}
-                    disabled={loading || paying}
+                    // disabled={loading || paying}
                   />
               </div>
           </div>

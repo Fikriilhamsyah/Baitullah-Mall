@@ -2,24 +2,39 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Info } from "lucide-react";
 
-import { DUMMY_ORDERS } from "@/types/IOrder";
+import { useOrderByCode } from "@/hooks/useOrderByCode";
 import { ORDER_STATUS_MAP } from "@/constants/orderStatus";
+import { OrderItem } from "@/types/IOrder";
 
 const OrderDetailPage = () => {
-  const { order_number } = useParams();
+  const { kode_order } = useParams<{ kode_order: string }>();
   const router = useRouter();
 
-  const order = DUMMY_ORDERS.find(
-    (o) => o.order_number === order_number
-  );
+  const {
+    order,
+    loading,
+    error,
+  } = useOrderByCode(kode_order);
 
-  if (!order) {
+  console.table(order)
+
+  /* ---------------- LOADING ---------------- */
+  if (loading) {
     return (
-      <div className="pt-[100px] container mx-auto px-4">
+      <div className="pt-[80px] md:pt-[89px] lg:pt-[161px] text-center text-sm text-neutral-500">
+        Memuat detail pesanan...
+      </div>
+    );
+  }
+
+  /* ---------------- ERROR ---------------- */
+  if (error || !order) {
+    return (
+      <div className="pt-[80px] md:pt-[89px] lg:pt-[161px] container mx-auto px-4">
         <p className="text-sm text-gray-500">
-          Pesanan tidak ditemukan.
+          {error ?? "Pesanan tidak ditemukan"}
         </p>
         <button
           onClick={() => router.back()}
@@ -31,22 +46,15 @@ const OrderDetailPage = () => {
     );
   }
 
+  /* ---------------- SUCCESS ---------------- */
   return (
-    <div className="pt-[80px] md:pt-[89px] lg:pt-[161px]">
-      <div className="container mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4">
+    <div className="pt-[80px] md:pt-[100px] lg:pt-[160px]">
+      <div className="container mx-auto px-4 md:px-6 space-y-4">
 
         {/* Back */}
         <Link
-          href="/profile?tab=orders"
-          className="hidden lg:flex items-center text-sm font-medium text-neutral-600 hover:text-neutral-800"
-        >
-          <ChevronLeft className="h-5 w-5 mr-1" />
-          Kembali ke Pesanan
-        </Link>
-
-        <Link
           href="/profile/orders"
-          className="flex lg:hidden items-center text-sm font-medium text-neutral-600 hover:text-neutral-800"
+          className="flex items-center text-sm font-medium text-neutral-600 hover:text-neutral-800"
         >
           <ChevronLeft className="h-5 w-5 mr-1" />
           Kembali ke Pesanan
@@ -56,7 +64,7 @@ const OrderDetailPage = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <p className="text-sm text-neutral-500">Order</p>
           <h1 className="text-lg font-semibold">
-            {order.order_number}
+            {order.kode_order}
           </h1>
 
           <div className="mt-2 flex items-center gap-2">
@@ -64,7 +72,7 @@ const OrderDetailPage = () => {
               {ORDER_STATUS_MAP[order.status].label}
             </span>
             <span className="text-xs text-neutral-400">
-              {order.date}
+              {new Date(order.created_at).toLocaleDateString("id-ID")}
             </span>
           </div>
         </div>
@@ -73,25 +81,29 @@ const OrderDetailPage = () => {
         <div className="bg-white rounded-xl p-4 shadow-sm space-y-3">
           <h3 className="text-sm font-semibold">Produk</h3>
 
-          {order.items.map((item, idx) => (
+          {order.details.map((item) => (
             <div
-              key={idx}
+              key={item.id}
               className="flex gap-4 items-center"
             >
               <img
-                src={item.thumbnail}
-                alt={item.name}
+                src={`${process.env.NEXT_PUBLIC_PATH}/storage/${item.gambar}`}
+                alt={item.kode_varian}
                 className="w-16 h-16 rounded-lg object-cover border"
               />
 
               <div className="flex-1">
                 <p className="text-sm font-medium">
-                  {item.name}
+                  {item.kode_varian}
                 </p>
                 <p className="text-xs text-neutral-500">
-                  Qty: {item.qty}
+                  Qty: {item.jumlah}
                 </p>
               </div>
+
+              <p className="text-sm font-semibold">
+                Rp {item.subtotal.toLocaleString("id-ID")}
+              </p>
             </div>
           ))}
         </div>
@@ -104,35 +116,47 @@ const OrderDetailPage = () => {
 
           <div className="flex justify-between text-sm">
             <span>Metode</span>
-            <span>{order.payment_method}</span>
+            <span>{order.metode_pembayaran}</span>
+          </div>
+
+          <div className="flex justify-between text-sm">
+            <span>Ongkir</span>
+            <span>
+              Rp {order.ongkir.toLocaleString("id-ID")}
+            </span>
           </div>
 
           <div className="flex justify-between font-semibold">
             <span>Total</span>
             <span className="text-primary-500">
-              Rp {order.total.toLocaleString("id-ID")}
+              Rp {order.final_harga.toLocaleString("id-ID")}
             </span>
           </div>
         </div>
 
-        {/* Action */}
-        {order.status === "2" && (
+        {/* Payment Action */}
+        {order.payment_status === "PENDING" && order.xendit_payment_url && (
           <div className="bg-white rounded-xl p-4 shadow-sm">
             <button
               onClick={() => {
-                // arahkan ke halaman pembayaran / gateway
-                router.push(`/payment/${order.order_number}`);
+                router.push(`/checkout/payment?order=${order.kode_order}`)
               }}
               className="w-full bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold py-3 rounded-lg transition"
             >
               Lanjutkan Pembayaran
             </button>
-
-            <p className="mt-2 text-xs text-neutral-500 text-center">
-              Selesaikan pembayaran agar pesanan dapat diproses
-            </p>
           </div>
         )}
+
+        {/* Info */}
+        <div className="flex items-center gap-3 rounded-lg bg-neutral-50 border p-4">
+          <Info className="h-5 w-5 text-primary-500" />
+          <p className="text-sm text-neutral-600">
+            Detail pesanan diambil langsung dari sistem dan akan
+            diperbarui otomatis jika status berubah.
+          </p>
+        </div>
+
       </div>
     </div>
   );

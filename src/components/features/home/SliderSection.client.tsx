@@ -1,26 +1,36 @@
 "use client";
 import React, { useRef, useEffect, useState } from "react";
+
+// Swiper
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { SlidesData } from "@/data/SlidesData";
 
-type SlideType = typeof SlidesData[number];
+// Icon
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+// Hook
+import { useBanner } from "@/hooks/useBanner";
+
+type SlideType = {
+  imageLg: string; // Image for desktop
+  imageMdSm: string; // Image for mobile
+};
 
 interface SliderProps {
-  slides: SlideType[];
   autoPlay?: boolean;
 }
 
-export default function SliderClient({ slides, autoPlay = true }: SliderProps) {
+export default function SliderClient({ autoPlay = true }: SliderProps) {
   const prevRef = useRef<HTMLButtonElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
   const paginationRef = useRef<HTMLDivElement>(null);
   const swiperRef = useRef<any>(null);
   const [ready, setReady] = useState(false);
+
+  const { banners, loading, error } = useBanner();
 
   useEffect(() => {
     const timer = setTimeout(() => setReady(true), 50);
@@ -42,7 +52,6 @@ export default function SliderClient({ slides, autoPlay = true }: SliderProps) {
                   ? { delay: 3000, disableOnInteraction: false }
                   : false
               }
-              /** ========= FIX TYPE ERROR ========= **/
               pagination={{
                 clickable: true,
                 el: paginationRef.current as any,
@@ -72,17 +81,19 @@ export default function SliderClient({ slides, autoPlay = true }: SliderProps) {
               }}
               className="w-full h-full aspect-[4/2] md:aspect-[8.5/2] overflow-visible rounded-3xl md:rounded-2xl"
             >
-              {slides.map((slide, i) => (
+              {banners.map((banner, i) => (
                 <SwiperSlide key={i}>
                   <div className="relative w-full h-full">
+                    {/* Desktop Image */}
                     <img
-                      src={slide.imageLg}
-                      alt={slide.title || `Slide ${i + 1}`}
+                      src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/banner_desktop/${banner.gambar_desktop}`}
+                      alt={`Banner ${i + 1}`}
                       className="hidden lg:block w-full h-full object-cover"
                     />
+                    {/* Mobile Image */}
                     <img
-                      src={slide.imageMdSm}
-                      alt={slide.title || `Slide ${i + 1}`}
+                      src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/banner_mobile/${banner.gambar_mobile}`}
+                      alt={`Banner ${i + 1}`}
                       className="block lg:hidden w-full h-full object-cover"
                     />
                   </div>

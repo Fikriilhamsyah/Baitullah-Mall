@@ -1,68 +1,46 @@
 export type OrderStatus =
-  | "1" // Menunggu Pilih Pembayaran
-  | "2" // Menunggu Pembayaran
-  | "3" // Menunggu Verifikasi Pembayaran
-  | "4" // Order Sedang di Proses
-  | "5" // Dalam Pengiriman
-  | "6" // Selesai
-  | "7"; // Return
+  | "pending"   // Menunggu pembayaran
+  | "paid"      // Sudah dibayar / diproses
+  | "shipping"  // Dalam pengiriman
+  | "done"      // Selesai
+  | "cancel";   // Dibatalkan
 
-export interface OrderItemSummary {
-  name: string;
-  qty: number;
-  thumbnail: string;
+export interface OrderItem {
+  id: number;
+  order_id: number;
+  kode_order: string;
+  kode_varian: string;
+  jumlah: number;
+  harga: number;     // dari string → number
+  subtotal: number;  // dari string → number
+  created_at: string;
+  updated_at: string;
+  gambar: string;
 }
+
 
 export interface Order {
   id: number;
-  order_number: string;
+  kode_order: string;
+  user_id: number;
+
+  total_harga: number;
+  ongkir: number;
+  final_harga: number;
+
   status: OrderStatus;
-  total: number;
-  date: string;
+  metode_pembayaran: "VA" | "E-Wallet" | "Transfer" | "Poin";
 
-  /** tambahan */
-  payment_method: "VA" | "E-Wallet" | "Transfer" | "Poin";
-  items: OrderItemSummary[];
+  alamat: string;
+
+  created_at: string;
+  updated_at: string;
+
+  // Xendit
+  xendit_external_id?: string | null;
+  xendit_payment_url?: string | null;
+  xendit_invoice_id?: string | null;
+  payment_status?: "PENDING" | "PAID" | "EXPIRED";
+
+  details: OrderItem[];
 }
-
-
-export const DUMMY_ORDERS: Order[] = Array.from({ length: 42 }).map((_, i) => {
-  const statuses: OrderStatus[] = ["1", "2", "3", "4", "5", "6", "7"];
-  const status = statuses[i % statuses.length];
-
-  return {
-    id: i + 1,
-    order_number: `INV-${20240000 + i}`,
-    status,
-    date: `2024-12-${String((i % 28) + 1).padStart(2, "0")}`,
-    total: 350000 + i * 25000,
-
-    payment_method:
-      status === "1"
-        ? "VA"
-        : status === "2"
-        ? "E-Wallet"
-        : status === "3"
-        ? "Transfer"
-        : status === "6"
-        ? "Poin"
-        : "VA",
-
-    items: [
-      {
-        name: "Paket Umrah Reguler",
-        qty: 1,
-        thumbnail: "/images/dummy/umrah.jpg",
-      },
-      ...(i % 3 === 0
-        ? [
-            {
-              name: "Koper Kabin",
-              qty: 1,
-              thumbnail: "/images/dummy/koper.jpg",
-            },
-          ]
-        : []),
-    ],
-  };
-});

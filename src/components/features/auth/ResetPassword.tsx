@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 
 // Context
 import { useModal } from "@/context/ModalContext";
 
 // Hooks
 import { useResetPassword } from "@/hooks/useResetPassword";
+import { useAuth } from "@/context/AuthContext";
 
 // Components
 import SignIn from "./SignIn";
@@ -15,20 +17,27 @@ import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 
 const ResetPassword: React.FC = () => {
+  const hydrated = useAuth((s) => s.hydrated);
+  if (!hydrated) return null;
   const openModal = useModal((s) => s.openModal);
   const closeModal = useModal((s) => s.closeModal);
   const { send, loading, error, success, setError } = useResetPassword();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const user = useAuth((state) => state.user);
+
   const { showToast } = useToast();
 
   const [phone, setPhone] = useState<string>("");
+  const resolvedPhone = user ? user.phone : phone;
 
   /** Validation sederhana */
   const validate = () => {
-    const trimmed = phone.trim();
+    const value = user?.phone ?? phone;
+    const trimmed = value?.trim();
+
     if (!trimmed) return "Nomor telepon wajib diisi";
-    // opsional: validasi format minimal (mis. 8 karakter)
     if (trimmed.length < 6) return "Nomor telepon tidak valid";
+
     return null;
   };
 
@@ -46,7 +55,9 @@ const ResetPassword: React.FC = () => {
     }
 
     try {
-      const res = await send({ phone });
+      const res = await send({
+        phone: user ? user.phone : phone,
+      });
 
       // asumsi API mengembalikan { success: boolean, data?: ..., message?: string }
       if (!res || res?.success === false) {
@@ -87,6 +98,8 @@ const ResetPassword: React.FC = () => {
     }, 200);
   };
 
+  const pathname = usePathname();
+
   return (
     <div className="flex flex-col justify-between items-center w-full h-full pb-10 lg:pb-0">
       <div className="space-y-4 w-full">
@@ -98,9 +111,10 @@ const ResetPassword: React.FC = () => {
             placeholder="Masukkan nomor telepon terdaftar"
             label="Nomor Telepon"
             type="number"
-            value={phone}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
+            value={user ? user.phone : phone}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>{if (!user) setPhone(e.target.value);}}
             required
+            disabled={!!user}
           />
 
           {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
@@ -116,25 +130,29 @@ const ResetPassword: React.FC = () => {
         </form>
 
         {/* Tombol kembali / ke SignIn (desktop) */}
-        <button
-          className="hidden lg:block text-sm text-primary-600 text-center cursor-pointer"
-          onClick={handleToSignIn}
-          type="button"
-        >
-          Kembali / Masuk
-        </button>
+        {pathname.startsWith("/profile") ? null : (
+          <button
+            className="hidden lg:block text-sm text-primary-600 text-center cursor-pointer"
+            onClick={handleToSignIn}
+            type="button"
+          >
+            Kembali / Masuk
+          </button>
+        )}
       </div>
 
       {/* Jika ingin tampilkan link SignIn di mobile, bisa diaktifkan */}
-      <div className="block lg:hidden w-full text-center mt-2">
-        <button
-          className="text-sm text-primary-600"
-          onClick={handleToSignIn}
-          type="button"
-        >
-          Kembali / Masuk
-        </button>
-      </div>
+      {pathname.startsWith("/profile") ? null : (
+        <div className="block lg:hidden w-full text-center mt-2">
+          <button
+            className="text-sm text-primary-600"
+            onClick={handleToSignIn}
+            type="button"
+          >
+            Kembali / Masuk
+          </button>
+        </div>
+      )}
     </div>
   );
 };

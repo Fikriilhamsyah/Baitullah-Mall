@@ -50,6 +50,7 @@ export default function Modal() {
                 rounded-none md:rounded-xl
                 max-h-screen md:max-h-[calc(100vh-80px)]
                 ${widthClass}
+                pointer-events-auto
               `}
               initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}

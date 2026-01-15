@@ -1,6 +1,8 @@
 export interface ISlide {
-  imageLg: string;
-  imageMdSm: string;
-  title?: string;
-  caption?: string;
+  id_banner: number,
+  gambar_desktop: string,
+  gambar_mobile: string,
+  created_at: string,
+  updated_at: string,
+  status: number,
 }
