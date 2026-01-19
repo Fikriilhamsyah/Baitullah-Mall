@@ -30,6 +30,9 @@ import { useOrder } from "@/hooks/useOrder";
 import { useOrderByIdUser } from "@/hooks/useOrderByIdUser";
 import { useAuth } from "@/context/AuthContext";
 
+// Utils
+import { encryptOrderCode } from "@/utils/crypto";
+
 const ITEMS_PER_PAGE = 8;
 
 const OrdersPage = () => {
@@ -166,50 +169,53 @@ const OrdersPage = () => {
           {paginatedOrders.length === 0 ? (
             <p className="text-sm text-gray-500">Tidak ada pesanan</p>
           ) : (
-            paginatedOrders.map((order) => (
-              <Link
-                href={`/orders/${order.kode_order}`}
-                key={order.id}
-              >
-                <div className="flex gap-4 p-4 border rounded-xl bg-white hover:shadow-sm transition cursor-pointer mb-4">
-                  
-                  {/* Thumbnail (fallback aman) */}
-                  <img
-                    src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${order.details[0].gambar}`}
-                    alt={order.kode_order}
-                    className="w-16 h-16 rounded-lg object-cover border"
-                  />
+            paginatedOrders.map((order) => {
+              const encryptedOrder = encryptOrderCode(order.kode_order);
+              return (
+                <Link
+                  href={`/orders/${encryptedOrder}`}
+                  key={order.id}
+                >
+                  <div className="flex gap-4 p-4 border rounded-xl bg-white hover:shadow-sm transition cursor-pointer mb-4">
+                    
+                    {/* Thumbnail (fallback aman) */}
+                    <img
+                      src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${order.details[0].gambar}`}
+                      alt={order.kode_order}
+                      className="w-16 h-16 rounded-lg object-cover border"
+                    />
 
-                  {/* Info */}
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-neutral-900">
-                      {order.kode_order}
-                    </p>
+                    {/* Info */}
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-neutral-900">
+                        {order.kode_order}
+                      </p>
 
-                    <p className="text-xs text-neutral-500">
-                      {order.details.length} item
-                    </p>
+                      <p className="text-xs text-neutral-500">
+                        {order.details.length} item
+                      </p>
 
-                    <p className="text-xs text-neutral-400 mt-1">
-                      {new Date(order.created_at).toLocaleDateString("id-ID")} •{" "}
-                      {order.metode_pembayaran}
-                    </p>
+                      <p className="text-xs text-neutral-400 mt-1">
+                        {new Date(order.created_at).toLocaleDateString("id-ID")} •{" "}
+                        {order.metode_pembayaran}
+                      </p>
+                    </div>
+
+                    {/* Price & Status */}
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-primary-500">
+                        Rp{" "}
+                        {order.final_harga.toLocaleString("id-ID")}
+                      </p>
+
+                      <span className="inline-block mt-1 text-xs px-2 py-1 rounded-full bg-neutral-100 text-neutral-600">
+                        {ORDER_STATUS_MAP[order.status].label}
+                      </span>
+                    </div>
                   </div>
-
-                  {/* Price & Status */}
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-primary-500">
-                      Rp{" "}
-                      {order.final_harga.toLocaleString("id-ID")}
-                    </p>
-
-                    <span className="inline-block mt-1 text-xs px-2 py-1 rounded-full bg-neutral-100 text-neutral-600">
-                      {ORDER_STATUS_MAP[order.status].label}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))
+                </Link>
+              )
+            })
           )}
         </div>
 

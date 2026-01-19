@@ -2,23 +2,52 @@
 
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
+// Icons
 import { ChevronLeft, Info } from "lucide-react";
 
+// Hooks
 import { useOrderByCode } from "@/hooks/useOrderByCode";
+
+// Constants
 import { ORDER_STATUS_MAP } from "@/constants/orderStatus";
+
+// Types
 import { OrderItem } from "@/types/IOrder";
 
+// Utils
+import { decryptOrderCode, encryptOrderCode } from "@/utils/crypto";
+
+// Component
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+
 const OrderDetailPage = () => {
-  const { kode_order } = useParams<{ kode_order: string }>();
+  const [redirecting, setRedirecting] = useState(false);
+  const { kode_order: encryptedOrder } =
+    useParams<{ kode_order: string }>();
+
   const router = useRouter();
+
+  const decryptedOrderCode = encryptedOrder
+    ? decryptOrderCode(encryptedOrder)
+    : undefined;
+
+  useEffect(() => {
+    if (!decryptedOrderCode) {
+      router.replace("/profile/orders");
+    }
+  }, [decryptedOrderCode, router]);
 
   const {
     order,
     loading,
     error,
-  } = useOrderByCode(kode_order);
+  } = useOrderByCode(decryptedOrderCode);
 
-  console.table(order)
+  if (loading || redirecting) {
+    return <LoadingSpinner />;
+  }
 
   /* ---------------- LOADING ---------------- */
   if (loading) {
@@ -139,11 +168,15 @@ const OrderDetailPage = () => {
           <div className="bg-white rounded-xl p-4 shadow-sm">
             <button
               onClick={() => {
-                router.push(`/checkout/payment?order=${order.kode_order}`)
+                if (!order.xendit_payment_url) return;
+                setRedirecting(true);
+
+                // optional: cegah double click
+                window.location.href = order.xendit_payment_url;
               }}
               className="w-full bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold py-3 rounded-lg transition"
             >
-              Lanjutkan Pembayaran
+              {redirecting ? "Mengalihkan ke pembayaran..." : "Lanjutkan Pembayaran"}
             </button>
           </div>
         )}

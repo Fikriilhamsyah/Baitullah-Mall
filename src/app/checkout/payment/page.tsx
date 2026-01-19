@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/Toast";
 // Utils
 import { formatPrice } from "@/utils/formatters";
 import { formatDecimal } from "@/utils/formatDecimal";
+import { decryptOrderCode } from "@/utils/crypto";
 
 // Hooks
 import { usePayment } from "@/hooks/usePayment";
@@ -50,12 +51,15 @@ export default function PaymentPage() {
   const user = useAuth((s) => s.user);
 
   const searchParams = useSearchParams();
+  const encryptedOrder = searchParams.get("order");
+  const orderCode = encryptedOrder
+    ? decryptOrderCode(encryptedOrder)
+    : undefined;
 
-  const orderCode = searchParams.get("order") ?? undefined;
+  const { order, loading: loadingOrder } = useOrderByCode(orderCode);
 
-  const { order, loading: loadingOrder, error } = useOrderByCode(orderCode);
-
-  const [hydrated, setHydrated] = useState(false);
+  const getPaymentSubmittedKey = (orderCode?: string) =>
+    orderCode ? `payment_submitted_${orderCode}` : null;
 
   const [pageLoading, setPageLoading] = useState(true);
   const [paymentMethod, setPaymentMethod] =
@@ -63,17 +67,30 @@ export default function PaymentPage() {
 
   const [payload, setPayloadState] = useState<CheckoutPayload | null>(null);
   const setPayload = useCheckoutFlow((s) => s.setPayload);
-  const clear = useCheckoutFlow((s) => s.clear);
 
   const [paying, setPaying] = useState(false);
-  const [loadingPage, setLoadingPage] = useState(false);
-
   const checkoutFlowPayload = useCheckoutFlow((s) => s.payload);
 
   const paymentLockRef = React.useRef(false);
 
+  const [paymentSubmitted, setPaymentSubmitted] = useState(false);
+
+  const goToOrders = () => {
+    if (typeof window === "undefined") return;
+
+    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+
+    if (isDesktop) {
+      router.push("/profile?tab=orders");
+    } else {
+      router.push("/profile/orders");
+    }
+  };
+
+  // =====================================
+  // BUILD PAYLOAD DARI ORDER
+  // =====================================
   useEffect(() => {
-    // 🔥 jika payload belum ada tapi order ADA → bangun payload
     if (!payload && order) {
       const generatedPayload: CheckoutPayload = {
         kode_order: order.kode_order,
@@ -93,7 +110,7 @@ export default function PaymentPage() {
           gambar: it.gambar
             ? `${process.env.NEXT_PUBLIC_PATH}/storage/${it.gambar}`
             : null,
-          jenis: "uang", // atau dari backend kalau ada
+          jenis: "uang",
         })),
       };
 
@@ -106,9 +123,11 @@ export default function PaymentPage() {
 
       setPageLoading(false);
     }
-  }, [order, payload]);
+  }, [order, payload, setPayload]);
 
-  // 🔹 Load payload dari zustand / sessionStorage
+  // =====================================
+  // LOAD DARI ZUSTAND / SESSION
+  // =====================================
   useEffect(() => {
     if (checkoutFlowPayload?.kode_order) {
       if (orderCode && checkoutFlowPayload.kode_order !== orderCode) {
@@ -122,13 +141,11 @@ export default function PaymentPage() {
       return;
     }
 
-    // 2️⃣ FALLBACK: sessionStorage (refresh / reload)
     const raw = sessionStorage.getItem("checkout_payload");
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-
-        if (!parsed?.kode_order) throw new Error("Invalid payload");
+        if (!parsed?.kode_order) throw new Error();
 
         if (orderCode && parsed.kode_order !== orderCode) {
           showToast("Data checkout tidak sesuai", "error");
@@ -136,62 +153,83 @@ export default function PaymentPage() {
           return;
         }
 
-        // sinkronkan kembali ke zustand
         setPayload(parsed);
         setPayloadState(parsed);
         setPageLoading(false);
         return;
-      } catch {
-        // lanjut ke redirect
-      }
+      } catch {}
     }
 
-    // 3️⃣ GAGAL TOTAL → redirect aman
     const timer = setTimeout(() => {
       showToast("Data checkout tidak ditemukan", "error");
       router.replace("/checkout");
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [checkoutFlowPayload, orderCode]);
+  }, [checkoutFlowPayload, orderCode, router, setPayload, showToast]);
 
   useEffect(() => {
-    setHydrated(true);
-  }, []);
+    if (!payload?.kode_order) return;
 
-  if (loadingOrder || pageLoading) return <LoadingSpinner />;
+    const key = getPaymentSubmittedKey(payload.kode_order);
+    if (!key) return;
 
-  if (!payload && !order) {
+    const submitted = sessionStorage.getItem(key);
+
+    if (submitted === "true") {
+      setPaymentSubmitted(true);
+    }
+  }, [payload?.kode_order]);
+
+  useEffect(() => {
+    if (!payload?.kode_order) return;
+
+    const key = getPaymentSubmittedKey(payload.kode_order);
+    if (!key) return;
+
+    const submitted = sessionStorage.getItem(key);
+    if (submitted === "true") {
+      setPaymentSubmitted(true);
+    }
+  }, [payload?.kode_order]);
+
+  // =====================================
+  // LOADING STATE
+  // =====================================
+  if (loadingOrder || pageLoading || paying) {
+    return <LoadingSpinner />;
+  }
+
+  // =====================================
+  // 🚨 EARLY RETURN — INI KUNCI TS
+  // =====================================
+  if (!payload) {
     return (
-      <div className="pt-[80px] container mx-auto px-4">
-        <p className="text-sm text-gray-500">
-          Data checkout tidak ditemukan
-        </p>
-        <Button
-          label="Kembali"
-          onClick={() => router.replace("/profile/orders")}
-        />
+      <div className="pt-[80px] md:pt-[89px] lg:pt-[161px] container mx-auto px-4 py-12">
+        <h1 className="text-2xl font-bold mb-2">Pembayaran</h1>
+        <p className="text-gray-600 mb-4">Data checkout tidak ditemukan.</p>
+        <Link href="/">
+          <Button label="Kembali ke Beranda" color="primary" />
+        </Link>
       </div>
     );
   }
 
-  console.log("pageLoading" , pageLoading);
-
-  const isAllPoin =
-    payload.items.every(
-      (it: CheckoutItem) =>
-        String(it.jenis ?? "").toLowerCase() === "poin"
+  // =====================================
+  // ✅ AMAN: payload SUDAH PASTI ADA
+  // =====================================
+  const isAllPoin = payload.items.every(
+    (it) => String(it.jenis ?? "").toLowerCase() === "poin"
   );
 
-  // ===============================
-  // 🔥 PAYMENT HANDLER (FIXED)
-  // ===============================
-  // ===============================
-// 🔥 PAYMENT HANDLER (FINAL)
-// ===============================
-const handlePayment = async () => {
-  if (paymentLockRef.current) return;
-    paymentLockRef.current = true;
+  // =====================================
+  // PAYMENT HANDLER
+  // =====================================
+  const handlePayment = async () => {
+    if (paymentSubmitted) return;
+
+    if (paymentLockRef.current) return;
+      paymentLockRef.current = true;
 
     if (!user) {
       showToast("Harap login", "error");
@@ -199,13 +237,19 @@ const handlePayment = async () => {
       return;
     }
 
-    if (!payload?.kode_order) {
+    if (!payload.kode_order) {
       showToast("Kode order tidak valid", "error");
       paymentLockRef.current = false;
       return;
     }
 
-    // ✅ JIKA PAYMENT SUDAH ADA → LANGSUNG REDIRECT
+    setPaymentSubmitted(true);
+
+    const key = getPaymentSubmittedKey(payload.kode_order);
+    if (key) {
+      sessionStorage.setItem(key, "true");
+    }
+
     if (order?.xendit_payment_url) {
       window.location.href = order.xendit_payment_url;
       return;
@@ -222,59 +266,28 @@ const handlePayment = async () => {
     };
 
     try {
-      setPageLoading(true);
-
       const res = await postPayment(paymentPayload);
-
-      showToast("Silakan lanjutkan pembayaran", "success");
 
       const redirectUrl =
         res.data?.invoice_url ||
         res.data?.redirect_url ||
         res.data?.payment_url;
 
-      // ✅ PRIORITAS:
-      // 1. order.xendit_payment_url
-      // 2. redirectUrl (hasil create payment)
-      const finalRedirect =
-        order?.xendit_payment_url || redirectUrl;
+      const finalRedirect = order?.xendit_payment_url || redirectUrl;
 
       if (finalRedirect) {
+        setPaying(true);
         window.location.href = finalRedirect;
         return;
       }
 
       showToast("URL pembayaran tidak ditemukan", "error");
     } catch (err: any) {
-      paymentLockRef.current = false;
-
-      if (err?.response?.status === 429) {
-        showToast(
-          "Pembayaran sedang diproses. Silakan cek halaman pembayaran.",
-          "info"
-        );
-        return;
-      }
-
       showToast(err?.message || "Gagal memproses pembayaran", "error");
     } finally {
-      setPaying(false);
+      // setPaying(false);
     }
   };
-
-  if (!payload) {
-    return (
-      <div className="pt-[80px] md:pt-[89px] lg:pt-[161px] container mx-auto px-4 py-12">
-        <h1 className="text-2xl font-bold mb-2">Pembayaran</h1>
-        <p className="text-gray-600 mb-4">
-          Data checkout tidak ditemukan.
-        </p>
-        <Link href="/">
-          <Button label="Kembali ke Beranda" color="primary" />
-        </Link>
-      </div>
-    );
-  }
 
   return (
     <div className="pt-[80px] md:pt-[89px] lg:pt-[92px]">
@@ -381,13 +394,21 @@ const handlePayment = async () => {
                 </span>
               </div>
 
-              <Button
-                label="Lanjutkan Bayar"
-                fullWidth
-                className="mt-4"
-                onClick={handlePayment}
-                // disabled={loading || paying}
-              />
+              {!paymentSubmitted ? (
+                <Button
+                  label="Lanjutkan Bayar"
+                  fullWidth
+                  className="mt-4"
+                  onClick={handlePayment}
+                />
+              ) : (
+                <Button
+                  label="Ke Daftar Pesanan"
+                  fullWidth
+                  className="mt-4"
+                  onClick={goToOrders}
+                />
+              )}
             </div>
           </aside>
         </div>
@@ -405,12 +426,19 @@ const handlePayment = async () => {
                           : formatPrice(payload.total)}
                       </div>
                   </div>
-                  <Button
-                    label="Lanjutkan Bayar"
-                    color="primary"
-                    onClick={handlePayment}
-                    // disabled={loading || paying}
-                  />
+                  {!paymentSubmitted ? (
+                    <Button
+                      label="Lanjutkan Bayar"
+                      color="primary"
+                      onClick={handlePayment}
+                    />
+                  ) : (
+                    <Button
+                      label="Ke Daftar Pesanan"
+                      color="primary"
+                      onClick={goToOrders}
+                    />
+                  )}
               </div>
           </div>
       </div>

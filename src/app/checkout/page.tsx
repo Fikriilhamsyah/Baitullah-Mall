@@ -17,6 +17,7 @@ import RadioGroup from "@/components/ui/RadioGroup";
 // Utils
 import { formatPrice } from "@/utils/formatters";
 import { formatDecimal } from "@/utils/formatDecimal";
+import { encryptOrderCode } from "@/utils/crypto";
 
 // Hooks
 import { useAddress } from "@/hooks/useAddress";
@@ -95,6 +96,8 @@ export default function CheckoutPage() {
 
   // Payment Method
   const [paymentMethod, setPaymentMethod] = useState<"VA" | "Direct Transfer">("VA");
+
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     // read from sessionStorage
@@ -567,6 +570,8 @@ export default function CheckoutPage() {
 
 
   const placeOrder = async () => {
+    if (submitting) return;
+
     if (!user) {
       showToast("Harap login", "error");
       return;
@@ -600,6 +605,7 @@ export default function CheckoutPage() {
     }
 
     try {
+      setSubmitting(true);
       setLoading(true);
 
       const payload: CheckoutPayload = {
@@ -658,9 +664,11 @@ export default function CheckoutPage() {
         JSON.stringify(checkoutPayload)
       );
 
+      const encryptedOrder = encryptOrderCode(kodeOrder);
+
       // 2️⃣ TUNDA NAVIGASI 1 TICK
       setTimeout(() => {
-        router.push(`/checkout/payment?order=${kodeOrder}`);
+        router.push(`/checkout/payment?order=${encryptedOrder}`);
       }, 0);
 
       // 3️⃣ TOAST BOLEH
@@ -669,6 +677,7 @@ export default function CheckoutPage() {
     } catch (err: any) {
       showToast(err.message || "Gagal memproses pembayaran", "error");
     } finally {
+      setSubmitting(false);
       setLoading(false);
     }
   };
@@ -730,7 +739,8 @@ export default function CheckoutPage() {
     !selectedAddress ||
     effectiveShippingCost <= 0 ||
     loading ||
-    loadingXendit;
+    loadingXendit ||
+    submitting;
 
   return (
     <div className="pt-[80px] md:pt-[89px] lg:pt-[92px]">
@@ -972,7 +982,7 @@ export default function CheckoutPage() {
 
                           <div className="mt-4">
                               <Button
-                                label="Buat Pesanan"
+                                label={submitting ? "Memproses Pesanan..." : "Buat Pesanan"}
                                 color={disableCreateOrder ? "secondary" : "primary"}
                                 fullWidth
                                 onClick={placeOrder}
@@ -1000,7 +1010,7 @@ export default function CheckoutPage() {
                       </div>
                   </div>
                   <Button
-                    label="Buat Pesanan"
+                    label={submitting ? "Memproses Pesanan..." : "Buat Pesanan"}
                     color={disableCreateOrder ? "secondary" : "primary"}
                     onClick={placeOrder}
                     disabled={disableCreateOrder}
