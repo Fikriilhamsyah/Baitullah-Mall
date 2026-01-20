@@ -33,6 +33,18 @@ const OrderDetailPage = () => {
     ? decryptOrderCode(encryptedOrder)
     : undefined;
 
+  const handleBackToOrders = () => {
+    if (typeof window === "undefined") return;
+
+    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+
+    if (isDesktop) {
+      router.push("/profile?tab=orders&status=pending");
+    } else {
+      router.push("/profile/orders");
+    }
+  };
+
   useEffect(() => {
     if (!decryptedOrderCode) {
       router.replace("/profile/orders");
@@ -81,13 +93,13 @@ const OrderDetailPage = () => {
       <div className="container mx-auto px-4 md:px-6 space-y-4">
 
         {/* Back */}
-        <Link
-          href="/profile/orders"
+        <button
+          onClick={handleBackToOrders}
           className="flex items-center text-sm font-medium text-neutral-600 hover:text-neutral-800"
         >
           <ChevronLeft className="h-5 w-5 mr-1" />
           Kembali ke Pesanan
-        </Link>
+        </button>
 
         {/* Header */}
         <div className="bg-white rounded-xl p-4 shadow-sm">
@@ -144,11 +156,6 @@ const OrderDetailPage = () => {
           </h3>
 
           <div className="flex justify-between text-sm">
-            <span>Metode</span>
-            <span>{order.metode_pembayaran}</span>
-          </div>
-
-          <div className="flex justify-between text-sm">
             <span>Ongkir</span>
             <span>
               Rp {order.ongkir.toLocaleString("id-ID")}
@@ -164,7 +171,7 @@ const OrderDetailPage = () => {
         </div>
 
         {/* Payment Action */}
-        {order.payment_status === "PENDING" && order.xendit_payment_url && (
+        {order.status === "pending" && order.xendit_payment_url && (
           <div className="bg-white rounded-xl p-4 shadow-sm">
             <button
               onClick={() => {
@@ -178,6 +185,18 @@ const OrderDetailPage = () => {
             >
               {redirecting ? "Mengalihkan ke pembayaran..." : "Lanjutkan Pembayaran"}
             </button>
+          </div>
+        )}
+
+        {/* Review Action */}
+        {order.status === "done" && (
+          <div className="bg-white rounded-xl p-4 shadow-sm">
+            <Link
+              href={`/review?order=${encryptOrderCode(order.kode_order)}`}
+              className="block w-full text-center bg-[#299A4D] hover:bg-[#238B42] text-white text-sm font-semibold py-3 rounded-lg transition"
+            >
+              Beri Ulasan
+            </Link>
           </div>
         )}
 

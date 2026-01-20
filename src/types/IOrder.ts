@@ -29,7 +29,6 @@ export interface Order {
   final_harga: number;
 
   status: OrderStatus;
-  metode_pembayaran: "VA" | "E-Wallet" | "Transfer" | "Poin";
 
   alamat: string;
 
@@ -40,7 +39,7 @@ export interface Order {
   xendit_external_id?: string | null;
   xendit_payment_url?: string | null;
   xendit_invoice_id?: string | null;
-  payment_status?: "PENDING" | "PAID" | "EXPIRED";
+  payment_status?: OrderStatus;
 
   details: OrderItem[];
 }

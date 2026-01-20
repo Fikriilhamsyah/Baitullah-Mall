@@ -32,7 +32,7 @@ import { formatPrice } from "@/utils/formatters";
 import { formatDecimal } from "@/utils/formatDecimal";
 
 // Icon
-import { ShoppingCart, Star, MessageCircleMore } from "lucide-react";
+import { ShoppingCart, PencilRuler, MessageCircleMore } from "lucide-react";
 
 interface ProductDetailProps {
   id: number;
@@ -617,6 +617,11 @@ const ProductDetail: React.FC<ProductDetailProps> = ({ id, nama_produk, onBack }
                   <p className="text-sm text-gray-500">
                     Sisa stok varian: <span className="font-medium">{stokVarian}</span>
                   </p>
+
+                  {/* <button className="flex items-center gap-1 text-sm text-gray-500">
+                    <PencilRuler />
+                    <p className="text-primary-500">Panduan Ukuran</p>
+                  </button> */}
                 </div>
 
                 {isLoggedIn ? (

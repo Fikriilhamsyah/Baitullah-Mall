@@ -1,13 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const orderCode = searchParams.get("order");
+
+  const router = useRouter();
+
+  const handleBackToOrders = () => {
+    if (typeof window === "undefined") return;
+
+    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+
+    if (isDesktop) {
+      router.push("/profile?tab=orders");
+    } else {
+      router.push("/profile/orders");
+    }
+  };
 
   return (
     <div className="pt-[80px] md:pt-[89px] lg:pt-[92px]">
@@ -49,21 +63,19 @@ export default function PaymentSuccessPage() {
             </div>
 
             {/* ACTION */}
-            <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto relative">
-                <Link href="/profile/orders">
-                    <Button
-                        label="Lihat Pesanan Saya"
-                        fullWidth
-                        className="font-semibold"
-                    />
-                </Link>
+            <div className="flex flex-col md:flex-row gap-3 w-full md:w-1/2 relative">
+                <Button
+                    label="Lihat Pesanan Saya"
+                    fullWidth
+                    className="font-semibold"
+                    onClick={handleBackToOrders}
+                />
 
-                <Link href="/">
-                    <Button
-                        label="Kembali ke Beranda"
-                        fullWidth
-                    />
-                </Link>
+                <Button
+                    label="Kembali ke Beranda"
+                    fullWidth
+                    onClick={() => router.push("/")}
+                />
             </div>
 
             {/* FOOTER NOTE */}

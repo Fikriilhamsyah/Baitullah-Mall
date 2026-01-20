@@ -205,11 +205,6 @@ const Orders = () => {
                     <p className="text-xs text-neutral-500">
                       {order.details.length} item
                     </p>
-
-                    <p className="text-xs text-neutral-400 mt-1">
-                      {new Date(order.created_at).toLocaleDateString("id-ID")} •{" "}
-                      {order.metode_pembayaran}
-                    </p>
                   </div>
 
                   {/* Price & Status */}
