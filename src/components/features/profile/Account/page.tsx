@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect, useMemo } from 'react'
 
 // Components
@@ -67,7 +69,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
                     </div>
                 ) : (<></>)}
               </div> */}
-              <div className="col-span-12 lg:col-span-6">
+              <div className="col-span-12">
                 <InputField
                   id="userName"
                   name="userName"
@@ -78,7 +80,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUserName(e.target.value)}
                 />
               </div>
-              <div className="col-span-12 lg:col-span-6">
+              <div className="col-span-12">
                 <InputField
                   id="email"
                   name="email"
@@ -91,7 +93,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
                   // onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
                 />
               </div>
-              <div className="col-span-12 lg:col-span-6">
+              <div className="col-span-12">
                 <InputField
                   id="phoneNumber"
                   name="phoneNumber"
@@ -104,7 +106,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
                   // onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
                 />
               </div>
-              <div className="col-span-12 lg:col-span-6">
+              {/* <div className="col-span-12">
                 <InputField
                   id="createdAt"
                   name="createdAt"
@@ -115,7 +117,7 @@ const Account: React.FC<AccountProps> = ({ user }) => {
                   value={user ? new Date(user.created_at).toLocaleDateString() : ""}
                   // onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFullName(e.target.value)}
                 />
-              </div>
+              </div> */}
               <div className="col-span-12">
                 <Button
                   type="submit"

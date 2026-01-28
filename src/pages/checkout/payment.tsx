@@ -1,7 +1,6 @@
-"use client";
 import React, { useEffect, useState, } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/router";
 
 // Components
 import { Button } from "@/components/ui/Button";
@@ -50,8 +49,16 @@ export default function PaymentPage() {
   const { postPayment, loading } = usePayment();
   const user = useAuth((s) => s.user);
 
-  const searchParams = useSearchParams();
-  const encryptedOrder = searchParams.get("order");
+  const { query: routerQuery, isReady } = router;
+
+  const getParam = (key: string): string | null => {
+    if (!isReady) return null;
+    const value = routerQuery[key];
+    if (!value) return null;
+    return Array.isArray(value) ? value[0] : String(value);
+  };
+
+  const encryptedOrder = getParam("order");
   const orderCode = encryptedOrder
     ? decryptOrderCode(encryptedOrder)
     : undefined;

@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
@@ -56,7 +54,7 @@ const AccountPage = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="grid grid-cols-12 gap-4">
-                <div className="col-span-12 lg:col-span-6">
+                <div className="col-span-12">
                   <InputField
                     id="userName"
                     name="userName"
@@ -66,7 +64,7 @@ const AccountPage = () => {
                   />
                 </div>
 
-                <div className="col-span-12 lg:col-span-6">
+                <div className="col-span-12">
                   <InputField
                     id="email"
                     label="Email"
@@ -76,7 +74,7 @@ const AccountPage = () => {
                   />
                 </div>
 
-                <div className="col-span-12 lg:col-span-6">
+                <div className="col-span-12">
                   <InputField
                     id="phone"
                     label="Nomor Telepon"
@@ -86,7 +84,7 @@ const AccountPage = () => {
                   />
                 </div>
 
-                <div className="col-span-12 lg:col-span-6">
+                {/* <div className="col-span-12">
                   <InputField
                     id="createdAt"
                     label="Bergabung Sejak"
@@ -97,7 +95,7 @@ const AccountPage = () => {
                         : ""
                     }
                   />
-                </div>
+                </div> */}
 
                 <div className="col-span-12">
                   <Button

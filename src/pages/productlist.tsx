@@ -1,7 +1,5 @@
-"use client";
-
 import React, { useState, useEffect, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/router";
 import { motion } from "framer-motion";
 import { SearchX, ChevronDown } from "lucide-react";
 
@@ -23,8 +21,16 @@ import { usePaymentType } from "@hooks/usePaymentType";
 
 export default function ProductListPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const kategoriId = searchParams.get("kategori_id");
+  const { query: routerQuery, isReady } = router;
+
+  const getParam = (key: string): string | null => {
+    if (!isReady) return null;
+    const value = routerQuery[key];
+    if (!value) return null;
+    return Array.isArray(value) ? value[0] : String(value);
+  };
+
+  const kategoriId = getParam("kategori_id");
 
   const { products, loading: productLoading, error } = useProducts();
   const { categories, loading: loadingCategories, error: categoryError } = useCategories();
@@ -47,7 +53,10 @@ export default function ProductListPage() {
   const [loading, setLoading] = useState(true);
 
   const ITEMS_PER_PAGE = 8;
-  const query = searchParams.get("query")?.toLowerCase() || "";
+  const query =
+    typeof router.query.query === "string"
+      ? router.query.query.toLowerCase()
+      : "";
 
   const [showScrollDown, setShowScrollDown] = useState(true);
   const [showScrollUp, setShowScrollUp] = useState(false);
@@ -80,24 +89,24 @@ export default function ProductListPage() {
   // 🔹 Ambil filter awal dari URL + kategori API
   useEffect(() => {
     let initialCategory: string[] = [];
-    const rawInitialCollection = searchParams.get("collection")?.split(",") || [];
+    const rawInitialCollection = getParam("collection")?.split(",") || [];
     const initialCollectionFilter = normalizeCollectionParam(rawInitialCollection);
-    const initialSort = searchParams.get("sort") || "";
-    const initialType = searchParams.get("type")?.split(",") || [];
-    const initialMin = searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : "";
-    const initialMax = searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : "";
-    const page = searchParams.get("page") ? Number(searchParams.get("page")) : 1;
+    const initialSort = getParam("sort") || "";
+    const initialType = getParam("type")?.split(",") || [];
+    const initialMin = getParam("minPrice") ? Number(getParam("minPrice")) : "";
+    const initialMax = getParam("maxPrice") ? Number(getParam("maxPrice")) : "";
+    const page = getParam("page") ? Number(getParam("page")) : 1;
 
     // Ambil dari URL atau kategori_id tapi pakai nama kategori dari API
     if (kategoriId && categoryList.length > 0) {
       const kategoriIdNumber = Number(kategoriId); // convert ke number
       const matchedCategory = categoryList.find(cat => cat.id === kategoriIdNumber);
-      const urlCategory = searchParams.get("category");
+      const urlCategory = getParam("category");
       if (matchedCategory || urlCategory) {
         initialCategory = [urlCategory || matchedCategory?.nama_kategori || ""].filter(Boolean);
       }
     } else {
-      initialCategory = searchParams.get("category")?.split(",") || [];
+      initialCategory = getParam("category")?.split(",") || [];
     }
 
     setCategory(initialCategory);
@@ -137,20 +146,53 @@ export default function ProductListPage() {
 
   // 🔹 Update URL setiap filter berubah
   useEffect(() => {
-    const params = new URLSearchParams();
+    if (!router.isReady) return;
 
-    if (query) params.set("query", query);
+    const params = new URLSearchParams(router.query as Record<string, string>);
+
     if (category.length) params.set("category", category.join(","));
-    if (collectionFilter.length) params.set("collection", collectionFilter.join(","));
-    if (paymentTypeFilter.length) params.set("type", paymentTypeFilter.join(","));
-    if (productType.length) params.set("type", productType.join(","));
-    if (minPrice !== "") params.set("minPrice", String(minPrice));
-    if (maxPrice !== "") params.set("maxPrice", String(maxPrice));
-    if (sortBy) params.set("sort", sortBy);
-    if (currentPage > 1) params.set("page", String(currentPage));
+    else params.delete("category");
 
-    router.replace(`?${params.toString()}`, { scroll: false });
-  }, [category, collectionFilter, paymentTypeFilter, productType, minPrice, maxPrice, sortBy, currentPage, query, router]);
+    if (collectionFilter.length) params.set("collection", collectionFilter.join(","));
+    else params.delete("collection");
+
+    if (paymentTypeFilter.length) params.set("paymentType", paymentTypeFilter.join(","));
+    else params.delete("paymentType");
+
+    if (productType.length) params.set("type", productType.join(","));
+    else params.delete("type");
+
+    if (minPrice !== "") params.set("minPrice", String(minPrice));
+    else params.delete("minPrice");
+
+    if (maxPrice !== "") params.set("maxPrice", String(maxPrice));
+    else params.delete("maxPrice");
+
+    if (sortBy) params.set("sort", sortBy);
+    else params.delete("sort");
+
+    if (currentPage > 1) params.set("page", String(currentPage));
+    else params.delete("page");
+
+    router.replace(
+      {
+        pathname: router.pathname,
+        query: Object.fromEntries(params.entries()),
+      },
+      undefined,
+      { shallow: true, scroll: false }
+    );
+  }, [
+    category,
+    collectionFilter,
+    paymentTypeFilter,
+    productType,
+    minPrice,
+    maxPrice,
+    sortBy,
+    currentPage,
+    router.isReady,
+  ]);
 
   // 🔹 Simulasi loading awal
   useEffect(() => {
@@ -325,29 +367,22 @@ export default function ProductListPage() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={showScrollDown ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
-                  className="
-                    pointer-events-auto
-                    absolute top-2 inset-x-0 z-50
-                    mx-auto w-fit
-                    flex items-center gap-1
-                    bg-white border border-primary-500 text-primary-500
-                    rounded-full py-1 px-3 text-[11px]
-                    shadow-md cursor-pointer
-                  "
+                  className="pointer-events-auto absolute top-2 inset-x-0 z-50 mx-auto w-fit
+                            flex items-center gap-1 bg-white border border-primary-500
+                            text-primary-500 rounded-full py-1 px-3 text-[11px] shadow-md"
                 >
                   <ChevronDown className="w-4 h-4" />
                   Gulir ke bawah
                 </motion.button>
-
 
                 <motion.button
                   onClick={scrollToTop}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={showScrollUp ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
-                  className="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 
-                            z-50 flex items-center gap-1 bg-primary-500 text-white 
-                            rounded-full py-1 px-4 text-[11px] shadow-lg cursor-pointer"
+                  className="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2
+                            z-50 flex items-center gap-1 bg-primary-500 text-white
+                            rounded-full py-1 px-4 text-[11px] shadow-lg"
                 >
                   ↑ Ke atas
                 </motion.button>
@@ -355,15 +390,17 @@ export default function ProductListPage() {
                 <Button
                   label="Atur Ulang Filter"
                   color="primary"
+                  fullWidth
                   onClick={() => {
                     setCategory([]);
                     setCollectionFilter([]);
+                    setPaymentTypeFilter([]);
                     setProductType([]);
                     setSortBy("");
                     setMinPrice("");
                     setMaxPrice("");
+                    setCurrentPage(1);
                   }}
-                  fullWidth
                 />
 
                 <div className="flex justify-between items-center mb-8 mt-8">
@@ -384,29 +421,38 @@ export default function ProductListPage() {
                           type="number"
                           placeholder="Min"
                           value={minPrice}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setMinPrice(e.target.value === "" ? "" : Number(e.target.value))
-                          }
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            setMinPrice(e.target.value === "" ? "" : Number(e.target.value));
+                            setCurrentPage(1);
+                          }}
+
                         />
                         <InputField
                           type="number"
                           placeholder="Max"
                           value={maxPrice}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setMaxPrice(e.target.value === "" ? "" : Number(e.target.value))
-                          }
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            setMaxPrice(e.target.value === "" ? "" : Number(e.target.value));
+                            setCurrentPage(1);
+                          }}
                         />
                       </div>
                     </div>
                   </div>
 
-                  {/* Jenis Produk */}
+                  {/* Jenis Pembayaran */}
                   <div>
                     <p className="text-md font-bold text-neutral-700 mb-2">Jenis Pembayaran Produk</p>
                     <CheckboxGroup
-                      options={paymentTypeList.map((pay) => ({ label: pay.nama_jenis, value: pay.nama_jenis }))}
+                      options={paymentTypeList.map((pay) => ({
+                        label: pay.nama_jenis,
+                        value: pay.nama_jenis,
+                      }))}
                       selected={paymentTypeFilter}
-                      onChange={setPaymentTypeFilter}
+                      onChange={(vals) => {
+                        setPaymentTypeFilter(vals);
+                        setCurrentPage(1);
+                      }}
                     />
                   </div>
 
@@ -419,14 +465,16 @@ export default function ProductListPage() {
                         value: cat.nama_kategori,
                       }))}
                       selected={category}
-                      onChange={setCategory}
+                      onChange={(vals) => {
+                        setCategory(vals);
+                        setCurrentPage(1);
+                      }}
                     />
                   </div>
 
                   {/* Koleksi / Gender */}
                   <div>
                     <p className="text-md font-bold text-neutral-700 mb-2">Gender</p>
-                    {/* gunakan id sebagai value agar URL lebih stabil; label tetap nama */}
                     <CheckboxGroup
                       options={collectionList.map((col) => ({
                         label: col.nama_koleksi,
@@ -434,9 +482,9 @@ export default function ProductListPage() {
                       }))}
                       selected={collectionFilter}
                       onChange={(vals) => {
-                        // jika UI sends names instead of ids (older code), normalize
                         const normalized = normalizeCollectionParam(vals);
                         setCollectionFilter(normalized);
+                        setCurrentPage(1);
                       }}
                     />
                   </div>

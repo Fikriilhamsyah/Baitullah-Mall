@@ -1,8 +1,6 @@
-"use client";
-
 import React, { useMemo, useRef, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/router";
 
 // Icons
 import {
@@ -44,20 +42,27 @@ const OrdersPage = () => {
   const { ordersByIdUser, loading: loadingOrdersByIdUser, error: errorOrdersByIdUser } = useOrderByIdUser();
 
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const { query: routerQuery, isReady } = router;
+
+  const getParam = (key: string): string | null => {
+    if (!isReady) return null;
+    const value = routerQuery[key];
+    if (!value) return null;
+    return Array.isArray(value) ? value[0] : String(value);
+  };
 
   const statusKeys = Object.keys(
     ORDER_STATUS_MAP
   ) as OrderStatus[];
   
-  const initialStatus =
-    (searchParams.get("status") as OrderStatus) &&
-    statusKeys.includes(searchParams.get("status") as OrderStatus)
-      ? (searchParams.get("status") as OrderStatus)
+  const statusParam = getParam("status") as OrderStatus | null;
+
+  const initialStatus: OrderStatus =
+    statusParam && statusKeys.includes(statusParam)
+      ? statusParam
       : "done";
 
-  const [activeTab, setActiveTab] =
-    useState<OrderStatus>(initialStatus);
+  const [activeTab, setActiveTab] = useState<OrderStatus>(initialStatus);
 
   const [page, setPage] = useState(1);
 
@@ -101,21 +106,22 @@ const OrdersPage = () => {
     setActiveTab(status);
     setPage(1);
 
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(router.asPath.split("?")[1] || "");
     params.set("status", status);
 
-    router.replace(`?${params.toString()}`, {
+    router.replace(`?${params.toString()}`, undefined, {
       scroll: false,
+      shallow: true,
     });
   };
 
   useEffect(() => {
-    const status = searchParams.get("status") as OrderStatus;
+    const status = getParam("status") as OrderStatus | null;
 
     if (status && statusKeys.includes(status)) {
       setActiveTab(status);
     }
-  }, [searchParams]);
+  }, [router.query, isReady]);
 
   return (
     <div className="pt-[80px] md:pt-[89px] lg:pt-[161px]">

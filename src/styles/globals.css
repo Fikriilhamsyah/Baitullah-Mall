@@ -116,24 +116,27 @@ body.bs-locked {
 
 /* Banner Paragraph */
 .banner-paragraf{
-  background-image: url('../../public/img/banner/banner-paragraf-mobile.webp');
+  background-image: url('/img/banner/banner-paragraf-mobile.webp');
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
 }
 
 @media (min-width: 768px) {
   .banner-paragraf{
-    background-image: url('../../public/img/banner/banner-paragraf-tablet.webp');
+    background-image: url('/img/banner/banner-paragraf-tablet.webp');
     background-size: cover;
     background-position: center;
+    background-repeat: no-repeat;
   }
 }
 
 @media (min-width: 1024px) {
   .banner-paragraf{
-    background-image: url('../../public/img/banner/banner-paragraf-desktop.webp');
+    background-image: url('/img/banner/banner-paragraf-desktop.webp');
     background-size: cover;
     background-position: center;
+    background-repeat: no-repeat;
   }
 }
 

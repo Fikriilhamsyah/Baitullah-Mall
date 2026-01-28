@@ -1,10 +1,11 @@
 import React from "react";
 import Image from "next/image";
 import { Facebook, Instagram, Youtube, Mail, PhoneCall } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/router";
 
 export default function Footer() {
-  const pathname = usePathname();
+  const router = useRouter();
+  const pathname = router.pathname;
 
   const isProductDetail =
     !!pathname &&

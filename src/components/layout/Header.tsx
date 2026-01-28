@@ -1,8 +1,8 @@
 "use client";
+
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 
 // Components
 import { MobileSidebar } from "./MobileSidebar";
@@ -79,13 +79,13 @@ const Header: React.FC = () => {
   if (!hydrated) return null;
 
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = router.pathname;
+  const query = router.query;
 
   const { cartByIdUser, loading: cartByIdUserLoading, error: cartByIdUserError } = useCartByIdUser();
   const { poin, loading: poinLoading, error: poinError, refetch } = usePoin();
   const cartCount = cartByIdUser.length;
 
-  const searchParams = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -110,7 +110,11 @@ const Header: React.FC = () => {
   const { showToast } = useToast();
 
   // ✅ Ambil query dari URL (misal ?query=tas)
-  const queryParam = searchParams.get("query") || "";
+  const queryParam = query.query
+    ? Array.isArray(query.query)
+      ? query.query[0]
+      : query.query
+    : "";
 
   const handleLogout = () => {
     useAuth.getState().logout();
@@ -200,6 +204,12 @@ const Header: React.FC = () => {
 
     return () => clearInterval(interval);
   }, [isInputFocused]);
+
+  useEffect(() => {
+    if (router.pathname !== "/productlist") {
+      setSearchTerm("");
+    }
+  }, [router.pathname]);
 
   const sidebarLinks =
     user === null
@@ -324,6 +334,7 @@ const Header: React.FC = () => {
                 trigger={
                   <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />
                 }
+                classNameContent="w-44 right-0 top-8"
               >
                 <div className="flex flex-col text-sm">
                   <Link href="/profile" className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">
@@ -389,6 +400,7 @@ const Header: React.FC = () => {
               </div>
             }
             className="flex items-center gap-2"
+            classNameContent="w-44 right-0 top-8"
           >
             <div>
               <div className="px-3 py-2">
@@ -647,6 +659,7 @@ const Header: React.FC = () => {
                 trigger={
                   <UserRound className="w-7 h-7 text-neutral-700 hover:text-black transition" />
                 }
+                classNameContent="w-44 right-0 top-8"
               >
                 <div className="flex flex-col text-sm">
                   <Link href="/profile" className="flex items-center gap-2 px-3 py-2 text-neutral-600 hover:bg-gray-100 text-left cursor-pointer">

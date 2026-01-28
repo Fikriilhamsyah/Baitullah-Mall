@@ -1,7 +1,5 @@
-"use client";
-
 import React, { useMemo, useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/router";
 
 // Hooks
 import { useCart } from "@/hooks/useCart";
@@ -75,8 +73,16 @@ export default function CartPage() {
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
 
-  const searchParams = useSearchParams();
-  const jenisFromQuery = searchParams.get("jenis"); // "uang" | "poin" | null
+  const { query: routerQuery, isReady } = router;
+
+  const getParam = (key: string): string | null => {
+    if (!isReady) return null;
+    const value = routerQuery[key];
+    if (!value) return null;
+    return Array.isArray(value) ? value[0] : String(value);
+  };
+
+  const jenisFromQuery = getParam("jenis"); // "uang" | "poin" | null
 
   // server canonical qty (for rollback & compute)
   const serverQtyRef = useRef<Record<number, number>>({});
@@ -494,7 +500,7 @@ export default function CartPage() {
       const unit_price = Number(ci?.harga) || Number(found?.price) || 0;
       const subtotal = unit_price * qty;
       const gambarRel = variant?.gambar ?? productObj?.gambar_utama ?? null;
-      const gambar = gambarRel ? `${process.env.NEXT_PUBLIC_PATH}/storage/${gambarRel}` : null;
+      const gambar = gambarRel ? `${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${gambarRel}` : null;
 
       const beratPerItem = Number(found?.variantBerat ?? 0) || 0;
       const totalBerat = beratPerItem * qty;
@@ -543,7 +549,7 @@ export default function CartPage() {
         const active = g.id_jenis === activeJenis;
         return (
           <button key={g.id_jenis}
-            onClick={() => { setActiveJenis(g.id_jenis); const ids = g.items.map((it: any) => it.cartItem.id); setSelected(g.items.map((it: any) => it.cartItem.id)); router.replace(`?jenis=${g.id_jenis}`, { scroll: false }); }}
+            onClick={() => { setActiveJenis(g.id_jenis); const ids = g.items.map((it: any) => it.cartItem.id); setSelected(g.items.map((it: any) => it.cartItem.id)); router.replace(`?jenis=${g.id_jenis}`, undefined, { scroll: false, shallow: true });}}
             className={`px-3 py-1 rounded-full text-sm font-medium border ${active ? "bg-primary-500 text-white border-primary-500" : "bg-white text-gray-700 border-gray-200 cursor-pointer"}`}
           >
             {g.nama_jenis} <span className={`ml-1 text-xs ${active ? "text-white" : "text-gray-500"}`}>({g.items.length})</span>
@@ -609,8 +615,8 @@ export default function CartPage() {
                           <div className="flex items-start gap-3 md:w-auto">
                             <input type="checkbox" checked={selected.includes(cartItem.id)} onChange={() => toggleSelect(cartItem.id)} className="h-4 w-4 mt-1" aria-label={`Pilih item ${cartItem.kode_varian}`} />
                             <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 rounded-lg overflow-hidden border border-neutral-200">
-                              {variant?.gambar ? <img src={`${process.env.NEXT_PUBLIC_PATH}/storage/${variant.gambar}`} alt={product?.nama_produk ?? cartItem.kode_varian} className="w-full h-full object-cover" />
-                              : product?.gambar_utama ? <img src={`${process.env.NEXT_PUBLIC_PATH}/storage/${product.gambar_utama}`} alt={product?.nama_produk} className="w-full h-full object-cover" />
+                              {variant?.gambar ? <img src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${variant.gambar}`} alt={product?.nama_produk ?? cartItem.kode_varian} className="w-full h-full object-cover" />
+                              : product?.gambar_utama ? <img src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${product.gambar_utama}`} alt={product?.nama_produk} className="w-full h-full object-cover" />
                               : <div className="w-full h-full flex items-center justify-center text-xs bg-gray-100 text-gray-500">No Image</div>}
                             </div>
                           </div>

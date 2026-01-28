@@ -1,6 +1,5 @@
-"use client";
 import React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import { IProduct } from "@/types/IProduct";
 import { formatPrice } from "@/utils/formatters";
 import { formatDecimal } from "@/utils/formatDecimal";
@@ -13,7 +12,6 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  console.table(product)
   const router = useRouter();
 
   const variantColors =

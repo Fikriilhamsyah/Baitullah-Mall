@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/router";
 
 // Components
 import { Button } from "@/components/ui/Button";
@@ -35,10 +35,17 @@ export default function ProfilePage() {
   const hydrated = useAuth((s) => s.hydrated);
   if (!hydrated) return null;
 
-  const searchParams = useSearchParams();
   const router = useRouter();
+  const { query: routerQuery, isReady } = router;
 
-  const initialTab = searchParams.get("tab") || "account";
+  const getParam = (key: string): string | null => {
+    if (!isReady) return null;
+    const value = routerQuery[key];
+    if (!value) return null;
+    return Array.isArray(value) ? value[0] : String(value);
+  };
+
+  const initialTab = getParam("tab") || "account";
   const [activeTab, setActiveTab] = useState(initialTab);
 
   const { poin, loading: poinLoading, error: poinError, refetch } = usePoin();
@@ -88,7 +95,8 @@ export default function ProfilePage() {
 
   const changeTab = (tab: string) => {
     setActiveTab(tab);
-    router.replace(`?tab=${tab}`, { scroll: false });
+    router.replace( { pathname: router.pathname, query: { tab } }, undefined, { shallow: true });
+    // router.replace(`?tab=${tab}`, undefined, { shallow: true });
   };
 
   return (

@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 
@@ -20,7 +21,7 @@ interface ProductListProps {
   searchQuery?: string;
 }
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 12;
 
 const ProductList: React.FC<ProductListProps> = ({
   paymentType,

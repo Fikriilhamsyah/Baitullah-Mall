@@ -15,7 +15,7 @@ interface InputFieldProps {
   label?: string;
   icon?: LucideIcon;
   variant?: "default" | "rounded";
-  type?: "text" | "number" | "textarea" | "select" | "email" | "password";
+  type?: "text" | "number" | "textarea" | "select" | "email" | "password" | "file";
   options?: Option[];
   autoComplete?: string;
   id?: string;
@@ -207,6 +207,24 @@ export const InputField: React.FC<InputFieldProps> = ({
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </>
+        ) : type === "file" ? (
+          /* FILE INPUT ✅ */
+          <input
+            id={id}
+            name={name}
+            type="file"
+            onChange={onChange as React.ChangeEventHandler<HTMLInputElement>}
+            disabled={disabled}
+            className={cn(
+              "block w-full text-sm text-neutral-600",
+              "file:mr-3 file:py-2 file:px-4",
+              "file:rounded-lg file:border-0",
+              "file:bg-primary-500 file:text-white",
+              "hover:file:bg-primary-600 transition",
+              className
+            )}
+            {...props}
+          />
         ) : (
           // INPUT DEFAULT (text)
           <input

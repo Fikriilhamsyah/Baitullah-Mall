@@ -1,3 +1,5 @@
+import { IReview } from "./IReview";
+
 export type OrderStatus =
   | "pending"   // Menunggu pembayaran
   | "paid"      // Sudah dibayar / diproses
@@ -42,4 +44,6 @@ export interface Order {
   payment_status?: OrderStatus;
 
   details: OrderItem[];
+
+  review_data?: IReview | null;
 }

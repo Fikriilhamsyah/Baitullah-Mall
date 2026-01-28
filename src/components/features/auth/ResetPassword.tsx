@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/router";
 
 // Context
 import { useModal } from "@/context/ModalContext";
@@ -17,6 +17,8 @@ import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 
 const ResetPassword: React.FC = () => {
+  const router = useRouter();
+  const pathname = router.pathname;
   const hydrated = useAuth((s) => s.hydrated);
   if (!hydrated) return null;
   const openModal = useModal((s) => s.openModal);
@@ -97,8 +99,6 @@ const ResetPassword: React.FC = () => {
       });
     }, 200);
   };
-
-  const pathname = usePathname();
 
   return (
     <div className="flex flex-col justify-between items-center w-full h-full pb-10 lg:pb-0">

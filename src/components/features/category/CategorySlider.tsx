@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 
 // Swiper
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -74,6 +74,7 @@ export const CategorySlider: React.FC = () => {
   const router = useRouter();
   const [swiper, setSwiper] = useState<any>(null);
   const [isBeginning, setIsBeginning] = useState(true);
+  const [swiperInstance, setSwiperInstance] = useState<any>(null);
   const [isEnd, setIsEnd] = useState(false);
 
   const prevRef = useRef<HTMLButtonElement>(null);
@@ -102,8 +103,12 @@ export const CategorySlider: React.FC = () => {
           modules={[Navigation]}
           slidesPerView={3}
           spaceBetween={8}
-          onSwiper={(instance) => setSwiper(instance)}
-            onSlideChange={(s) => {
+          navigation={{
+            prevEl: prevRef.current,
+            nextEl: nextRef.current,
+          }}
+          onSwiper={(swiper) => setSwiperInstance(swiper)}
+          onSlideChange={(s) => {
             setIsBeginning(s.isBeginning);
             setIsEnd(s.isEnd);
           }}

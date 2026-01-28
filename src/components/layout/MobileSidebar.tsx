@@ -1,6 +1,7 @@
 "use client";
+
 import React, { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 
 // Icons
 import { X, Facebook, Instagram, Youtube, Mail } from "lucide-react";

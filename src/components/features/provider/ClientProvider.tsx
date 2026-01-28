@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { useAuth, AuthContext } from "@/context/AuthContext";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Context
@@ -30,7 +30,7 @@ export default function ClientProvider({ children }: { children: ReactNode }) {
   const user = useAuth((state) => state.user);
   const hydrated = useAuth((state) => state.hydrated);
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = router.pathname;
 
   const [ready, setReady] = useState(false);
 

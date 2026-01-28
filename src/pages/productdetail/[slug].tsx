@@ -1,11 +1,19 @@
-"use client";
 import React from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import ProductDetail from "@/components/features/product/ProductDetail";
 
 export default function ProductDetailPage() {
-  const { slug } = useParams(); // contoh: "e.<base64url>" atau legacy "123-tas-ihram"
   const router = useRouter();
+  const { query: routerQuery, isReady } = router;
+
+  const getParam = (key: string): string | null => {
+    if (!isReady) return null;
+    const value = routerQuery[key];
+    if (!value) return null;
+    return Array.isArray(value) ? value[0] : String(value);
+  };
+
+  const slug = getParam("slug"); // contoh: "e.<base64url>" atau legacy "123-tas-ihram"
 
   let id: number | null = null;
   let name = "";

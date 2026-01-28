@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";

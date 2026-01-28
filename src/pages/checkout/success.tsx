@@ -1,15 +1,20 @@
-"use client";
-
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export default function PaymentSuccessPage() {
-  const searchParams = useSearchParams();
-  const orderCode = searchParams.get("order");
-
   const router = useRouter();
+  const { query: routerQuery, isReady } = router;
+
+  const getParam = (key: string): string | null => {
+    if (!isReady) return null;
+    const value = routerQuery[key];
+    if (!value) return null;
+    return Array.isArray(value) ? value[0] : String(value);
+  };
+
+  const orderCode = getParam("order");
 
   const handleBackToOrders = () => {
     if (typeof window === "undefined") return;

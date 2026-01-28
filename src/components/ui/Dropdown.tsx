@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useRef, useEffect } from "react";
 
 interface DropdownProps {
@@ -7,6 +8,7 @@ interface DropdownProps {
   className?: string;
   /** delay sebelum menutup (ms) — bisa diubah jika perlu */
   closeDelay?: number;
+  classNameContent?: string;
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -14,6 +16,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   children,
   className,
   closeDelay = 150,
+  classNameContent,
 }) => {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -119,7 +122,7 @@ const Dropdown: React.FC<DropdownProps> = ({
         ref={menuRef}
         className={`${
           open ? "block" : "hidden"
-        } absolute right-0 top-full translate-y-2 w-44 bg-white rounded-md shadow-md border border-neutral-100 animate-fadeIn origin-top z-50`}
+        } absolute top-full bg-white rounded-md shadow-md border border-neutral-100 animate-fadeIn origin-top z-50 ${classNameContent}`}
       >
         {children}
       </div>

@@ -1,8 +1,6 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 
 // Components
 import ProductList from "@/components/features/product/ProductList";
@@ -96,7 +94,7 @@ export default function HomePage() {
 
       {/* Banner Paragraf */}
       <div className="py-4 md:py-6">
-        <div className="w-full h-full aspect-[2.32/1]">
+        <div className="w-full aspect-[2.32/1]">
           <div className="banner-paragraf w-full h-full">
             <div className="container mx-auto px-4 sm:px-6 py-4 md:py-6 flex flex-col justify-center items-center h-full">
               <h4 className="text-md md:text-4xl font-extrabold text-neutral-900 text-center mb-1 md:mb-4">

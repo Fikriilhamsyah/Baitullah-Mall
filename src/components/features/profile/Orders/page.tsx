@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import Link from "next/link";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/router";
 
 // Icons
 import {
@@ -44,7 +44,15 @@ const Orders = () => {
   const hydrated = useAuth((s) => s.hydrated);
   if (!hydrated) return null;
   const router = useRouter();
-  const searchParams = useSearchParams();
+  
+  const { query: routerQuery, isReady } = router;
+
+  const getParam = (key: string): string | null => {
+    if (!isReady) return null;
+    const value = routerQuery[key];
+    if (!value) return null;
+    return Array.isArray(value) ? value[0] : String(value);
+  };
 
   const user = useAuth((state) => state.user);
   const { orders, loading: loadingOrders, error: errorOrders } = useOrder();
@@ -53,11 +61,12 @@ const Orders = () => {
   const statusKeys = Object.keys(
     ORDER_STATUS_MAP
   ) as OrderStatus[];
+
+  const statusParam = getParam("status") as OrderStatus | null;
   
-  const initialStatus =
-    (searchParams.get("status") as OrderStatus) &&
-    statusKeys.includes(searchParams.get("status") as OrderStatus)
-      ? (searchParams.get("status") as OrderStatus)
+  const initialStatus: OrderStatus =
+    statusParam && statusKeys.includes(statusParam)
+      ? statusParam
       : "done";
 
   const [activeTab, setActiveTab] =
@@ -91,11 +100,12 @@ const Orders = () => {
     setActiveTab(status);
     setPage(1);
 
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(router.asPath.split("?")[1] || "");
     params.set("status", status);
 
-    router.replace(`?${params.toString()}`, {
+    router.replace(`?${params.toString()}`, undefined, {
       scroll: false,
+      shallow: true,
     });
   };
 
@@ -131,12 +141,12 @@ const Orders = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    const status = searchParams.get("status") as OrderStatus;
+    const status = getParam("status") as OrderStatus | null;
 
     if (status && statusKeys.includes(status)) {
       setActiveTab(status);
     }
-  }, [searchParams]);
+  }, [router.query, isReady]);
 
   return (
     <div className="grid grid-cols-12 gap-0 lg:gap-6">

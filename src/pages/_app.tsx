@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
+import type { AppProps } from "next/app";
 
 // Global CSS
-import "../styles/globals.css";
+import "@/styles/globals.css";
 
 // Fonts
 import { Inter } from "next/font/google";
@@ -61,32 +61,15 @@ const openSauceTwo = localFont({
   display: "swap",
 });
 
-// Metadata untuk SEO dan ikon situs
-export const metadata: Metadata = {
-  title: "Baitullah Mall - Perlengkapan Haji & Umroh",
-  description: "Toko online perlengkapan haji dan umroh terlengkap.",
-  icons: {
-    icon: '/img/logo/favicon.ico',
-  },
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function App({ Component, pageProps }: AppProps) {
 
   return (
-    <html lang="id">
-      <body
-        className={`${openSauceSans.className} flex flex-col min-h-screen bg-white`}
-      >
-        <Toast>
-          <ClientProvider>
-            {children}
-          </ClientProvider>
-        </Toast>
-      </body>
-    </html>
+    <div className={openSauceSans.className + " flex flex-col min-h-screen bg-white"}>
+      <Toast>
+        <ClientProvider>
+          <Component {...pageProps} />
+        </ClientProvider>
+      </Toast>
+    </div>
   );
 }

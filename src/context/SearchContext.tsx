@@ -1,6 +1,7 @@
 "use client";
+
 import React, { createContext, useState, useContext, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/router";
 
 interface SearchContextType {
   searchTerm: string;
@@ -19,48 +20,66 @@ export const SearchProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  // 🔹 Sinkronkan searchTerm dengan URL query (biar input selalu up-to-date)
+  /**
+   * 🔹 Sinkronkan searchTerm dengan URL query
+   * HANYA ketika user benar-benar berada di /productlist
+   */
   useEffect(() => {
-    const query = searchParams.get("query") || "";
-    setSearchTerm(query);
-  }, [searchParams]);
+    if (!router.isReady) return;
 
+    const isProductList = router.asPath.startsWith("/productlist");
+
+    if (!isProductList) {
+      // Kalau pindah halaman → reset state saja
+      setSearchTerm("");
+      return;
+    }
+
+    const query =
+      typeof router.query.query === "string"
+        ? router.query.query
+        : "";
+
+    setSearchTerm(query);
+  }, [router.asPath, router.isReady]);
+
+  /**
+   * 🔍 Handle search
+   */
   const handleSearch = (value: string) => {
-    if (typeof window === "undefined") return;
+    if (!router.isReady) return;
 
     const trimmed = value.trim();
-    const currentPath = window.location.pathname;
+    const currentPath = router.pathname;
 
-    // 1️⃣ Jika masih di Home dan search kosong → jangan navigasi
+    // 1️⃣ Home + search kosong → tidak navigasi
     if (currentPath === "/" && trimmed.length === 0) {
       setSearchTerm("");
       return;
     }
 
-    // 2️⃣ Jika kosong, cek dulu apakah user sedang di product detail
-    //    Jika iya → jangan pindah halaman
+    // 2️⃣ Search dikosongkan
     if (trimmed.length === 0) {
+      // product detail → jangan redirect
       if (currentPath.startsWith("/product") && currentPath !== "/productlist") {
-        // sedang di product detail → jangan redirect
         setSearchTerm("");
         return;
       }
 
-      // kalau sedang di productlist → reset query
+      // productlist → bersihkan query
       if (currentPath === "/productlist") {
-        router.replace("/productlist");
+        router.replace("/productlist", undefined, { shallow: true });
+        setSearchTerm("");
         return;
       }
     }
 
-    // 3️⃣ Jika ada teks → arahkan ke productlist?query=
+    // 3️⃣ Ada teks → ke productlist
     const searchUrl = `/productlist?query=${encodeURIComponent(trimmed)}`;
-    const currentUrl = currentPath + window.location.search;
 
-    if (currentUrl !== searchUrl) {
-      router.replace(searchUrl);
+    if (router.asPath !== searchUrl) {
+      router.push(searchUrl);
     }
   };
 

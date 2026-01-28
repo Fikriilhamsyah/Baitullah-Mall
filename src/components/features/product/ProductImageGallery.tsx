@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useRef, useEffect } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Thumbs } from "swiper/modules";
@@ -127,7 +128,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
               <div className="relative">
                 {img ? (
                   <img
-                    src={`${process.env.NEXT_PUBLIC_PATH}/storage/${img}`}
+                    src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${img}`}
                     alt={`${name}-${index}`}
                     className={mainImageClass}
                     onClick={() => openPreview(index)}
@@ -176,7 +177,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
               >
                 {img ? (
                   <img
-                    src={`${process.env.NEXT_PUBLIC_PATH}/storage/${img}`}
+                    src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${img}`}
                     alt={`${name}-thumb-${index}`}
                     className="w-full h-full object-cover"
                     onError={(e) =>
@@ -238,7 +239,7 @@ const ProductImageGallery: React.FC<ProductImageGalleryProps> = ({
 
             {/* Gambar Preview */}
             <img
-              src={`${process.env.NEXT_PUBLIC_PATH}/storage/${previewImage}`}
+              src={`${process.env.NEXT_PUBLIC_API_BAITULLAH_MALL}/storage/${previewImage}`}
               alt="Preview"
               className="max-w-full max-h-[85vh] rounded-lg object-contain shadow-xl"
             />
